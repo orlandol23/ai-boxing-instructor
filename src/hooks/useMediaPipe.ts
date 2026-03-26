@@ -1,0 +1,147 @@
+import { useEffect, useRef, useState } from 'react';
+import {
+  PoseLandmarker,
+  FilesetResolver,
+} from '@mediapipe/tasks-vision';
+import type { Landmark } from '../engine/types';
+
+interface UseMediaPipeOptions {
+  videoRef: React.RefObject<HTMLVideoElement | null>;
+  isVideoReady: boolean;
+  /** Process every Nth frame (1 = every frame, 2 = every other, etc.) */
+  frameSkip?: number;
+}
+
+interface UseMediaPipeReturn {
+  landmarks: Landmark[] | null;
+  isLoading: boolean;
+  fps: number;
+  error: string | null;
+}
+
+export function useMediaPipe(options: UseMediaPipeOptions): UseMediaPipeReturn {
+  const { videoRef, isVideoReady, frameSkip = 1 } = options;
+  const [landmarks, setLandmarks] = useState<Landmark[] | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [fps, setFps] = useState(0);
+  const [error, setError] = useState<string | null>(null);
+
+  const landmarkerRef = useRef<PoseLandmarker | null>(null);
+  const rafRef = useRef<number>(0);
+  const frameCountRef = useRef(0);
+  const lastFpsTimeRef = useRef(0);
+  const fpsCountRef = useRef(0);
+  const lastTimestampRef = useRef(-1);
+  const frameSkipRef = useRef(frameSkip);
+
+  useEffect(() => {
+    frameSkipRef.current = frameSkip;
+  }, [frameSkip]);
+
+  // Initialize PoseLandmarker
+  useEffect(() => {
+    let cancelled = false;
+
+    async function init() {
+      try {
+        const vision = await FilesetResolver.forVisionTasks(
+          'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@latest/wasm'
+        );
+
+        const landmarker = await PoseLandmarker.createFromOptions(vision, {
+          baseOptions: {
+            modelAssetPath:
+              'https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task',
+            delegate: 'GPU',
+          },
+          runningMode: 'VIDEO',
+          numPoses: 1,
+        });
+
+        if (!cancelled) {
+          landmarkerRef.current = landmarker;
+          setIsLoading(false);
+        }
+      } catch (err) {
+        if (!cancelled) {
+          setError(
+            `Erro ao carregar modelo de pose: ${err instanceof Error ? err.message : 'desconhecido'}`
+          );
+          setIsLoading(false);
+        }
+      }
+    }
+
+    init();
+
+    return () => {
+      cancelled = true;
+      landmarkerRef.current?.close();
+    };
+  }, []);
+
+  // Detection loop — uses refs to avoid re-creating the loop
+  useEffect(() => {
+    if (!isVideoReady || isLoading || error) return;
+
+    let running = true;
+
+    function detect() {
+      if (!running) return;
+
+      const video = videoRef.current;
+      const landmarker = landmarkerRef.current;
+
+      if (!video || !landmarker || video.readyState < 2) {
+        rafRef.current = requestAnimationFrame(detect);
+        return;
+      }
+
+      frameCountRef.current++;
+
+      if (frameCountRef.current % frameSkipRef.current === 0) {
+        const now = performance.now();
+
+        // Avoid duplicate timestamps (MediaPipe requirement)
+        if (video.currentTime !== lastTimestampRef.current) {
+          lastTimestampRef.current = video.currentTime;
+
+          const result = landmarker.detectForVideo(video, now);
+
+          if (result.landmarks.length > 0) {
+            const poseLandmarks: Landmark[] = result.landmarks[0].map(
+              (lm, i) => ({
+                x: lm.x,
+                y: lm.y,
+                z: lm.z,
+                visibility: result.landmarks[0][i].visibility ?? 0,
+              })
+            );
+            setLandmarks(poseLandmarks);
+          } else {
+            setLandmarks(null);
+          }
+        }
+
+        // FPS counter
+        fpsCountRef.current++;
+        if (now - lastFpsTimeRef.current >= 1000) {
+          setFps(fpsCountRef.current);
+          fpsCountRef.current = 0;
+          lastFpsTimeRef.current = now;
+        }
+      }
+
+      rafRef.current = requestAnimationFrame(detect);
+    }
+
+    rafRef.current = requestAnimationFrame(detect);
+
+    return () => {
+      running = false;
+      cancelAnimationFrame(rafRef.current);
+    };
+  }, [isVideoReady, isLoading, error, videoRef]);
+
+  return { landmarks, isLoading, fps, error };
+}

@@ -1,0 +1,43 @@
+@import 'tailwindcss';
+
+@theme {
+  --color-boxing-dark: #0A0A0A;
+  --color-boxing-card: #1A1A1A;
+  --color-boxing-border: #2A2A2A;
+  --color-boxing-red: #DC2626;
+  --color-boxing-red-light: #EF4444;
+  --color-boxing-gold: #D4A843;
+  --color-boxing-gold-light: #F5D98C;
+  --color-score-good: #22C55E;
+  --color-score-warn: #EAB308;
+  --color-score-bad: #EF4444;
+
+  --font-display: 'Oswald', sans-serif;
+  --font-body: 'DM Sans', sans-serif;
+}
+
+html, body, #root {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  background-color: var(--color-boxing-dark);
+  color: #F5F5F5;
+  font-family: var(--font-body);
+  overflow: hidden;
+}
+
+@font-face {
+  font-family: 'Oswald';
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url('https://fonts.gstatic.com/s/oswald/v53/TK3iWkUHHAIjg752GT8Dl-1PKw.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'DM Sans';
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url('https://fonts.gstatic.com/s/dmsans/v15/rP2tp2ywxg089UriI5-g4vlH9VoD8CmcqZG40F9JadbnoEwA.woff2') format('woff2');
+}

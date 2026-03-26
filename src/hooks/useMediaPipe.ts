@@ -5,6 +5,9 @@ import {
 } from '@mediapipe/tasks-vision';
 import type { Landmark } from '../engine/types';
 
+/** Target UI update rate in ms (~30 fps for React state updates) */
+const UI_UPDATE_INTERVAL = 33;
+
 interface UseMediaPipeOptions {
   videoRef: React.RefObject<HTMLVideoElement | null>;
   isVideoReady: boolean;
@@ -32,6 +35,8 @@ export function useMediaPipe(options: UseMediaPipeOptions): UseMediaPipeReturn {
   const lastFpsTimeRef = useRef(0);
   const fpsCountRef = useRef(0);
   const lastTimestampRef = useRef(-1);
+  const lastUiUpdateRef = useRef(0);
+  const latestLandmarksRef = useRef<Landmark[] | null>(null);
   const frameSkipRef = useRef(frameSkip);
 
   useEffect(() => {
@@ -118,7 +123,7 @@ export function useMediaPipe(options: UseMediaPipeOptions): UseMediaPipeReturn {
           const result = landmarker.detectForVideo(video, now);
 
           if (result.landmarks.length > 0) {
-            const poseLandmarks: Landmark[] = result.landmarks[0].map(
+            latestLandmarksRef.current = result.landmarks[0].map(
               (lm, i) => ({
                 x: lm.x,
                 y: lm.y,
@@ -126,9 +131,14 @@ export function useMediaPipe(options: UseMediaPipeOptions): UseMediaPipeReturn {
                 visibility: result.landmarks[0][i].visibility ?? 0,
               })
             );
-            setLandmarks(poseLandmarks);
           } else {
-            setLandmarks(null);
+            latestLandmarksRef.current = null;
+          }
+
+          // Throttle React state updates to ~30fps
+          if (now - lastUiUpdateRef.current >= UI_UPDATE_INTERVAL) {
+            lastUiUpdateRef.current = now;
+            setLandmarks(latestLandmarksRef.current);
           }
         }
 

@@ -36,11 +36,9 @@ function getContainRect(
   let drawH: number;
 
   if (videoAspect > containerAspect) {
-    // Video is wider — letterbox top/bottom
     drawW = containerW;
     drawH = containerW / videoAspect;
   } else {
-    // Video is taller — pillarbox left/right
     drawH = containerH;
     drawW = containerH * videoAspect;
   }
@@ -71,6 +69,12 @@ export function PoseCanvas({
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
+    // Scale canvas backing store for high-DPI displays
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width = width * dpr;
+    canvas.height = height * dpr;
+    ctx.scale(dpr, dpr);
+
     ctx.clearRect(0, 0, width, height);
 
     if (!landmarks) return;
@@ -82,7 +86,6 @@ export function PoseCanvas({
       videoHeight
     );
 
-    // Helper to map normalized landmarks to screen coordinates
     const toScreen = (lm: Landmark) => ({
       x: offsetX + (isMirrored ? (1 - lm.x) : lm.x) * drawW,
       y: offsetY + lm.y * drawH,
@@ -119,7 +122,6 @@ export function PoseCanvas({
       ctx.fillStyle = SCORE_COLORS.excellent;
       ctx.fill();
 
-      // White border for visibility
       ctx.strokeStyle = '#FFFFFF';
       ctx.lineWidth = 1.5;
       ctx.stroke();
@@ -129,10 +131,10 @@ export function PoseCanvas({
   return (
     <canvas
       ref={canvasRef}
-      width={width}
-      height={height}
       className="absolute inset-0 h-full w-full"
       style={{
+        width,
+        height,
         pointerEvents: 'none',
       }}
     />

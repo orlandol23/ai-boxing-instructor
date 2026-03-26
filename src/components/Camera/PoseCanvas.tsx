@@ -8,12 +8,59 @@ interface PoseCanvasProps {
   width: number;
   height: number;
   facingMode: FacingMode;
+  videoWidth: number;
+  videoHeight: number;
 }
 
 const JOINT_RADIUS = 5;
 const LINE_WIDTH = 3;
 
-export function PoseCanvas({ landmarks, width, height, facingMode }: PoseCanvasProps) {
+/**
+ * Computes the display rect for object-contain behavior:
+ * how the video is scaled/positioned inside the container.
+ */
+function getContainRect(
+  containerW: number,
+  containerH: number,
+  videoW: number,
+  videoH: number
+) {
+  if (videoW === 0 || videoH === 0) {
+    return { offsetX: 0, offsetY: 0, drawW: containerW, drawH: containerH };
+  }
+
+  const containerAspect = containerW / containerH;
+  const videoAspect = videoW / videoH;
+
+  let drawW: number;
+  let drawH: number;
+
+  if (videoAspect > containerAspect) {
+    // Video is wider — letterbox top/bottom
+    drawW = containerW;
+    drawH = containerW / videoAspect;
+  } else {
+    // Video is taller — pillarbox left/right
+    drawH = containerH;
+    drawW = containerH * videoAspect;
+  }
+
+  return {
+    offsetX: (containerW - drawW) / 2,
+    offsetY: (containerH - drawH) / 2,
+    drawW,
+    drawH,
+  };
+}
+
+export function PoseCanvas({
+  landmarks,
+  width,
+  height,
+  facingMode,
+  videoWidth,
+  videoHeight,
+}: PoseCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const isMirrored = facingMode === 'user';
 
@@ -28,10 +75,17 @@ export function PoseCanvas({ landmarks, width, height, facingMode }: PoseCanvasP
 
     if (!landmarks) return;
 
-    // Helper to get screen coordinates
+    const { offsetX, offsetY, drawW, drawH } = getContainRect(
+      width,
+      height,
+      videoWidth,
+      videoHeight
+    );
+
+    // Helper to map normalized landmarks to screen coordinates
     const toScreen = (lm: Landmark) => ({
-      x: isMirrored ? (1 - lm.x) * width : lm.x * width,
-      y: lm.y * height,
+      x: offsetX + (isMirrored ? (1 - lm.x) : lm.x) * drawW,
+      y: offsetY + lm.y * drawH,
     });
 
     // Draw connections
@@ -70,7 +124,7 @@ export function PoseCanvas({ landmarks, width, height, facingMode }: PoseCanvasP
       ctx.lineWidth = 1.5;
       ctx.stroke();
     }
-  }, [landmarks, width, height, isMirrored]);
+  }, [landmarks, width, height, isMirrored, videoWidth, videoHeight]);
 
   return (
     <canvas

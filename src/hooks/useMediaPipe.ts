@@ -35,7 +35,7 @@ export function useMediaPipe(options: UseMediaPipeOptions): UseMediaPipeReturn {
   const frameSkipRef = useRef(frameSkip);
 
   useEffect(() => {
-    frameSkipRef.current = frameSkip;
+    frameSkipRef.current = Math.max(1, Math.floor(frameSkip));
   }, [frameSkip]);
 
   // Initialize PoseLandmarker

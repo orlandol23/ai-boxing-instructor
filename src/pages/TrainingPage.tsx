@@ -9,6 +9,7 @@ import { StatusBar } from '../components/HUD/StatusBar';
 export function TrainingPage() {
   const containerRef = useRef<HTMLDivElement>(null);
   const [dimensions, setDimensions] = useState({ width: 640, height: 480 });
+  const [videoDimensions, setVideoDimensions] = useState({ width: 0, height: 0 });
 
   const { videoRef, facingMode, isReady, error: cameraError, toggleCamera } = useCamera({
     initialFacing: 'user',
@@ -43,6 +44,29 @@ export function TrainingPage() {
     return () => window.removeEventListener('resize', updateDimensions);
   }, [updateDimensions]);
 
+  // Track video intrinsic dimensions for overlay alignment
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    function onLoadedMetadata() {
+      if (video) {
+        setVideoDimensions({
+          width: video.videoWidth,
+          height: video.videoHeight,
+        });
+      }
+    }
+
+    video.addEventListener('loadedmetadata', onLoadedMetadata);
+    // If already loaded
+    if (video.videoWidth > 0) {
+      onLoadedMetadata();
+    }
+
+    return () => video.removeEventListener('loadedmetadata', onLoadedMetadata);
+  }, [videoRef, isReady]);
+
   const error = cameraError || poseError;
 
   return (
@@ -56,6 +80,8 @@ export function TrainingPage() {
           width={dimensions.width}
           height={dimensions.height}
           facingMode={facingMode}
+          videoWidth={videoDimensions.width}
+          videoHeight={videoDimensions.height}
         />
 
         <CameraControls onToggleCamera={toggleCamera} fps={fps} />

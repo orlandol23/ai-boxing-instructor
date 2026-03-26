@@ -9,7 +9,7 @@ export function CameraFeed({ videoRef, facingMode }: CameraFeedProps) {
   return (
     <video
       ref={videoRef}
-      className="absolute inset-0 h-full w-full object-cover"
+      className="absolute inset-0 h-full w-full object-contain bg-black"
       style={{
         transform: facingMode === 'user' ? 'scaleX(-1)' : 'none',
       }}

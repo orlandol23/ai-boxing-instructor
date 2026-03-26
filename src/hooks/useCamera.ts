@@ -35,6 +35,7 @@ export function useCamera(options: UseCameraOptions = {}): UseCameraReturn {
         if (streamRef.current) {
           streamRef.current.getTracks().forEach((t) => t.stop());
           streamRef.current = null;
+          setStream(null);
         }
 
         const mediaStream = await navigator.mediaDevices.getUserMedia({
@@ -78,6 +79,7 @@ export function useCamera(options: UseCameraOptions = {}): UseCameraReturn {
       if (streamRef.current) {
         streamRef.current.getTracks().forEach((t) => t.stop());
         streamRef.current = null;
+        setStream(null);
       }
     };
   }, [facingMode, width, height]);

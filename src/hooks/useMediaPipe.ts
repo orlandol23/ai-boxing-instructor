@@ -165,6 +165,9 @@ export function useMediaPipe(options: UseMediaPipeOptions): UseMediaPipeReturn {
     return () => {
       running = false;
       cancelAnimationFrame(rafRef.current);
+      latestLandmarksRef.current = null;
+      frameCountRef.current = 0;
+      fpsCountRef.current = 0;
     };
   }, [isVideoReady, isLoading, error, videoRef]);
 

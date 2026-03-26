@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Swords, Target, Dumbbell } from 'lucide-react';
 
@@ -55,7 +56,7 @@ function ModeCard({
   onClick,
   disabled,
 }: {
-  icon: React.ReactNode;
+  icon: ReactNode;
   title: string;
   description: string;
   onClick?: () => void;

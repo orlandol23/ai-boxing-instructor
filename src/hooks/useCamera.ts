@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState, type RefObject } from 'react';
 
 export type FacingMode = 'user' | 'environment';
 
@@ -9,7 +9,7 @@ interface UseCameraOptions {
 }
 
 interface UseCameraReturn {
-  videoRef: React.RefObject<HTMLVideoElement | null>;
+  videoRef: RefObject<HTMLVideoElement | null>;
   stream: MediaStream | null;
   facingMode: FacingMode;
   isReady: boolean;

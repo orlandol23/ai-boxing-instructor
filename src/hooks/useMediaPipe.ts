@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type RefObject } from 'react';
 import {
   PoseLandmarker,
   FilesetResolver,
@@ -9,7 +9,7 @@ import type { Landmark } from '../engine/types';
 const UI_UPDATE_INTERVAL = 33;
 
 interface UseMediaPipeOptions {
-  videoRef: React.RefObject<HTMLVideoElement | null>;
+  videoRef: RefObject<HTMLVideoElement | null>;
   isVideoReady: boolean;
   /** Process every Nth frame (1 = every frame, 2 = every other, etc.) */
   frameSkip?: number;
@@ -72,10 +72,13 @@ export function useMediaPipe(options: UseMediaPipeOptions): UseMediaPipeReturn {
           landmarker = await createLandmarker('CPU');
         }
 
-        if (!cancelled) {
-          landmarkerRef.current = landmarker;
-          setIsLoading(false);
+        if (cancelled) {
+          landmarker.close();
+          return;
         }
+
+        landmarkerRef.current = landmarker;
+        setIsLoading(false);
       } catch (err) {
         if (!cancelled) {
           setError(
@@ -116,30 +119,32 @@ export function useMediaPipe(options: UseMediaPipeOptions): UseMediaPipeReturn {
       if (frameCountRef.current % frameSkipRef.current === 0) {
         const now = performance.now();
 
-        // Avoid duplicate timestamps (MediaPipe requirement)
-        if (video.currentTime !== lastTimestampRef.current) {
-          lastTimestampRef.current = video.currentTime;
+        // MediaPipe requires strictly increasing timestamps
+        if (now <= lastTimestampRef.current) {
+          rafRef.current = requestAnimationFrame(detect);
+          return;
+        }
+        lastTimestampRef.current = now;
 
-          const result = landmarker.detectForVideo(video, now);
+        const result = landmarker.detectForVideo(video, now);
 
-          if (result.landmarks.length > 0) {
-            latestLandmarksRef.current = result.landmarks[0].map(
-              (lm, i) => ({
-                x: lm.x,
-                y: lm.y,
-                z: lm.z,
-                visibility: result.landmarks[0][i].visibility ?? 0,
-              })
-            );
-          } else {
-            latestLandmarksRef.current = null;
-          }
+        if (result.landmarks.length > 0) {
+          latestLandmarksRef.current = result.landmarks[0].map(
+            (lm, i) => ({
+              x: lm.x,
+              y: lm.y,
+              z: lm.z,
+              visibility: result.landmarks[0][i].visibility ?? 0,
+            })
+          );
+        } else {
+          latestLandmarksRef.current = null;
+        }
 
-          // Throttle React state updates to ~30fps
-          if (now - lastUiUpdateRef.current >= UI_UPDATE_INTERVAL) {
-            lastUiUpdateRef.current = now;
-            setLandmarks(latestLandmarksRef.current);
-          }
+        // Throttle React state updates to ~30fps
+        if (now - lastUiUpdateRef.current >= UI_UPDATE_INTERVAL) {
+          lastUiUpdateRef.current = now;
+          setLandmarks(latestLandmarksRef.current);
         }
 
         // FPS counter

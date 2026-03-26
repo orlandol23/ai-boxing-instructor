@@ -1,7 +1,8 @@
+import type { RefObject } from 'react';
 import type { FacingMode } from '../../hooks/useCamera';
 
 interface CameraFeedProps {
-  videoRef: React.RefObject<HTMLVideoElement | null>;
+  videoRef: RefObject<HTMLVideoElement | null>;
   facingMode: FacingMode;
 }
 

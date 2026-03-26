@@ -6,9 +6,9 @@ Instrutor virtual de boxe com análise de pose em tempo real via MediaPipe e coa
 
 - **Frontend:** React 19 + TypeScript + Vite + Tailwind CSS
 - **Pose Detection:** MediaPipe Pose Landmarker (client-side, WASM)
-- **Voice Feedback:** Web Speech API
-- **AI Coaching:** Claude API (Haiku / Sonnet)
-- **Database:** Neon (PostgreSQL serverless)
+- **Voice Feedback:** Web Speech API *(planned — Phase 3)*
+- **AI Coaching:** Claude API (Haiku / Sonnet) *(planned — Phase 4)*
+- **Database:** Neon (PostgreSQL serverless) *(planned — Phase 5)*
 - **PWA:** vite-plugin-pwa
 
 ## Setup

@@ -102,6 +102,7 @@ export function useMediaPipe(options: UseMediaPipeOptions): UseMediaPipeReturn {
     if (!isVideoReady || isLoading || error) return;
 
     let running = true;
+    lastFpsTimeRef.current = performance.now();
 
     function detect() {
       if (!running) return;
@@ -130,11 +131,11 @@ export function useMediaPipe(options: UseMediaPipeOptions): UseMediaPipeReturn {
 
         if (result.landmarks.length > 0) {
           latestLandmarksRef.current = result.landmarks[0].map(
-            (lm, i) => ({
+            (lm) => ({
               x: lm.x,
               y: lm.y,
               z: lm.z,
-              visibility: result.landmarks[0][i].visibility ?? 0,
+              visibility: lm.visibility ?? 0,
             })
           );
         } else {

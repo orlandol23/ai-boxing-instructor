@@ -23,5 +23,4 @@ html, body, #root {
   background-color: var(--color-boxing-dark);
   color: #F5F5F5;
   font-family: var(--font-body);
-  overflow: hidden;
 }

@@ -45,18 +45,27 @@ export function useMediaPipe(options: UseMediaPipeOptions): UseMediaPipeReturn {
     async function init() {
       try {
         const vision = await FilesetResolver.forVisionTasks(
-          'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@latest/wasm'
+          'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.34/wasm'
         );
 
-        const landmarker = await PoseLandmarker.createFromOptions(vision, {
-          baseOptions: {
-            modelAssetPath:
-              'https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task',
-            delegate: 'GPU',
-          },
-          runningMode: 'VIDEO',
-          numPoses: 1,
-        });
+        const createLandmarker = (delegate: 'GPU' | 'CPU') =>
+          PoseLandmarker.createFromOptions(vision, {
+            baseOptions: {
+              modelAssetPath:
+                'https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task',
+              delegate,
+            },
+            runningMode: 'VIDEO',
+            numPoses: 1,
+          });
+
+        // Try GPU first, fall back to CPU if not supported
+        let landmarker: PoseLandmarker;
+        try {
+          landmarker = await createLandmarker('GPU');
+        } catch {
+          landmarker = await createLandmarker('CPU');
+        }
 
         if (!cancelled) {
           landmarkerRef.current = landmarker;

@@ -5,7 +5,6 @@ import { CameraFeed } from '../components/Camera/CameraFeed';
 import { PoseCanvas } from '../components/Camera/PoseCanvas';
 import { CameraControls } from '../components/Camera/CameraControls';
 import { StatusBar } from '../components/HUD/StatusBar';
-import { calculateFrameAngles } from '../engine/AngleCalculator';
 
 export function TrainingPage() {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -43,13 +42,6 @@ export function TrainingPage() {
     window.addEventListener('resize', updateDimensions);
     return () => window.removeEventListener('resize', updateDimensions);
   }, [updateDimensions]);
-
-  // Calculate angles when landmarks are available (for future phases)
-  useEffect(() => {
-    if (landmarks) {
-      calculateFrameAngles(landmarks);
-    }
-  }, [landmarks]);
 
   const error = cameraError || poseError;
 

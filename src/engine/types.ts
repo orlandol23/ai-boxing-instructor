@@ -84,7 +84,7 @@ export interface AnalysisFrame {
   base: BaseScore;
   activePunch: PunchEvent | null;
   landmarks: Landmark[];
-  angles: Record<string, number>;
+  angles: Record<string, number | null>;
 }
 
 export interface SessionSummary {

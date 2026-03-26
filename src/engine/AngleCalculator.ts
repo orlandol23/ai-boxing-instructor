@@ -25,7 +25,7 @@ export interface FrameAngles {
 }
 
 function isVisible(...landmarks: Landmark[]): boolean {
-  return landmarks.every((l) => l.visibility > VISIBILITY_THRESHOLD);
+  return landmarks.every((l) => l.visibility >= VISIBILITY_THRESHOLD);
 }
 
 export function calculateFrameAngles(landmarks: Landmark[]): FrameAngles {

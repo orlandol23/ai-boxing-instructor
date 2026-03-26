@@ -20,54 +20,67 @@ interface UseCameraReturn {
 export function useCamera(options: UseCameraOptions = {}): UseCameraReturn {
   const { initialFacing = 'user', width = 640, height = 480 } = options;
   const videoRef = useRef<HTMLVideoElement | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
   const [stream, setStream] = useState<MediaStream | null>(null);
   const [facingMode, setFacingMode] = useState<FacingMode>(initialFacing);
   const [isReady, setIsReady] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const startCamera = useCallback(async (facing: FacingMode) => {
-    try {
-      // Stop existing stream
-      if (stream) {
-        stream.getTracks().forEach((t) => t.stop());
-      }
-
-      const mediaStream = await navigator.mediaDevices.getUserMedia({
-        video: {
-          facingMode: facing,
-          width: { ideal: width },
-          height: { ideal: height },
-        },
-        audio: false,
-      });
-
-      if (videoRef.current) {
-        videoRef.current.srcObject = mediaStream;
-        await videoRef.current.play();
-        setIsReady(true);
-      }
-
-      setStream(mediaStream);
-      setError(null);
-    } catch (err) {
-      const message =
-        err instanceof DOMException && err.name === 'NotAllowedError'
-          ? 'Permissão de câmera negada. Habilite nas configurações do navegador.'
-          : 'Não foi possível acessar a câmera.';
-      setError(message);
-      setIsReady(false);
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [width, height]);
-
   useEffect(() => {
-    startCamera(facingMode);
+    let cancelled = false;
+
+    async function startCamera() {
+      try {
+        // Stop existing stream
+        if (streamRef.current) {
+          streamRef.current.getTracks().forEach((t) => t.stop());
+          streamRef.current = null;
+        }
+
+        const mediaStream = await navigator.mediaDevices.getUserMedia({
+          video: {
+            facingMode,
+            width: { ideal: width },
+            height: { ideal: height },
+          },
+          audio: false,
+        });
+
+        if (cancelled) {
+          mediaStream.getTracks().forEach((t) => t.stop());
+          return;
+        }
+
+        if (videoRef.current) {
+          videoRef.current.srcObject = mediaStream;
+          await videoRef.current.play();
+        }
+
+        streamRef.current = mediaStream;
+        setStream(mediaStream);
+        setIsReady(true);
+        setError(null);
+      } catch (err) {
+        if (cancelled) return;
+        const message =
+          err instanceof DOMException && err.name === 'NotAllowedError'
+            ? 'Permissão de câmera negada. Habilite nas configurações do navegador.'
+            : 'Não foi possível acessar a câmera.';
+        setError(message);
+        setIsReady(false);
+      }
+    }
+
+    startCamera();
 
     return () => {
-      stream?.getTracks().forEach((t) => t.stop());
+      cancelled = true;
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach((t) => t.stop());
+        streamRef.current = null;
+      }
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [facingMode]);
+  }, [facingMode, width, height]);
 
   const toggleCamera = useCallback(() => {
     setIsReady(false);

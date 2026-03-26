@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import type { Landmark } from '../../engine/types';
 import type { FacingMode } from '../../hooks/useCamera';
-import { SKELETON_CONNECTIONS, SCORE_COLORS } from '../../engine/constants';
+import { SKELETON_CONNECTIONS, SCORE_COLORS, VISIBILITY_THRESHOLD } from '../../engine/constants';
 
 interface PoseCanvasProps {
   landmarks: Landmark[] | null;
@@ -43,7 +43,7 @@ export function PoseCanvas({ landmarks, width, height, facingMode }: PoseCanvasP
       const start = landmarks[startIdx];
       const end = landmarks[endIdx];
 
-      if (start.visibility < 0.5 || end.visibility < 0.5) continue;
+      if (start.visibility < VISIBILITY_THRESHOLD || end.visibility < VISIBILITY_THRESHOLD) continue;
 
       const p1 = toScreen(start);
       const p2 = toScreen(end);
@@ -56,7 +56,7 @@ export function PoseCanvas({ landmarks, width, height, facingMode }: PoseCanvasP
 
     // Draw joints
     for (const lm of landmarks) {
-      if (lm.visibility < 0.5) continue;
+      if (lm.visibility < VISIBILITY_THRESHOLD) continue;
 
       const p = toScreen(lm);
 

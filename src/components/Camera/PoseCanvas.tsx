@@ -62,6 +62,17 @@ export function PoseCanvas({
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const isMirrored = facingMode === 'user';
 
+  // Resize canvas backing store only when dimensions change (not every frame)
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width = width * dpr;
+    canvas.height = height * dpr;
+  }, [width, height]);
+
+  // Draw skeleton overlay per frame
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -69,12 +80,8 @@ export function PoseCanvas({
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    // Scale canvas backing store for high-DPI displays
     const dpr = window.devicePixelRatio || 1;
-    canvas.width = width * dpr;
-    canvas.height = height * dpr;
-    ctx.scale(dpr, dpr);
-
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctx.clearRect(0, 0, width, height);
 
     if (!landmarks) return;

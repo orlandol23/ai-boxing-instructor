@@ -168,6 +168,8 @@ export function useMediaPipe(options: UseMediaPipeOptions): UseMediaPipeReturn {
       latestLandmarksRef.current = null;
       frameCountRef.current = 0;
       fpsCountRef.current = 0;
+      setLandmarks(null);
+      setFps(0);
     };
   }, [isVideoReady, isLoading, error, videoRef]);
 

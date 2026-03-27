@@ -12,6 +12,7 @@ export function CameraControls({ onToggleCamera, fps }: CameraControlsProps) {
         {fps} FPS
       </span>
       <button
+        type="button"
         onClick={onToggleCamera}
         className="rounded-full bg-black/60 p-2 text-white transition-colors hover:bg-black/80 active:bg-boxing-red"
         aria-label="Alternar câmera"

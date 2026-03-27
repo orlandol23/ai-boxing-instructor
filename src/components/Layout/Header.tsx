@@ -14,6 +14,7 @@ export function Header() {
         </span>
       ) : (
         <button
+          type="button"
           onClick={() => navigate(-1)}
           className="flex items-center gap-1 text-sm text-gray-400 hover:text-white"
         >

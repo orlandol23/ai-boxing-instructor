@@ -19,6 +19,7 @@ export function HomePage() {
 
       {/* Main CTA */}
       <button
+        type="button"
         onClick={() => navigate('/training')}
         className="flex w-full max-w-xs items-center justify-center gap-3 rounded-xl bg-boxing-red py-4 text-lg font-bold text-white shadow-lg transition-transform active:scale-95 hover:bg-boxing-red-light"
       >
@@ -64,6 +65,7 @@ function ModeCard({
 }) {
   return (
     <button
+      type="button"
       onClick={onClick}
       disabled={disabled}
       className="flex flex-col items-center gap-2 rounded-lg border border-boxing-border bg-boxing-card p-4 text-center transition-colors hover:border-boxing-gold/50 disabled:opacity-40 disabled:cursor-not-allowed"

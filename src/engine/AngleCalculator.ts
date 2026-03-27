@@ -38,7 +38,7 @@ const NULL_ANGLES: FrameAngles = {
 };
 
 export function calculateFrameAngles(landmarks: Landmark[]): FrameAngles {
-  if (landmarks.length < 33) return NULL_ANGLES;
+  if (landmarks.length < 33) return { ...NULL_ANGLES };
 
   const lm = (i: PoseLandmarkIndex) => landmarks[i];
 

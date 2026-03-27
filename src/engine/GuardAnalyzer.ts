@@ -46,7 +46,7 @@ export function analyzeGuard(landmarks: Landmark[]): GuardScore {
 
   // -- Hand Height Score --
   // In normalized coords, Y increases downward. Hands should be at or above shoulder level.
-  // Perfect: wrist.y <= shoulder.y (hands at chin level)
+  // Perfect: wrist.y <= shoulder.y (hands at or above shoulder height)
   // Score decreases as hands drop below shoulders
   const shoulderY = (leftShoulder.y + rightShoulder.y) / 2;
   const hipY = (leftHip.y + rightHip.y) / 2;
@@ -65,7 +65,7 @@ export function analyzeGuard(landmarks: Landmark[]): GuardScore {
   const elbowTuckScore = (leftElbowTuck + rightElbowTuck) / 2;
 
   // -- Chin Tuck Score --
-  // Chin is protected when hands are near face level and nose is between/behind shoulders
+  // Chin is protected when hands are near face/chin level and nose is well tucked relative to the shoulder line
   const chinTuckScore = scoreChinTuck(nose, leftWrist, rightWrist, shoulderY);
 
   const overall = Math.round(

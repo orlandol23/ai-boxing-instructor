@@ -90,16 +90,20 @@ export class PunchClassifier {
       stance
     );
 
-    // Track previous wrist data only when visible. Clear state when visibility
-    // drops so velocity is computed only between consecutive visible frames.
-    if (leftWrist.visibility >= VISIBILITY_THRESHOLD) {
+    // Track previous data only when the full arm chain is visible.
+    // Clear state when visibility drops so extension/velocity are computed
+    // only between consecutive fully-visible frames.
+    const leftArmFullyVisible = allVisible(leftShoulder, leftElbow, leftWrist);
+    const rightArmFullyVisible = allVisible(rightShoulder, rightElbow, rightWrist);
+
+    if (leftArmFullyVisible) {
       this.prevLeftWrist = { ...leftWrist };
       this.prevLeftElbowAngle = leftElbowAngle;
     } else {
       this.prevLeftWrist = null;
       this.prevLeftElbowAngle = 0;
     }
-    if (rightWrist.visibility >= VISIBILITY_THRESHOLD) {
+    if (rightArmFullyVisible) {
       this.prevRightWrist = { ...rightWrist };
       this.prevRightElbowAngle = rightElbowAngle;
     } else {

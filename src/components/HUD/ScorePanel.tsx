@@ -42,8 +42,8 @@ export function ScorePanel({ frame, punchCount, recentPunches }: ScorePanelProps
       {/* Recent punch feed */}
       {recentPunches.length > 0 && (
         <div className="flex flex-col gap-1">
-          {recentPunches.slice(-3).map((punch, i) => (
-            <PunchBadge key={`${punch.timestamp}-${i}`} punch={punch} />
+          {recentPunches.slice(-3).map((punch) => (
+            <PunchBadge key={`${punch.timestamp}-${punch.type}`} punch={punch} />
           ))}
         </div>
       )}

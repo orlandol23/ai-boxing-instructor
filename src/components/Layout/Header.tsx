@@ -24,6 +24,7 @@ export function Header() {
       )}
 
       <button
+        type="button"
         className="text-gray-400 cursor-default"
         aria-label="Configurações"
         disabled

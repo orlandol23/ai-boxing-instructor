@@ -67,10 +67,32 @@ export function useCamera(options: UseCameraOptions = {}): UseCameraReturn {
         setError(null);
       } catch (err) {
         if (cancelled) return;
-        const message =
-          err instanceof DOMException && err.name === 'NotAllowedError'
-            ? 'Permissão de câmera negada. Habilite nas configurações do navegador.'
-            : 'Não foi possível acessar a câmera.';
+
+        let message = 'Não foi possível acessar a câmera.';
+
+        if (!window.isSecureContext) {
+          message =
+            'Não foi possível acessar a câmera porque a conexão não é segura. Acesse via HTTPS ou localhost.';
+        } else if (err instanceof DOMException) {
+          switch (err.name) {
+            case 'NotAllowedError':
+              message =
+                'Permissão de câmera negada. Habilite nas configurações do navegador.';
+              break;
+            case 'NotFoundError':
+              message = 'Nenhuma câmera foi encontrada neste dispositivo.';
+              break;
+            case 'NotReadableError':
+              message =
+                'Câmera em uso por outro aplicativo. Feche e tente novamente.';
+              break;
+            case 'OverconstrainedError':
+              message =
+                'Configurações de câmera não suportadas. Recarregue a página.';
+              break;
+          }
+        }
+
         setError(message);
         setIsReady(false);
       }

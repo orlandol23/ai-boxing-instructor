@@ -1,10 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useCamera } from '../hooks/useCamera';
 import { useMediaPipe } from '../hooks/useMediaPipe';
+import { useBoxingAnalysis } from '../hooks/useBoxingAnalysis';
 import { CameraFeed } from '../components/Camera/CameraFeed';
 import { PoseCanvas } from '../components/Camera/PoseCanvas';
 import { CameraControls } from '../components/Camera/CameraControls';
 import { StatusBar } from '../components/HUD/StatusBar';
+import { ScorePanel } from '../components/HUD/ScorePanel';
 
 export function TrainingPage() {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -27,6 +29,8 @@ export function TrainingPage() {
     isVideoReady: isReady,
     frameSkip: 1,
   });
+
+  const { frame, recentPunches, punchCount } = useBoxingAnalysis({ landmarks });
 
   // Resize canvas to match container
   const updateDimensions = useCallback(() => {
@@ -82,9 +86,17 @@ export function TrainingPage() {
           facingMode={facingMode}
           videoWidth={videoDimensions.width}
           videoHeight={videoDimensions.height}
+          guardScore={frame?.guard}
+          baseScore={frame?.base}
         />
 
         <CameraControls onToggleCamera={toggleCamera} fps={fps} />
+
+        <ScorePanel
+          frame={frame}
+          punchCount={punchCount}
+          recentPunches={recentPunches}
+        />
 
         <StatusBar
           isModelLoading={isModelLoading}

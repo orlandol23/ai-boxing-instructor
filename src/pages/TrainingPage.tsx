@@ -90,6 +90,7 @@ export function TrainingPage() {
           isModelLoading={isModelLoading}
           hasLandmarks={landmarks !== null}
           error={error}
+          isCameraReady={isReady}
         />
       </div>
     </div>

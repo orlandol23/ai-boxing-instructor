@@ -2,9 +2,10 @@ interface StatusBarProps {
   isModelLoading: boolean;
   hasLandmarks: boolean;
   error: string | null;
+  isCameraReady?: boolean;
 }
 
-export function StatusBar({ isModelLoading, hasLandmarks, error }: StatusBarProps) {
+export function StatusBar({ isModelLoading, hasLandmarks, error, isCameraReady = false }: StatusBarProps) {
   if (error) {
     return (
       <div className="absolute bottom-0 left-0 right-0 bg-score-bad/90 px-4 py-2 text-center text-sm text-white">
@@ -24,7 +25,7 @@ export function StatusBar({ isModelLoading, hasLandmarks, error }: StatusBarProp
     );
   }
 
-  if (!hasLandmarks) {
+  if (!hasLandmarks && isCameraReady) {
     return (
       <div className="absolute bottom-0 left-0 right-0 bg-boxing-card/90 px-4 py-2 text-center text-sm text-score-warn">
         Posicione-se na frente da câmera

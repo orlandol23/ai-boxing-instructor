@@ -23,8 +23,9 @@ export function Header() {
       )}
 
       <button
-        className="text-gray-400 hover:text-white"
+        className="text-gray-400 cursor-default"
         aria-label="Configurações"
+        disabled
       >
         <Settings size={18} />
       </button>

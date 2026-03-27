@@ -43,10 +43,16 @@ export function analyzeBase(landmarks: Landmark[]): BaseScore {
   if (!lowerBodyVisible) return { ...DEFAULT_BASE };
 
   // -- Foot Width Score --
-  // Ideal foot spread is approximately shoulder width
-  const shoulderWidth = Math.abs(rightShoulder.x - leftShoulder.x);
+  // Ideal foot spread is approximately shoulder width. Fall back to hip width
+  // when shoulders are not sufficiently visible.
+  const shouldersVisible =
+    leftShoulder.visibility >= VISIBILITY_THRESHOLD &&
+    rightShoulder.visibility >= VISIBILITY_THRESHOLD;
+  const referenceWidth = shouldersVisible
+    ? Math.abs(rightShoulder.x - leftShoulder.x)
+    : Math.abs(rightHip.x - leftHip.x);
   const footSpread = Math.abs(rightAnkle.x - leftAnkle.x);
-  const footWidthScore = scoreFootWidth(footSpread, shoulderWidth);
+  const footWidthScore = scoreFootWidth(footSpread, referenceWidth);
 
   // -- Knee Flex Score --
   // Knees should be slightly bent. We check by comparing knee Y to a line

@@ -119,7 +119,7 @@ export function PoseCanvas({
       const p1 = toScreen(start);
       const p2 = toScreen(end);
 
-      // Use the color of the lower-scored endpoint
+      // Use first available endpoint color (start preferred)
       const c1 = jointColors.get(startIdx);
       const c2 = jointColors.get(endIdx);
       ctx.strokeStyle = c1 ?? c2 ?? getScoreColor(100);

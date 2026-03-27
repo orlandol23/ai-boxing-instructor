@@ -10,10 +10,10 @@ interface ScorePanelProps {
 const PUNCH_LABELS: Record<string, string> = {
   jab: 'Jab',
   cross: 'Cross',
-  lead_hook: 'Hook E',
-  rear_hook: 'Hook D',
-  lead_uppercut: 'Upper E',
-  rear_uppercut: 'Upper D',
+  lead_hook: 'Lead Hook',
+  rear_hook: 'Rear Hook',
+  lead_uppercut: 'Lead Upper',
+  rear_uppercut: 'Rear Upper',
 };
 
 export function ScorePanel({ frame, punchCount, recentPunches }: ScorePanelProps) {

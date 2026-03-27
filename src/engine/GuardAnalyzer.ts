@@ -38,7 +38,9 @@ export function analyzeGuard(landmarks: Landmark[]): GuardScore {
     leftWrist.visibility >= VISIBILITY_THRESHOLD &&
     rightWrist.visibility >= VISIBILITY_THRESHOLD &&
     leftShoulder.visibility >= VISIBILITY_THRESHOLD &&
-    rightShoulder.visibility >= VISIBILITY_THRESHOLD;
+    rightShoulder.visibility >= VISIBILITY_THRESHOLD &&
+    leftHip.visibility >= VISIBILITY_THRESHOLD &&
+    rightHip.visibility >= VISIBILITY_THRESHOLD;
 
   if (!upperBodyVisible) return { ...DEFAULT_GUARD };
 

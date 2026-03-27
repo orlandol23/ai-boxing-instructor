@@ -17,8 +17,9 @@ const PUNCH_DISPLAY_DURATION = 2000;
 /**
  * Hook that connects MediaPipe landmarks to the BoxingEngine.
  *
- * Uses useState for the engine instance (safe to read in useMemo)
- * and tracks punches via a separate effect.
+ * Uses useState for the engine instance (safe to read in useMemo).
+ * BoxingEngine.analyze() is idempotent per landmarks reference,
+ * making it safe under React Strict Mode double-invocation.
  */
 export function useBoxingAnalysis({
   landmarks,
@@ -29,9 +30,16 @@ export function useBoxingAnalysis({
   const punchCountRef = useRef(0);
   const [punchCount, setPunchCount] = useState(0);
 
-  // Compute analysis frame synchronously during render
+  // Compute analysis frame synchronously during render.
+  // analyze() is idempotent per landmarks reference (cached), so Strict Mode
+  // double-renders won't cause duplicate punch detections.
+  // onPoseLost() resets PunchClassifier when pose disappears, preventing
+  // stale data from causing false detections when pose returns.
   const frame = useMemo<AnalysisFrame | null>(() => {
-    if (!landmarks) return null;
+    if (!landmarks) {
+      engine.onPoseLost();
+      return null;
+    }
     return engine.analyze(landmarks);
   }, [landmarks, engine]);
 
@@ -46,16 +54,20 @@ export function useBoxingAnalysis({
     setRecentPunches((prev) => [...prev, activePunch]);
   }, [activePunch]);
 
-  // Clean up old punches from display
+  // Clean up old punches based on oldest punch's expiry time
   useEffect(() => {
     if (recentPunches.length === 0) return;
 
+    const now = performance.now();
+    const oldestTimestamp = Math.min(...recentPunches.map((p) => p.timestamp));
+    const delay = Math.max(0, PUNCH_DISPLAY_DURATION - (now - oldestTimestamp));
+
     const timer = setTimeout(() => {
-      const now = performance.now();
+      const cleanupNow = performance.now();
       setRecentPunches((prev) =>
-        prev.filter((p) => now - p.timestamp < PUNCH_DISPLAY_DURATION)
+        prev.filter((p) => cleanupNow - p.timestamp < PUNCH_DISPLAY_DURATION)
       );
-    }, PUNCH_DISPLAY_DURATION);
+    }, delay);
 
     return () => clearTimeout(timer);
   }, [recentPunches]);

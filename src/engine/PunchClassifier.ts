@@ -90,11 +90,16 @@ export class PunchClassifier {
       stance
     );
 
-    // Store current frame data for next frame comparison
-    this.prevLeftWrist = { ...leftWrist };
-    this.prevRightWrist = { ...rightWrist };
-    this.prevLeftElbowAngle = leftElbowAngle;
-    this.prevRightElbowAngle = rightElbowAngle;
+    // Only store visible wrist data for next frame comparison to prevent
+    // false velocity spikes when visibility returns after low-visibility frames.
+    if (leftWrist.visibility >= VISIBILITY_THRESHOLD) {
+      this.prevLeftWrist = { ...leftWrist };
+      this.prevLeftElbowAngle = leftElbowAngle;
+    }
+    if (rightWrist.visibility >= VISIBILITY_THRESHOLD) {
+      this.prevRightWrist = { ...rightWrist };
+      this.prevRightElbowAngle = rightElbowAngle;
+    }
 
     // Prefer the punch with higher extension if both detected
     if (leftPunch && rightPunch) {
@@ -118,7 +123,12 @@ export class PunchClassifier {
     const cooldown = side === 'left' ? this.cooldownLeft : this.cooldownRight;
     const prevAngle = side === 'left' ? this.prevLeftElbowAngle : this.prevRightElbowAngle;
 
-    if (cooldown > 0 || !prevWrist || wrist.visibility < VISIBILITY_THRESHOLD) {
+    if (
+      cooldown > 0 ||
+      !prevWrist ||
+      wrist.visibility < VISIBILITY_THRESHOLD ||
+      prevWrist.visibility < VISIBILITY_THRESHOLD
+    ) {
       return null;
     }
 

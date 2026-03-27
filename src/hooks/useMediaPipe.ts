@@ -127,33 +127,44 @@ export function useMediaPipe(options: UseMediaPipeOptions): UseMediaPipeReturn {
         }
         lastTimestampRef.current = now;
 
-        const result = landmarker.detectForVideo(video, now);
+        try {
+          const result = landmarker.detectForVideo(video, now);
 
-        if (result.landmarks.length > 0) {
-          latestLandmarksRef.current = result.landmarks[0].map(
-            (lm) => ({
-              x: lm.x,
-              y: lm.y,
-              z: lm.z,
-              visibility: lm.visibility ?? 0,
-            })
+          if (result.landmarks.length > 0) {
+            latestLandmarksRef.current = result.landmarks[0].map(
+              (lm) => ({
+                x: lm.x,
+                y: lm.y,
+                z: lm.z,
+                visibility: lm.visibility ?? 0,
+              })
+            );
+          } else {
+            latestLandmarksRef.current = null;
+          }
+
+          // Throttle React state updates to ~30fps
+          if (now - lastUiUpdateRef.current >= UI_UPDATE_INTERVAL) {
+            lastUiUpdateRef.current = now;
+            setLandmarks(latestLandmarksRef.current);
+          }
+
+          // FPS counter
+          fpsCountRef.current++;
+          if (now - lastFpsTimeRef.current >= 1000) {
+            setFps(fpsCountRef.current);
+            fpsCountRef.current = 0;
+            lastFpsTimeRef.current = now;
+          }
+        } catch (e) {
+          running = false;
+          setError(
+            `Erro na detecção de pose: ${e instanceof Error ? e.message : 'erro desconhecido'}`
           );
-        } else {
-          latestLandmarksRef.current = null;
-        }
-
-        // Throttle React state updates to ~30fps
-        if (now - lastUiUpdateRef.current >= UI_UPDATE_INTERVAL) {
-          lastUiUpdateRef.current = now;
-          setLandmarks(latestLandmarksRef.current);
-        }
-
-        // FPS counter
-        fpsCountRef.current++;
-        if (now - lastFpsTimeRef.current >= 1000) {
-          setFps(fpsCountRef.current);
-          fpsCountRef.current = 0;
-          lastFpsTimeRef.current = now;
+          landmarkerRef.current?.close();
+          landmarkerRef.current = null;
+          cancelAnimationFrame(rafRef.current);
+          return;
         }
       }
 

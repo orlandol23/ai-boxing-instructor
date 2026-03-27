@@ -1,4 +1,4 @@
-import type { AnalysisFrame, PunchEvent } from '../../engine/types';
+import type { AnalysisFrame, PunchEvent, PunchType } from '../../engine/types';
 import { getScoreColor } from '../../engine/constants';
 
 interface ScorePanelProps {
@@ -7,7 +7,7 @@ interface ScorePanelProps {
   recentPunches: PunchEvent[];
 }
 
-const PUNCH_LABELS: Record<string, string> = {
+const PUNCH_LABELS: Record<PunchType, string> = {
   jab: 'Jab',
   cross: 'Cross',
   lead_hook: 'Lead Hook',

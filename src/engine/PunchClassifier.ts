@@ -200,14 +200,19 @@ function classifyPunchType(
     return isLead ? 'lead_uppercut' : 'rear_uppercut';
   }
 
-  // Hook: significant lateral movement relative to forward movement
-  const shoulderCenter = (leftShoulder.x + rightShoulder.x) / 2;
-  const lateralDist = Math.abs(wrist.x - shoulderCenter);
-  const shoulderWidth = Math.abs(rightShoulder.x - leftShoulder.x);
+  // Hook: significant lateral movement relative to forward movement.
+  // Only apply when both shoulders are visible and separated.
+  if (allVisible(leftShoulder, rightShoulder)) {
+    const shoulderWidth = Math.abs(rightShoulder.x - leftShoulder.x);
 
-  // If wrist is far to the side and moved mostly laterally, it's a hook
-  if (lateralDist > shoulderWidth * 0.6 && Math.abs(dx) > Math.abs(dy) * 1.5) {
-    return isLead ? 'lead_hook' : 'rear_hook';
+    if (shoulderWidth > 1e-3) {
+      const shoulderCenter = (leftShoulder.x + rightShoulder.x) / 2;
+      const lateralDist = Math.abs(wrist.x - shoulderCenter);
+
+      if (lateralDist > shoulderWidth * 0.6 && Math.abs(dx) > Math.abs(dy) * 1.5) {
+        return isLead ? 'lead_hook' : 'rear_hook';
+      }
+    }
   }
 
   // Straight punches: jab (lead) or cross (rear)

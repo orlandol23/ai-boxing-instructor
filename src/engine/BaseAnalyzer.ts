@@ -55,8 +55,8 @@ export function analyzeBase(landmarks: Landmark[]): BaseScore {
   const footWidthScore = scoreFootWidth(footSpread, referenceWidth);
 
   // -- Knee Flex Score --
-  // Knees should be slightly bent. We check by comparing knee Y to a line
-  // between hip and ankle — a bent knee will be slightly forward of straight.
+  // Knees should be slightly bent. We evaluate this via the knee joint angle
+  // formed by the hip-knee and knee-ankle segments (penalizing locked or over-bent knees).
   const leftKneeFlex = scoreKneeFlex(leftHip, leftKnee, leftAnkle);
   const rightKneeFlex = scoreKneeFlex(rightHip, rightKnee, rightAnkle);
   const kneeFlexScore = (leftKneeFlex + rightKneeFlex) / 2;

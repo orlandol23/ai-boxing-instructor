@@ -110,8 +110,18 @@ export function useMediaPipe(options: UseMediaPipeOptions): UseMediaPipeReturn {
       const video = videoRef.current;
       const landmarker = landmarkerRef.current;
 
-      if (!video || !landmarker || video.readyState < 2) {
+      if (!video || !landmarker) {
         rafRef.current = requestAnimationFrame(detect);
+        return;
+      }
+
+      // Wait for video to be playable instead of busy-polling at ~60fps
+      if (video.readyState < 2) {
+        const onReady = () => {
+          if (!running) return;
+          rafRef.current = requestAnimationFrame(detect);
+        };
+        video.addEventListener('loadeddata', onReady, { once: true });
         return;
       }
 

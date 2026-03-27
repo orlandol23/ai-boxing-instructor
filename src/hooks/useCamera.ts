@@ -54,6 +54,12 @@ export function useCamera(options: UseCameraOptions = {}): UseCameraReturn {
 
         if (videoRef.current) {
           videoRef.current.srcObject = mediaStream;
+
+          // Set readiness once the video has enough data to play
+          videoRef.current.addEventListener('canplay', () => {
+            if (!cancelled) setIsReady(true);
+          }, { once: true });
+
           // play() can reject due to autoplay policy / iOS quirks even when
           // getUserMedia succeeds. Handle separately so the stream is still usable.
           videoRef.current.play().catch(() => {
@@ -63,7 +69,6 @@ export function useCamera(options: UseCameraOptions = {}): UseCameraReturn {
 
         streamRef.current = mediaStream;
         setStream(mediaStream);
-        setIsReady(true);
         setError(null);
       } catch (err) {
         if (cancelled) return;

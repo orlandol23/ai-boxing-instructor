@@ -28,7 +28,18 @@ function isVisible(...landmarks: Landmark[]): boolean {
   return landmarks.every((l) => l.visibility >= VISIBILITY_THRESHOLD);
 }
 
+const NULL_ANGLES: FrameAngles = {
+  leftElbow: null,
+  rightElbow: null,
+  leftShoulder: null,
+  rightShoulder: null,
+  leftKnee: null,
+  rightKnee: null,
+};
+
 export function calculateFrameAngles(landmarks: Landmark[]): FrameAngles {
+  if (landmarks.length < 33) return NULL_ANGLES;
+
   const lm = (i: PoseLandmarkIndex) => landmarks[i];
 
   const leftElbow =

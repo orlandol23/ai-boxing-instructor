@@ -90,15 +90,21 @@ export class PunchClassifier {
       stance
     );
 
-    // Only store visible wrist data for next frame comparison to prevent
-    // false velocity spikes when visibility returns after low-visibility frames.
+    // Track previous wrist data only when visible. Clear state when visibility
+    // drops so velocity is computed only between consecutive visible frames.
     if (leftWrist.visibility >= VISIBILITY_THRESHOLD) {
       this.prevLeftWrist = { ...leftWrist };
       this.prevLeftElbowAngle = leftElbowAngle;
+    } else {
+      this.prevLeftWrist = null;
+      this.prevLeftElbowAngle = 0;
     }
     if (rightWrist.visibility >= VISIBILITY_THRESHOLD) {
       this.prevRightWrist = { ...rightWrist };
       this.prevRightElbowAngle = rightElbowAngle;
+    } else {
+      this.prevRightWrist = null;
+      this.prevRightElbowAngle = 0;
     }
 
     // Prefer the punch with higher extension if both detected

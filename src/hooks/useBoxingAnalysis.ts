@@ -59,7 +59,7 @@ export function useBoxingAnalysis({
     if (recentPunches.length === 0) return;
 
     const now = performance.now();
-    const oldestTimestamp = Math.min(...recentPunches.map((p) => p.timestamp));
+    const oldestTimestamp = recentPunches[0].timestamp;
     const delay = Math.max(0, PUNCH_DISPLAY_DURATION - (now - oldestTimestamp));
 
     const timer = setTimeout(() => {

@@ -28,12 +28,17 @@ export function useCamera(options: UseCameraOptions = {}): UseCameraReturn {
 
   useEffect(() => {
     let cancelled = false;
+    const video = videoRef.current;
 
     async function startCamera() {
       try {
         // Stop existing stream
         if (streamRef.current) {
           streamRef.current.getTracks().forEach((t) => t.stop());
+          if (video && video.srcObject === streamRef.current) {
+            video.pause();
+            video.srcObject = null;
+          }
           streamRef.current = null;
           setStream(null);
         }
@@ -52,17 +57,17 @@ export function useCamera(options: UseCameraOptions = {}): UseCameraReturn {
           return;
         }
 
-        if (videoRef.current) {
-          videoRef.current.srcObject = mediaStream;
+        if (video) {
+          video.srcObject = mediaStream;
 
           // Set readiness once the video has enough data to play
-          videoRef.current.addEventListener('canplay', () => {
+          video.addEventListener('canplay', () => {
             if (!cancelled) setIsReady(true);
           }, { once: true });
 
           // play() can reject due to autoplay policy / iOS quirks even when
           // getUserMedia succeeds. Handle separately so the stream is still usable.
-          videoRef.current.play().catch(() => {
+          video.play().catch(() => {
             // Playback blocked by platform policy — stream remains active.
           });
         }
@@ -109,6 +114,10 @@ export function useCamera(options: UseCameraOptions = {}): UseCameraReturn {
       cancelled = true;
       if (streamRef.current) {
         streamRef.current.getTracks().forEach((t) => t.stop());
+        if (video && video.srcObject === streamRef.current) {
+          video.pause();
+          video.srcObject = null;
+        }
         streamRef.current = null;
         setStream(null);
       }

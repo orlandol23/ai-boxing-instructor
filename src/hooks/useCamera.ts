@@ -54,7 +54,11 @@ export function useCamera(options: UseCameraOptions = {}): UseCameraReturn {
 
         if (videoRef.current) {
           videoRef.current.srcObject = mediaStream;
-          await videoRef.current.play();
+          // play() can reject due to autoplay policy / iOS quirks even when
+          // getUserMedia succeeds. Handle separately so the stream is still usable.
+          videoRef.current.play().catch(() => {
+            // Playback blocked by platform policy — stream remains active.
+          });
         }
 
         streamRef.current = mediaStream;

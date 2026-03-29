@@ -70,7 +70,12 @@ export function useVoiceCoach({ frame, enabled }: UseVoiceCoachOptions) {
   );
 
   const speak = useCallback((text: string): boolean => {
-    if (typeof speechSynthesis === 'undefined') return false;
+    if (
+      typeof speechSynthesis === 'undefined' ||
+      typeof SpeechSynthesisUtterance === 'undefined'
+    ) {
+      return false;
+    }
 
     // Cancel any ongoing speech
     speechSynthesis.cancel();

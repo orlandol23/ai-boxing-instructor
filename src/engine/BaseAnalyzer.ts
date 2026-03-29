@@ -49,8 +49,11 @@ export function analyzeBase(landmarks: Landmark[]): BaseScore {
   const shouldersVisible =
     leftShoulder.visibility >= VISIBILITY_THRESHOLD &&
     rightShoulder.visibility >= VISIBILITY_THRESHOLD;
-  const referenceWidth = shouldersVisible
+  const shoulderWidth = shouldersVisible
     ? Math.abs(rightShoulder.x - leftShoulder.x)
+    : 0;
+  const referenceWidth = shoulderWidth > 1e-3
+    ? shoulderWidth
     : Math.abs(rightHip.x - leftHip.x);
   const footSpread = Math.abs(rightAnkle.x - leftAnkle.x);
   const footWidthScore = scoreFootWidth(footSpread, referenceWidth);

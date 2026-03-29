@@ -75,19 +75,19 @@ function ScoreBar({ label, score }: { label: string; score: number }) {
   );
 }
 
-function PunchBadge({ punch }: { punch: PunchEvent }) {
-  const qualityColors = {
-    good: 'text-score-good',
-    fair: 'text-score-warn',
-    poor: 'text-score-bad',
-  };
+const QUALITY_COLORS = {
+  good: 'text-score-good',
+  fair: 'text-score-warn',
+  poor: 'text-score-bad',
+} as const;
 
+function PunchBadge({ punch }: { punch: PunchEvent }) {
   return (
     <div className="rounded-md bg-black/60 px-2 py-1 text-xs flex items-center gap-1">
       <span className="text-white font-bold">
         {PUNCH_LABELS[punch.type] ?? punch.type}
       </span>
-      <span className={qualityColors[punch.quality]}>
+      <span className={QUALITY_COLORS[punch.quality]}>
         {punch.quality === 'good' ? '!' : punch.quality === 'fair' ? '~' : '?'}
       </span>
     </div>

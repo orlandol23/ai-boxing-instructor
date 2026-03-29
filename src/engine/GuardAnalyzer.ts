@@ -1,6 +1,6 @@
 import type { Landmark, GuardScore } from './types';
 import { PoseLandmark } from './types';
-import { VISIBILITY_THRESHOLD } from './constants';
+import { VISIBILITY_THRESHOLD, CHIN_FACE_COVERAGE_DIST, CHIN_TUCK_VERTICAL_GAP } from './constants';
 
 const DEFAULT_GUARD: GuardScore = {
   overall: 0,
@@ -100,7 +100,7 @@ function scoreHandHeight(
   if (dropFraction >= 1) return 0;
 
   // Linear falloff
-  return Math.round(100 * (1 - dropFraction));
+  return 100 * (1 - dropFraction);
 }
 
 function scoreElbowTuck(
@@ -118,7 +118,7 @@ function scoreElbowTuck(
   if (drift <= 0.5) return 100;
   if (drift >= 1.2) return 0;
 
-  return Math.round(100 * (1 - (drift - 0.5) / 0.7));
+  return 100 * (1 - (drift - 0.5) / 0.7);
 }
 
 function scoreChinTuck(
@@ -135,14 +135,14 @@ function scoreChinTuck(
 
   // Small distance (hands near face) = good
   // Score based on how close wrists are to nose level
-  const faceCoverage = Math.max(0, 1 - noseToWristDist / 0.15);
+  const faceCoverage = Math.max(0, 1 - noseToWristDist / CHIN_FACE_COVERAGE_DIST);
 
   // Nose should be closer to the shoulder line (chin tucked, not head up).
   // In MediaPipe, y increases downward, and in normal posture nose.y < shoulderY.
   // As the head lowers (chin tuck), nose.y moves down toward shoulderY, reducing
   // the vertical gap. We map a smaller gap to a higher chin-tuck score.
   const verticalGap = shoulderY - nose.y; // positive when nose is above shoulders
-  const chinTuck = 1 - Math.max(0, Math.min(1, verticalGap / 0.1));
+  const chinTuck = 1 - Math.max(0, Math.min(1, verticalGap / CHIN_TUCK_VERTICAL_GAP));
 
-  return Math.round(faceCoverage * 70 + chinTuck * 30);
+  return faceCoverage * 70 + chinTuck * 30;
 }

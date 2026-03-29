@@ -1,6 +1,7 @@
 import type { Landmark, BaseScore } from './types';
 import { PoseLandmark } from './types';
 import { VISIBILITY_THRESHOLD } from './constants';
+import { calculateAngle } from './AngleCalculator';
 
 const DEFAULT_BASE: BaseScore = {
   overall: 0,
@@ -93,37 +94,29 @@ function scoreFootWidth(footSpread: number, referenceWidth: number): number {
   // Too narrow
   if (ratio < 0.8) {
     if (ratio < 0.3) return 0;
-    return Math.round(100 * ((ratio - 0.3) / 0.5));
+    return 100 * ((ratio - 0.3) / 0.5);
   }
 
   // Too wide
   if (ratio > 2.0) return 0;
-  return Math.round(100 * (1 - (ratio - 1.3) / 0.7));
+  return 100 * (1 - (ratio - 1.3) / 0.7);
 }
 
 function scoreKneeFlex(hip: Landmark, knee: Landmark, ankle: Landmark): number {
-  // Calculate the angle at the knee joint
-  // Straight leg = ~180°, good bend = 150-170°, too bent = <140°
-  const dx1 = hip.x - knee.x;
-  const dy1 = hip.y - knee.y;
-  const dx2 = ankle.x - knee.x;
-  const dy2 = ankle.y - knee.y;
-
-  const radians = Math.atan2(dy2, dx2) - Math.atan2(dy1, dx1);
-  let angle = Math.abs(radians * (180 / Math.PI));
-  if (angle > 180) angle = 360 - angle;
+  // Reuse shared angle calculation (straight leg = ~180°, good bend = 150-170°)
+  const angle = calculateAngle(hip, knee, ankle);
 
   // 155-170° is ideal (slight bend)
   if (angle >= 155 && angle <= 170) return 100;
 
   // Locked knee (>175°)
-  if (angle > 175) return Math.round(100 * (1 - (angle - 175) / 5));
+  if (angle > 175) return 100 * (1 - (angle - 175) / 5);
 
   // Good range (145-155°)
   if (angle >= 145) return 85;
 
   // Too bent (<145°)
-  if (angle >= 120) return Math.round(100 * ((angle - 120) / 35));
+  if (angle >= 120) return 100 * ((angle - 120) / 35);
 
   return 0;
 }
@@ -142,5 +135,5 @@ function scoreWeightDistribution(
   if (offset <= 0.15) return 100;
   if (offset >= 0.5) return 0;
 
-  return Math.round(100 * (1 - (offset - 0.15) / 0.35));
+  return 100 * (1 - (offset - 0.15) / 0.35);
 }

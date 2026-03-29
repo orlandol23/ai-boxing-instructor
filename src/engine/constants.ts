@@ -8,6 +8,10 @@ export const STANCE_MIN_X_SPREAD = 0.05;
 export const STANCE_MIN_ANKLE_Z_DIFF = 0.02;
 export const STANCE_MIN_SHOULDER_Z_DIFF = 0.01;
 
+// Guard analysis thresholds
+export const CHIN_FACE_COVERAGE_DIST = 0.15;
+export const CHIN_TUCK_VERTICAL_GAP = 0.1;
+
 export const SKELETON_CONNECTIONS: [PoseLandmarkIndex, PoseLandmarkIndex][] = [
   // Face
   [PoseLandmark.LEFT_EAR, PoseLandmark.LEFT_EYE],

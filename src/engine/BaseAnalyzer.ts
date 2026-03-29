@@ -81,13 +81,13 @@ export function analyzeBase(landmarks: Landmark[]): BaseScore {
   };
 }
 
-function scoreFootWidth(footSpread: number, shoulderWidth: number): number {
-  if (shoulderWidth <= 0) return 50;
+function scoreFootWidth(footSpread: number, referenceWidth: number): number {
+  if (referenceWidth <= 0) return 50;
 
-  // Ratio of foot spread to shoulder width
-  const ratio = footSpread / shoulderWidth;
+  // Ratio of foot spread to reference body width (shoulders or hips)
+  const ratio = footSpread / referenceWidth;
 
-  // Ideal: 0.8 to 1.3 of shoulder width
+  // Ideal: 0.8 to 1.3 of the reference width
   if (ratio >= 0.8 && ratio <= 1.3) return 100;
 
   // Too narrow

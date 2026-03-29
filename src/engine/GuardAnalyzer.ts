@@ -113,8 +113,8 @@ function scoreElbowTuck(
   // How far from torso center, as fraction of shoulder width
   const drift = Math.abs(elbow.x - torsoCenter) / shoulderWidth;
 
-  // Tight to body (drift ~0.3-0.5 of shoulder width) = good
-  // Flared out (drift > 1.0) = bad
+  // Tight to body (drift <= 0.5 of shoulder width) = max score
+  // Flared out (drift >= 1.2 of shoulder width) = 0 score
   if (drift <= 0.5) return 100;
   if (drift >= 1.2) return 0;
 

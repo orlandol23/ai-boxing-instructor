@@ -25,7 +25,7 @@ export function detectStance(landmarks: Landmark[]): Stance {
   const leftShoulder = landmarks[PoseLandmark.LEFT_SHOULDER];
   const rightShoulder = landmarks[PoseLandmark.RIGHT_SHOULDER];
 
-  // Need at least ankles or shoulders visible
+  // Need both ankles or both shoulders visible to compare sides
   const anklesVisible =
     leftAnkle.visibility >= VISIBILITY_THRESHOLD &&
     rightAnkle.visibility >= VISIBILITY_THRESHOLD;

@@ -210,7 +210,7 @@ function classifyPunchType(
     return isLead ? 'lead_uppercut' : 'rear_uppercut';
   }
 
-  // Hook: significant lateral movement relative to forward movement.
+  // Hook: significant lateral movement relative to vertical movement.
   // Only apply when both shoulders are visible and separated.
   if (allVisible(leftShoulder, rightShoulder)) {
     const shoulderWidth = Math.abs(rightShoulder.x - leftShoulder.x);

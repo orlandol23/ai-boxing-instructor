@@ -2,11 +2,13 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useCamera } from '../hooks/useCamera';
 import { useMediaPipe } from '../hooks/useMediaPipe';
 import { useBoxingAnalysis } from '../hooks/useBoxingAnalysis';
+import { useVoiceCoach } from '../hooks/useVoiceCoach';
 import { CameraFeed } from '../components/Camera/CameraFeed';
 import { PoseCanvas } from '../components/Camera/PoseCanvas';
 import { CameraControls } from '../components/Camera/CameraControls';
 import { StatusBar } from '../components/HUD/StatusBar';
 import { ScorePanel } from '../components/HUD/ScorePanel';
+import { VoiceToggle } from '../components/HUD/VoiceToggle';
 
 export function TrainingPage() {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -31,6 +33,9 @@ export function TrainingPage() {
   });
 
   const { frame, recentPunches, punchCount } = useBoxingAnalysis({ landmarks });
+
+  const [voiceEnabled, setVoiceEnabled] = useState(false);
+  const { isSpeaking } = useVoiceCoach({ frame, enabled: voiceEnabled });
 
   // Resize canvas to match container
   const updateDimensions = useCallback(() => {
@@ -91,6 +96,12 @@ export function TrainingPage() {
         />
 
         <CameraControls onToggleCamera={toggleCamera} fps={fps} />
+
+        <VoiceToggle
+          enabled={voiceEnabled}
+          isSpeaking={isSpeaking}
+          onToggle={() => setVoiceEnabled((v) => !v)}
+        />
 
         <ScorePanel
           frame={frame}

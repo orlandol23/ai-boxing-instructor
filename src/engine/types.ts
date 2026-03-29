@@ -77,6 +77,15 @@ export interface PunchEvent {
   quality: 'good' | 'fair' | 'poor';
 }
 
+export interface FrameAngles {
+  leftElbow: number | null;
+  rightElbow: number | null;
+  leftShoulder: number | null;
+  rightShoulder: number | null;
+  leftKnee: number | null;
+  rightKnee: number | null;
+}
+
 export interface AnalysisFrame {
   timestamp: number;
   stance: Stance;
@@ -84,7 +93,7 @@ export interface AnalysisFrame {
   base: BaseScore;
   activePunch: PunchEvent | null;
   landmarks: Landmark[];
-  angles: Record<string, number | null>;
+  angles: FrameAngles;
 }
 
 export interface SessionSummary {

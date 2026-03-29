@@ -184,8 +184,13 @@ function allVisible(...landmarks: Landmark[]): boolean {
 function computeShoulderRotation(leftShoulder: Landmark, rightShoulder: Landmark): number {
   if (!allVisible(leftShoulder, rightShoulder)) return 0;
 
-  // Z-axis difference indicates shoulder rotation
-  return Math.abs(leftShoulder.z - rightShoulder.z) * 100;
+  // Estimate shoulder yaw rotation in degrees from the x-z plane
+  const dz = rightShoulder.z - leftShoulder.z;
+  const dx = rightShoulder.x - leftShoulder.x;
+
+  if (Math.abs(dx) < 1e-3 && Math.abs(dz) < 1e-3) return 0;
+
+  return Math.abs(Math.atan2(dz, dx) * (180 / Math.PI));
 }
 
 function classifyPunchType(

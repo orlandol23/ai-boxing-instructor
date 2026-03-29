@@ -1,5 +1,4 @@
 import type { AnalysisFrame, PunchEvent, PunchType } from '../../engine/types';
-import { getScoreColor } from '../../engine/constants';
 
 interface ScorePanelProps {
   frame: AnalysisFrame | null;
@@ -51,19 +50,25 @@ export function ScorePanel({ frame, punchCount, recentPunches }: ScorePanelProps
   );
 }
 
+function getScoreClasses(score: number): { barClass: string; textClass: string } {
+  if (score >= 90) return { barClass: 'bg-score-good', textClass: 'text-score-good' };
+  if (score >= 70) return { barClass: 'bg-score-warn', textClass: 'text-score-warn' };
+  return { barClass: 'bg-score-bad', textClass: 'text-score-bad' };
+}
+
 function ScoreBar({ label, score }: { label: string; score: number }) {
-  const color = getScoreColor(score);
+  const { barClass, textClass } = getScoreClasses(score);
 
   return (
     <div className="flex items-center gap-2 rounded-md bg-black/60 px-2 py-1">
       <span className="text-xs text-gray-300 w-12">{label}</span>
       <div className="flex-1 h-1.5 rounded-full bg-gray-700 min-w-12">
         <div
-          className="h-full rounded-full transition-all duration-300"
-          style={{ width: `${score}%`, backgroundColor: color }}
+          className={`h-full rounded-full transition-all duration-300 ${barClass}`}
+          style={{ width: `${score}%` }}
         />
       </div>
-      <span className="text-xs font-mono w-7 text-right" style={{ color }}>
+      <span className={`text-xs font-mono w-7 text-right ${textClass}`}>
         {score}
       </span>
     </div>

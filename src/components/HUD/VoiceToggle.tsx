@@ -5,6 +5,12 @@ interface VoiceToggleProps {
 }
 
 export function VoiceToggle({ enabled, isSpeaking, onToggle }: VoiceToggleProps) {
+  const label = enabled
+    ? isSpeaking
+      ? 'Coach de voz ativo, falando'
+      : 'Coach de voz ativo'
+    : 'Coach de voz desativado';
+
   return (
     <button
       type="button"
@@ -14,7 +20,7 @@ export function VoiceToggle({ enabled, isSpeaking, onToggle }: VoiceToggleProps)
           ? 'bg-boxing-red text-white'
           : 'bg-black/60 text-gray-300 hover:text-white'
       }`}
-      aria-label={enabled ? 'Desativar coach de voz' : 'Ativar coach de voz'}
+      aria-label={label}
       aria-pressed={enabled}
     >
       <span className="text-sm" aria-hidden="true">

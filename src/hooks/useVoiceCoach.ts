@@ -96,6 +96,9 @@ export function useVoiceCoach({ frame, enabled }: UseVoiceCoachOptions) {
       return;
     }
 
+    // No-op on browsers without Web Speech API
+    if (typeof speechSynthesis === 'undefined') return;
+
     const now = performance.now();
 
     // Global rate limit

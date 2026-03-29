@@ -118,6 +118,19 @@ export function useVoiceCoach({ frame, enabled }: UseVoiceCoachOptions) {
       return;
     }
 
+    // Immediate feedback (e.g. single-frame punch events) bypasses the
+    // per-candidate debounce so it is never silently dropped.
+    // Uses an early-return path to avoid disturbing pending debounce state
+    // that may be accumulating for a concurrent non-immediate message.
+    if (selected.immediate) {
+      const spoken = speak(selected.message);
+      if (spoken) {
+        lastSpokenRef.current.set(selected.message, now);
+        lastSpeechTimeRef.current = now;
+      }
+      return;
+    }
+
     // Per-candidate debounce: same message must persist for N frames
     if (selected.message === pendingMessageRef.current) {
       pendingCountRef.current++;
@@ -128,13 +141,14 @@ export function useVoiceCoach({ frame, enabled }: UseVoiceCoachOptions) {
 
     if (pendingCountRef.current < DEBOUNCE_FRAMES) return;
 
+    pendingMessageRef.current = null;
+    pendingCountRef.current = 0;
+
     // Only update cooldowns if speech actually fires
     const spoken = speak(selected.message);
     if (spoken) {
       lastSpokenRef.current.set(selected.message, now);
       lastSpeechTimeRef.current = now;
-      pendingMessageRef.current = null;
-      pendingCountRef.current = 0;
     }
   }, [frame, enabled, speak]);
 

@@ -90,6 +90,7 @@ export function evaluateFrame(frame: AnalysisFrame): VoiceFeedback[] {
         priority: 'low',
         category: 'encouragement',
         cooldownMs: 4000,
+        immediate: true,
       });
     } else if (punch.quality === 'poor') {
       feedback.push({
@@ -97,6 +98,7 @@ export function evaluateFrame(frame: AnalysisFrame): VoiceFeedback[] {
         priority: 'normal',
         category: 'punch',
         cooldownMs: 6000,
+        immediate: true,
       });
     }
   }

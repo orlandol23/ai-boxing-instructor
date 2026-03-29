@@ -21,6 +21,22 @@ const PUNCH_VELOCITY_THRESHOLD = 0.04;
 const PUNCH_COOLDOWN_FRAMES = 8;
 
 /**
+ * Minimum upward wrist displacement (normalized units) to classify as uppercut.
+ * Negative because y increases downward in MediaPipe coords.
+ */
+const UPPERCUT_DY_THRESHOLD = -0.06;
+
+/**
+ * Wrist must be at least this fraction of shoulder width away from center for a hook.
+ */
+const HOOK_LATERAL_RATIO = 0.6;
+
+/**
+ * Lateral movement must exceed vertical movement by this factor for a hook.
+ */
+const HOOK_DX_DY_RATIO = 1.5;
+
+/**
  * Classifies punches based on arm extension, wrist velocity,
  * and position relative to the body.
  *
@@ -211,7 +227,7 @@ function classifyPunchType(
   const dx = wrist.x - prevWrist.x;
 
   // Uppercut: significant upward movement
-  if (dy < -0.06) {
+  if (dy < UPPERCUT_DY_THRESHOLD) {
     return isLead ? 'lead_uppercut' : 'rear_uppercut';
   }
 
@@ -224,7 +240,7 @@ function classifyPunchType(
       const shoulderCenter = (leftShoulder.x + rightShoulder.x) / 2;
       const lateralDist = Math.abs(wrist.x - shoulderCenter);
 
-      if (lateralDist > shoulderWidth * 0.6 && Math.abs(dx) > Math.abs(dy) * 1.5) {
+      if (lateralDist > shoulderWidth * HOOK_LATERAL_RATIO && Math.abs(dx) > Math.abs(dy) * HOOK_DX_DY_RATIO) {
         return isLead ? 'lead_hook' : 'rear_hook';
       }
     }

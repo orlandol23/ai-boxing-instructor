@@ -1,0 +1,142 @@
+import type { Landmark, BaseScore } from './types';
+import { PoseLandmark } from './types';
+import { VISIBILITY_THRESHOLD } from './constants';
+import { calculateAngle } from './AngleCalculator';
+
+const DEFAULT_BASE: BaseScore = {
+  overall: 50,
+  footWidth: 50,
+  kneeFlex: 50,
+  weightDistribution: 50,
+};
+
+/**
+ * Analyzes boxing base/stance quality based on foot width, knee flex,
+ * and weight distribution.
+ *
+ * Scoring (0-100 per metric):
+ * - Foot width: lateral spread should be ~shoulder width (too narrow or too wide = bad)
+ * - Knee flex: knees should be slightly bent, not locked or over-bent
+ * - Weight distribution: hips should be roughly centered between feet
+ */
+export function analyzeBase(landmarks: Landmark[]): BaseScore {
+  if (landmarks.length < 33) return { ...DEFAULT_BASE };
+
+  const lm = (i: number) => landmarks[i];
+
+  const leftAnkle = lm(PoseLandmark.LEFT_ANKLE);
+  const rightAnkle = lm(PoseLandmark.RIGHT_ANKLE);
+  const leftKnee = lm(PoseLandmark.LEFT_KNEE);
+  const rightKnee = lm(PoseLandmark.RIGHT_KNEE);
+  const leftHip = lm(PoseLandmark.LEFT_HIP);
+  const rightHip = lm(PoseLandmark.RIGHT_HIP);
+  const leftShoulder = lm(PoseLandmark.LEFT_SHOULDER);
+  const rightShoulder = lm(PoseLandmark.RIGHT_SHOULDER);
+
+  const lowerBodyVisible =
+    leftAnkle.visibility >= VISIBILITY_THRESHOLD &&
+    rightAnkle.visibility >= VISIBILITY_THRESHOLD &&
+    leftKnee.visibility >= VISIBILITY_THRESHOLD &&
+    rightKnee.visibility >= VISIBILITY_THRESHOLD &&
+    leftHip.visibility >= VISIBILITY_THRESHOLD &&
+    rightHip.visibility >= VISIBILITY_THRESHOLD;
+
+  if (!lowerBodyVisible) return { ...DEFAULT_BASE };
+
+  // -- Foot Width Score --
+  // Ideal foot spread is approximately shoulder width. Fall back to hip width
+  // when shoulders are not sufficiently visible.
+  const shouldersVisible =
+    leftShoulder.visibility >= VISIBILITY_THRESHOLD &&
+    rightShoulder.visibility >= VISIBILITY_THRESHOLD;
+  const shoulderWidth = shouldersVisible
+    ? Math.abs(rightShoulder.x - leftShoulder.x)
+    : 0;
+  const referenceWidth = shoulderWidth > 1e-3
+    ? shoulderWidth
+    : Math.abs(rightHip.x - leftHip.x);
+  const footSpread = Math.abs(rightAnkle.x - leftAnkle.x);
+  const footWidthScore = scoreFootWidth(footSpread, referenceWidth);
+
+  // -- Knee Flex Score --
+  // Knees should be slightly bent. We evaluate this via the knee joint angle
+  // formed by the hip-knee and knee-ankle segments (penalizing locked or over-bent knees).
+  const leftKneeFlex = scoreKneeFlex(leftHip, leftKnee, leftAnkle);
+  const rightKneeFlex = scoreKneeFlex(rightHip, rightKnee, rightAnkle);
+  const kneeFlexScore = (leftKneeFlex + rightKneeFlex) / 2;
+
+  // -- Weight Distribution Score --
+  // Hip center should be roughly between the feet (not leaning too far)
+  const hipCenter = (leftHip.x + rightHip.x) / 2;
+  const footCenter = (leftAnkle.x + rightAnkle.x) / 2;
+  const weightScore = scoreWeightDistribution(hipCenter, footCenter, footSpread);
+
+  const overall = Math.round(
+    footWidthScore * 0.35 +
+    kneeFlexScore * 0.35 +
+    weightScore * 0.30
+  );
+
+  return {
+    overall,
+    footWidth: Math.round(footWidthScore),
+    kneeFlex: Math.round(kneeFlexScore),
+    weightDistribution: Math.round(weightScore),
+  };
+}
+
+function scoreFootWidth(footSpread: number, referenceWidth: number): number {
+  if (referenceWidth <= 0) return 50;
+
+  // Ratio of foot spread to reference body width (shoulders or hips)
+  const ratio = footSpread / referenceWidth;
+
+  // Ideal: 0.8 to 1.3 of the reference width
+  if (ratio >= 0.8 && ratio <= 1.3) return 100;
+
+  // Too narrow
+  if (ratio < 0.8) {
+    if (ratio < 0.3) return 0;
+    return 100 * ((ratio - 0.3) / 0.5);
+  }
+
+  // Too wide
+  if (ratio > 2.0) return 0;
+  return 100 * (1 - (ratio - 1.3) / 0.7);
+}
+
+function scoreKneeFlex(hip: Landmark, knee: Landmark, ankle: Landmark): number {
+  // Reuse shared angle calculation (straight leg = ~180°, good bend = 150-170°)
+  const angle = calculateAngle(hip, knee, ankle);
+
+  // 155-170° is ideal (slight bend)
+  if (angle >= 155 && angle <= 170) return 100;
+
+  // Locked knee (>175°)
+  if (angle > 175) return 100 * (1 - (angle - 175) / 5);
+
+  // Good range (145-155°)
+  if (angle >= 145) return 85;
+
+  // Too bent (<145°)
+  if (angle >= 120) return 100 * ((angle - 120) / 35);
+
+  return 0;
+}
+
+function scoreWeightDistribution(
+  hipCenter: number,
+  footCenter: number,
+  footSpread: number
+): number {
+  if (footSpread <= 0) return 50;
+
+  // How far hip center is from foot center, as fraction of foot spread
+  const offset = Math.abs(hipCenter - footCenter) / footSpread;
+
+  // Slightly off-center is fine in boxing (weight on back foot)
+  if (offset <= 0.15) return 100;
+  if (offset >= 0.5) return 0;
+
+  return 100 * (1 - (offset - 0.15) / 0.35);
+}

@@ -1,7 +1,8 @@
 import { useEffect, useRef } from 'react';
-import type { Landmark } from '../../engine/types';
+import type { Landmark, GuardScore, BaseScore } from '../../engine/types';
+import { PoseLandmark } from '../../engine/types';
 import type { FacingMode } from '../../hooks/useCamera';
-import { SKELETON_CONNECTIONS, SCORE_COLORS, VISIBILITY_THRESHOLD } from '../../engine/constants';
+import { SKELETON_CONNECTIONS, VISIBILITY_THRESHOLD, getScoreColor } from '../../engine/constants';
 
 interface PoseCanvasProps {
   landmarks: Landmark[] | null;
@@ -10,6 +11,8 @@ interface PoseCanvasProps {
   facingMode: FacingMode;
   videoWidth: number;
   videoHeight: number;
+  guardScore?: GuardScore | null;
+  baseScore?: BaseScore | null;
 }
 
 const JOINT_RADIUS = 5;
@@ -58,6 +61,8 @@ export function PoseCanvas({
   facingMode,
   videoWidth,
   videoHeight,
+  guardScore,
+  baseScore,
 }: PoseCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const isMirrored = facingMode === 'user';
@@ -98,9 +103,11 @@ export function PoseCanvas({
       y: offsetY + lm.y * drawH,
     });
 
+    // Build color map for joints based on scores
+    const jointColors = buildJointColorMap(guardScore ?? null, baseScore ?? null);
+
     // Draw connections
     ctx.lineWidth = LINE_WIDTH;
-    ctx.strokeStyle = SCORE_COLORS.excellent;
     ctx.lineCap = 'round';
 
     for (const [startIdx, endIdx] of SKELETON_CONNECTIONS) {
@@ -112,6 +119,18 @@ export function PoseCanvas({
       const p1 = toScreen(start);
       const p2 = toScreen(end);
 
+      // Choose a deterministic connection color independent of connection direction
+      const c1 = jointColors.get(startIdx);
+      const c2 = jointColors.get(endIdx);
+      let connectionColor = getScoreColor(100);
+      if (c1 && c2) {
+        const primaryIdx = Math.min(startIdx, endIdx);
+        connectionColor = jointColors.get(primaryIdx) ?? c1 ?? c2 ?? connectionColor;
+      } else {
+        connectionColor = c1 ?? c2 ?? connectionColor;
+      }
+      ctx.strokeStyle = connectionColor;
+
       ctx.beginPath();
       ctx.moveTo(p1.x, p1.y);
       ctx.lineTo(p2.x, p2.y);
@@ -119,21 +138,23 @@ export function PoseCanvas({
     }
 
     // Draw joints
-    for (const lm of landmarks) {
+    for (let i = 0; i < landmarks.length; i++) {
+      const lm = landmarks[i];
       if (lm.visibility < VISIBILITY_THRESHOLD) continue;
 
       const p = toScreen(lm);
+      const color = jointColors.get(i) ?? getScoreColor(100);
 
       ctx.beginPath();
       ctx.arc(p.x, p.y, JOINT_RADIUS, 0, Math.PI * 2);
-      ctx.fillStyle = SCORE_COLORS.excellent;
+      ctx.fillStyle = color;
       ctx.fill();
 
       ctx.strokeStyle = '#FFFFFF';
       ctx.lineWidth = 1.5;
       ctx.stroke();
     }
-  }, [landmarks, width, height, isMirrored, videoWidth, videoHeight]);
+  }, [landmarks, width, height, isMirrored, videoWidth, videoHeight, guardScore, baseScore]);
 
   return (
     <canvas
@@ -146,4 +167,67 @@ export function PoseCanvas({
       }}
     />
   );
+}
+
+/**
+ * Maps joint indices to colors based on guard and base scores.
+ * Upper body joints (wrists, elbows, shoulders) reflect guard score.
+ * Lower body joints (ankles, knees, hips) reflect base score.
+ */
+function buildJointColorMap(
+  guard: GuardScore | null,
+  base: BaseScore | null
+): Map<number, string> {
+  const map = new Map<number, string>();
+
+  if (guard) {
+    const guardColor = getScoreColor(guard.overall);
+
+    // Left arm — uses left hand height
+    const leftArmColor = getScoreColor(guard.leftHandHeight);
+    map.set(PoseLandmark.LEFT_WRIST, leftArmColor);
+    map.set(PoseLandmark.LEFT_INDEX, leftArmColor);
+    map.set(PoseLandmark.LEFT_PINKY, leftArmColor);
+    map.set(PoseLandmark.LEFT_THUMB, leftArmColor);
+
+    // Right arm — uses right hand height
+    const rightArmColor = getScoreColor(guard.rightHandHeight);
+    map.set(PoseLandmark.RIGHT_WRIST, rightArmColor);
+    map.set(PoseLandmark.RIGHT_INDEX, rightArmColor);
+    map.set(PoseLandmark.RIGHT_PINKY, rightArmColor);
+    map.set(PoseLandmark.RIGHT_THUMB, rightArmColor);
+
+    // Elbows — uses elbow tuck
+    const elbowColor = getScoreColor(guard.elbowTuck);
+    map.set(PoseLandmark.LEFT_ELBOW, elbowColor);
+    map.set(PoseLandmark.RIGHT_ELBOW, elbowColor);
+
+    // Shoulders — overall guard
+    map.set(PoseLandmark.LEFT_SHOULDER, guardColor);
+    map.set(PoseLandmark.RIGHT_SHOULDER, guardColor);
+  }
+
+  if (base) {
+    const baseColor = getScoreColor(base.overall);
+
+    // Knees — uses knee flex
+    const kneeColor = getScoreColor(base.kneeFlex);
+    map.set(PoseLandmark.LEFT_KNEE, kneeColor);
+    map.set(PoseLandmark.RIGHT_KNEE, kneeColor);
+
+    // Ankles/feet — uses foot width
+    const footColor = getScoreColor(base.footWidth);
+    map.set(PoseLandmark.LEFT_ANKLE, footColor);
+    map.set(PoseLandmark.RIGHT_ANKLE, footColor);
+    map.set(PoseLandmark.LEFT_HEEL, footColor);
+    map.set(PoseLandmark.RIGHT_HEEL, footColor);
+    map.set(PoseLandmark.LEFT_FOOT_INDEX, footColor);
+    map.set(PoseLandmark.RIGHT_FOOT_INDEX, footColor);
+
+    // Hips — overall base
+    map.set(PoseLandmark.LEFT_HIP, baseColor);
+    map.set(PoseLandmark.RIGHT_HIP, baseColor);
+  }
+
+  return map;
 }

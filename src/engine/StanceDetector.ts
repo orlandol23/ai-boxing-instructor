@@ -41,16 +41,15 @@ export function detectStance(landmarks: Landmark[]): Stance {
     const zDiff = leftAnkle.z - rightAnkle.z;
     const xSpread = Math.abs(leftAnkle.x - rightAnkle.x);
 
-    // Need minimum lateral spread to distinguish from neutral standing
-    if (xSpread < STANCE_MIN_X_SPREAD) return 'unknown';
+    // Need minimum lateral spread and depth offset; otherwise fall through to shoulder check
+    const hasMinSpread = xSpread >= STANCE_MIN_X_SPREAD;
+    const hasMinDepthOffset = Math.abs(zDiff) >= STANCE_MIN_ANKLE_Z_DIFF;
 
-    // Z difference threshold — need meaningful depth offset
-    if (Math.abs(zDiff) < STANCE_MIN_ANKLE_Z_DIFF) {
-      // Z not conclusive, fall through to shoulder check
-    } else {
+    if (hasMinSpread && hasMinDepthOffset) {
       // Left foot has smaller Z (closer/forward) = orthodox
       return zDiff < 0 ? 'orthodox' : 'southpaw';
     }
+    // Ankle signal not conclusive; fall through to shoulder check
   }
 
   // Secondary: shoulder orientation — the lead shoulder is slightly forward

@@ -4,10 +4,10 @@ import { VISIBILITY_THRESHOLD } from './constants';
 import { calculateAngle } from './AngleCalculator';
 
 const DEFAULT_BASE: BaseScore = {
-  overall: 0,
-  footWidth: 0,
-  kneeFlex: 0,
-  weightDistribution: 0,
+  overall: 50,
+  footWidth: 50,
+  kneeFlex: 50,
+  weightDistribution: 50,
 };
 
 /**

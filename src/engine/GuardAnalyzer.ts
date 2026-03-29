@@ -3,11 +3,11 @@ import { PoseLandmark } from './types';
 import { VISIBILITY_THRESHOLD, CHIN_FACE_COVERAGE_DIST, CHIN_TUCK_VERTICAL_GAP } from './constants';
 
 const DEFAULT_GUARD: GuardScore = {
-  overall: 0,
-  leftHandHeight: 0,
-  rightHandHeight: 0,
-  elbowTuck: 0,
-  chinTuck: 0,
+  overall: 50,
+  leftHandHeight: 50,
+  rightHandHeight: 50,
+  elbowTuck: 50,
+  chinTuck: 50,
 };
 
 /**

@@ -119,10 +119,17 @@ export function PoseCanvas({
       const p1 = toScreen(start);
       const p2 = toScreen(end);
 
-      // Use first available endpoint color (start preferred)
+      // Choose a deterministic connection color independent of connection direction
       const c1 = jointColors.get(startIdx);
       const c2 = jointColors.get(endIdx);
-      ctx.strokeStyle = c1 ?? c2 ?? getScoreColor(100);
+      let connectionColor = getScoreColor(100);
+      if (c1 && c2) {
+        const primaryIdx = Math.min(startIdx, endIdx);
+        connectionColor = jointColors.get(primaryIdx) ?? c1 ?? c2 ?? connectionColor;
+      } else {
+        connectionColor = c1 ?? c2 ?? connectionColor;
+      }
+      ctx.strokeStyle = connectionColor;
 
       ctx.beginPath();
       ctx.moveTo(p1.x, p1.y);

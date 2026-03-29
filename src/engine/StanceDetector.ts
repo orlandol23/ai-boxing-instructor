@@ -1,6 +1,11 @@
 import type { Landmark, Stance } from './types';
 import { PoseLandmark } from './types';
-import { VISIBILITY_THRESHOLD } from './constants';
+import {
+  VISIBILITY_THRESHOLD,
+  STANCE_MIN_X_SPREAD,
+  STANCE_MIN_ANKLE_Z_DIFF,
+  STANCE_MIN_SHOULDER_Z_DIFF,
+} from './constants';
 
 /**
  * Detects boxing stance (orthodox vs southpaw) based on foot positioning.
@@ -37,10 +42,10 @@ export function detectStance(landmarks: Landmark[]): Stance {
     const xSpread = Math.abs(leftAnkle.x - rightAnkle.x);
 
     // Need minimum lateral spread to distinguish from neutral standing
-    if (xSpread < 0.05) return 'unknown';
+    if (xSpread < STANCE_MIN_X_SPREAD) return 'unknown';
 
     // Z difference threshold — need meaningful depth offset
-    if (Math.abs(zDiff) < 0.02) {
+    if (Math.abs(zDiff) < STANCE_MIN_ANKLE_Z_DIFF) {
       // Z not conclusive, fall through to shoulder check
     } else {
       // Left foot has smaller Z (closer/forward) = orthodox
@@ -52,7 +57,7 @@ export function detectStance(landmarks: Landmark[]): Stance {
   if (shouldersVisible) {
     const shoulderZDiff = leftShoulder.z - rightShoulder.z;
 
-    if (Math.abs(shoulderZDiff) < 0.01) return 'unknown';
+    if (Math.abs(shoulderZDiff) < STANCE_MIN_SHOULDER_Z_DIFF) return 'unknown';
 
     return shoulderZDiff < 0 ? 'orthodox' : 'southpaw';
   }

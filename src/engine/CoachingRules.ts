@@ -129,13 +129,21 @@ export function selectFeedback(
   lastSpoken: Map<string, number>,
   now: number
 ): VoiceFeedback | null {
-  const available = candidates.filter((fb) => {
+  let best: VoiceFeedback | null = null;
+  let bestPriority = Number.POSITIVE_INFINITY;
+
+  for (const fb of candidates) {
     const lastTime = lastSpoken.get(fb.message);
-    return lastTime === undefined || now - lastTime >= fb.cooldownMs;
-  });
+    if (lastTime !== undefined && now - lastTime < fb.cooldownMs) {
+      continue;
+    }
 
-  if (available.length === 0) return null;
+    const priorityValue = PRIORITY_ORDER[fb.priority];
+    if (priorityValue < bestPriority) {
+      best = fb;
+      bestPriority = priorityValue;
+    }
+  }
 
-  available.sort((a, b) => PRIORITY_ORDER[a.priority] - PRIORITY_ORDER[b.priority]);
-  return available[0];
+  return best;
 }

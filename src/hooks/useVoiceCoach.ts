@@ -31,8 +31,8 @@ function notifySpeakingChange() {
 
 function subscribeSpeaking(callback: () => void): () => void {
   speakingListeners.add(callback);
-  // Sync initial state in case subscription starts mid-speech
-  notifySpeakingChange();
+  // Sync initial state for this subscriber in case subscription starts mid-speech
+  callback();
   return () => speakingListeners.delete(callback);
 }
 

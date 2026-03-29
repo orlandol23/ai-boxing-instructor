@@ -34,23 +34,34 @@ export function analyzeGuard(landmarks: Landmark[]): GuardScore {
   const leftHip = lm(PoseLandmark.LEFT_HIP);
   const rightHip = lm(PoseLandmark.RIGHT_HIP);
 
-  const upperBodyVisible =
+  const wristsVisible =
     leftWrist.visibility >= VISIBILITY_THRESHOLD &&
-    rightWrist.visibility >= VISIBILITY_THRESHOLD &&
+    rightWrist.visibility >= VISIBILITY_THRESHOLD;
+  const shouldersVisible =
     leftShoulder.visibility >= VISIBILITY_THRESHOLD &&
-    rightShoulder.visibility >= VISIBILITY_THRESHOLD &&
+    rightShoulder.visibility >= VISIBILITY_THRESHOLD;
+  const hipsVisible =
     leftHip.visibility >= VISIBILITY_THRESHOLD &&
     rightHip.visibility >= VISIBILITY_THRESHOLD;
 
-  if (!upperBodyVisible) return { ...DEFAULT_GUARD };
+  // Require wrists + shoulders; hips are optional (chest-up framing)
+  if (!wristsVisible || !shouldersVisible) return { ...DEFAULT_GUARD };
 
   // -- Hand Height Score --
   // In normalized coords, Y increases downward. Hands should be at or above shoulder level.
   // Perfect: wrist.y <= shoulder.y (hands at or above shoulder height)
   // Score decreases as hands drop below shoulders
   const shoulderY = (leftShoulder.y + rightShoulder.y) / 2;
-  const hipY = (leftHip.y + rightHip.y) / 2;
-  const torsoHeight = hipY - shoulderY; // positive value
+  const shoulderWidth = Math.abs(rightShoulder.x - leftShoulder.x);
+
+  // Use hips for torso height when visible; otherwise fall back to shoulder width
+  let torsoHeight: number;
+  if (hipsVisible) {
+    const hipY = (leftHip.y + rightHip.y) / 2;
+    torsoHeight = hipY - shoulderY;
+  } else {
+    torsoHeight = shoulderWidth > 0 ? shoulderWidth : 0.1;
+  }
 
   const leftHandScore = scoreHandHeight(leftWrist.y, shoulderY, torsoHeight);
   const rightHandScore = scoreHandHeight(rightWrist.y, shoulderY, torsoHeight);
@@ -58,7 +69,6 @@ export function analyzeGuard(landmarks: Landmark[]): GuardScore {
   // -- Elbow Tuck Score --
   // Elbows should be close to the ribs (small horizontal distance from torso center)
   const torsoCenter = (leftShoulder.x + rightShoulder.x) / 2;
-  const shoulderWidth = Math.abs(rightShoulder.x - leftShoulder.x);
 
   const leftElbowTuck = scoreElbowTuck(leftElbow, torsoCenter, shoulderWidth);
   const rightElbowTuck = scoreElbowTuck(rightElbow, torsoCenter, shoulderWidth);

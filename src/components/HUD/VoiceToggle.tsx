@@ -15,6 +15,7 @@ export function VoiceToggle({ enabled, isSpeaking, onToggle }: VoiceToggleProps)
           : 'bg-black/60 text-gray-300 hover:text-white'
       }`}
       aria-label={enabled ? 'Desativar coach de voz' : 'Ativar coach de voz'}
+      aria-pressed={enabled}
     >
       <span className="text-sm" aria-hidden="true">
         {enabled ? (isSpeaking ? '\u{1F50A}' : '\u{1F508}') : '\u{1F507}'}

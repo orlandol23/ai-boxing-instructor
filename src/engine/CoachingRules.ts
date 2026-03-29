@@ -1,9 +1,10 @@
 import type { AnalysisFrame, VoiceFeedback } from './types';
 
 /**
- * Evaluates an analysis frame and returns coaching feedback items
- * sorted by priority. Each rule targets a specific aspect of form
- * and includes a cooldown to prevent repetitive nagging.
+ * Evaluates an analysis frame and returns coaching feedback candidates.
+ * Items are returned in evaluation order; priority-based selection
+ * happens in selectFeedback(). Each rule targets a specific aspect
+ * of form and includes a cooldown to prevent repetitive nagging.
  */
 export function evaluateFrame(frame: AnalysisFrame): VoiceFeedback[] {
   const feedback: VoiceFeedback[] = [];

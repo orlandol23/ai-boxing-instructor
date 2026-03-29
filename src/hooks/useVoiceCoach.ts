@@ -14,33 +14,33 @@ interface UseVoiceCoachOptions {
 const MIN_SPEECH_INTERVAL = 3000;
 
 /**
- * Minimum consecutive frames of a condition before speaking.
- * Avoids reacting to momentary dips.
+ * Minimum consecutive frames the same feedback must be selected
+ * before it is spoken. Avoids reacting to momentary flickers.
  */
 const DEBOUNCE_FRAMES = 10;
 
 // External store for speechSynthesis.speaking state.
 // Uses a listener set so useSyncExternalStore can subscribe.
 const speakingListeners = new Set<() => void>();
-let lastSpeakingState = false;
 
 function notifySpeakingChange() {
-  const current = typeof speechSynthesis !== 'undefined' && speechSynthesis.speaking;
-  if (current !== lastSpeakingState) {
-    lastSpeakingState = current;
-    for (const listener of speakingListeners) {
-      listener();
-    }
+  for (const listener of speakingListeners) {
+    listener();
   }
 }
 
 function subscribeSpeaking(callback: () => void): () => void {
   speakingListeners.add(callback);
+  // Sync initial state in case subscription starts mid-speech
+  notifySpeakingChange();
   return () => speakingListeners.delete(callback);
 }
 
 function getSpeakingSnapshot(): boolean {
-  return lastSpeakingState;
+  if (typeof speechSynthesis !== 'undefined') {
+    return speechSynthesis.speaking;
+  }
+  return false;
 }
 
 function getServerSnapshot(): boolean {
@@ -54,14 +54,14 @@ function getServerSnapshot(): boolean {
  * Features:
  * - Priority-based feedback selection
  * - Per-message cooldown to avoid repetition
- * - Frame debouncing to avoid reacting to flickers
+ * - Per-candidate frame debouncing (N consecutive frames)
  * - Cancels speech on disable/unmount
  */
 export function useVoiceCoach({ frame, enabled }: UseVoiceCoachOptions) {
   const lastSpokenRef = useRef(new Map<string, number>());
   const lastSpeechTimeRef = useRef(0);
-  const frameCountRef = useRef(0);
-  const lastMessageRef = useRef<string | null>(null);
+  const pendingMessageRef = useRef<string | null>(null);
+  const pendingCountRef = useRef(0);
 
   const isSpeaking = useSyncExternalStore(
     subscribeSpeaking,
@@ -69,8 +69,8 @@ export function useVoiceCoach({ frame, enabled }: UseVoiceCoachOptions) {
     getServerSnapshot
   );
 
-  const speak = useCallback((text: string) => {
-    if (typeof speechSynthesis === 'undefined') return;
+  const speak = useCallback((text: string): boolean => {
+    if (typeof speechSynthesis === 'undefined') return false;
 
     // Cancel any ongoing speech
     speechSynthesis.cancel();
@@ -86,18 +86,15 @@ export function useVoiceCoach({ frame, enabled }: UseVoiceCoachOptions) {
     utterance.onerror = () => notifySpeakingChange();
 
     speechSynthesis.speak(utterance);
+    return true;
   }, []);
 
   useEffect(() => {
     if (!enabled || !frame) {
-      frameCountRef.current = 0;
-      lastMessageRef.current = null;
+      pendingMessageRef.current = null;
+      pendingCountRef.current = 0;
       return;
     }
-
-    // Debounce: only speak after consistent conditions
-    frameCountRef.current++;
-    if (frameCountRef.current < DEBOUNCE_FRAMES) return;
 
     const now = performance.now();
 
@@ -107,16 +104,30 @@ export function useVoiceCoach({ frame, enabled }: UseVoiceCoachOptions) {
     const candidates = evaluateFrame(frame);
     const selected = selectFeedback(candidates, lastSpokenRef.current, now);
 
-    if (!selected) return;
+    if (!selected) {
+      pendingMessageRef.current = null;
+      pendingCountRef.current = 0;
+      return;
+    }
 
-    // Avoid repeating the exact same message back-to-back
-    if (selected.message === lastMessageRef.current) return;
+    // Per-candidate debounce: same message must persist for N frames
+    if (selected.message === pendingMessageRef.current) {
+      pendingCountRef.current++;
+    } else {
+      pendingMessageRef.current = selected.message;
+      pendingCountRef.current = 1;
+    }
 
-    lastSpokenRef.current.set(selected.message, now);
-    lastSpeechTimeRef.current = now;
-    lastMessageRef.current = selected.message;
+    if (pendingCountRef.current < DEBOUNCE_FRAMES) return;
 
-    speak(selected.message);
+    // Only update cooldowns if speech actually fires
+    const spoken = speak(selected.message);
+    if (spoken) {
+      lastSpokenRef.current.set(selected.message, now);
+      lastSpeechTimeRef.current = now;
+      pendingMessageRef.current = null;
+      pendingCountRef.current = 0;
+    }
   }, [frame, enabled, speak]);
 
   // Cancel speech when disabled

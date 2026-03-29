@@ -137,9 +137,12 @@ function scoreChinTuck(
   // Score based on how close wrists are to nose level
   const faceCoverage = Math.max(0, 1 - noseToWristDist / 0.15);
 
-  // Nose should be slightly below shoulder line (chin tucked, not head up)
-  const chinDrop = nose.y - shoulderY;
-  const chinTuck = chinDrop > 0 ? Math.min(1, chinDrop / 0.1) : 0;
+  // Nose should be closer to the shoulder line (chin tucked, not head up).
+  // In MediaPipe, y increases downward, and in normal posture nose.y < shoulderY.
+  // As the head lowers (chin tuck), nose.y moves down toward shoulderY, reducing
+  // the vertical gap. We map a smaller gap to a higher chin-tuck score.
+  const verticalGap = shoulderY - nose.y; // positive when nose is above shoulders
+  const chinTuck = 1 - Math.max(0, Math.min(1, verticalGap / 0.1));
 
   return Math.round(faceCoverage * 70 + chinTuck * 30);
 }

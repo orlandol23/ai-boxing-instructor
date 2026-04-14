@@ -1,8 +1,22 @@
 import type { AnalysisFrame, VoiceFeedback } from './types';
 
+const PHRASE_STABILITY_WINDOW_MS = 1000;
+
+function hashString(value: string): number {
+  let hash = 0;
+  for (let i = 0; i < value.length; i += 1) {
+    hash = (hash * 31 + value.charCodeAt(i)) >>> 0;
+  }
+  return hash;
+}
+
 function pickRandom(phrases: string[]): string {
   if (phrases.length === 0) return '';
-  return phrases[Math.floor(Math.random() * phrases.length)];
+
+  const bucket = Math.floor(Date.now() / PHRASE_STABILITY_WINDOW_MS);
+  const seed = `${bucket}:${phrases.join('|')}`;
+  const index = hashString(seed) % phrases.length;
+  return phrases[index];
 }
 
 /**

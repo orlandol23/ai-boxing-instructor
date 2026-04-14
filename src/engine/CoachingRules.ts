@@ -1,6 +1,7 @@
 import type { AnalysisFrame, VoiceFeedback } from './types';
 
 function pickRandom(phrases: string[]): string {
+  if (phrases.length === 0) return '';
   return phrases[Math.floor(Math.random() * phrases.length)];
 }
 

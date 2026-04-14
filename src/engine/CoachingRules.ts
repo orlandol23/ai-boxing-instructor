@@ -1,5 +1,9 @@
 import type { AnalysisFrame, VoiceFeedback } from './types';
 
+function pickRandom(phrases: string[]): string {
+  return phrases[Math.floor(Math.random() * phrases.length)];
+}
+
 /**
  * Evaluates an analysis frame and returns coaching feedback candidates.
  * Items are returned in evaluation order; priority-based selection
@@ -12,7 +16,7 @@ export function evaluateFrame(frame: AnalysisFrame): VoiceFeedback[] {
   // Guard checks
   if (frame.guard.overall < 40) {
     feedback.push({
-      message: 'Levanta a guarda!',
+      message: pickRandom(['Levanta a guarda!', 'Protege o rosto!', 'Mãos no queixo!']),
       priority: 'critical',
       category: 'guard',
       cooldownMs: 5000,
@@ -20,7 +24,11 @@ export function evaluateFrame(frame: AnalysisFrame): VoiceFeedback[] {
   } else if (frame.guard.overall < 70) {
     if (frame.guard.leftHandHeight < 60 || frame.guard.rightHandHeight < 60) {
       feedback.push({
-        message: 'Mãos mais altas, protege o rosto!',
+        message: pickRandom([
+          'Mãos mais altas, protege o rosto!',
+          'Mantém as mãos altas',
+          'Guarda tá caindo um pouco',
+        ]),
         priority: 'high',
         category: 'guard',
         cooldownMs: 8000,
@@ -28,7 +36,7 @@ export function evaluateFrame(frame: AnalysisFrame): VoiceFeedback[] {
     }
     if (frame.guard.elbowTuck < 60) {
       feedback.push({
-        message: 'Cotovelos junto ao corpo!',
+        message: pickRandom(['Cotovelos junto ao corpo!', 'Cola os cotovelos!']),
         priority: 'high',
         category: 'guard',
         cooldownMs: 8000,
@@ -38,7 +46,7 @@ export function evaluateFrame(frame: AnalysisFrame): VoiceFeedback[] {
 
   if (frame.guard.chinTuck < 50) {
     feedback.push({
-      message: 'Abaixa o queixo!',
+      message: pickRandom(['Abaixa o queixo!', 'Protege o queixo!']),
       priority: 'high',
       category: 'guard',
       cooldownMs: 10000,
@@ -48,7 +56,7 @@ export function evaluateFrame(frame: AnalysisFrame): VoiceFeedback[] {
   // Base checks
   if (frame.base.overall < 40) {
     feedback.push({
-      message: 'Corrige a base!',
+      message: pickRandom(['Corrige a base!', 'Ajusta a posição dos pés!']),
       priority: 'critical',
       category: 'base',
       cooldownMs: 5000,
@@ -56,7 +64,7 @@ export function evaluateFrame(frame: AnalysisFrame): VoiceFeedback[] {
   } else if (frame.base.overall < 70) {
     if (frame.base.footWidth < 60) {
       feedback.push({
-        message: 'Abre mais os pés!',
+        message: pickRandom(['Abre mais os pés!', 'Pés na largura dos ombros!']),
         priority: 'normal',
         category: 'base',
         cooldownMs: 8000,
@@ -64,7 +72,7 @@ export function evaluateFrame(frame: AnalysisFrame): VoiceFeedback[] {
     }
     if (frame.base.kneeFlex < 60) {
       feedback.push({
-        message: 'Flexiona os joelhos!',
+        message: pickRandom(['Flexiona os joelhos!', 'Dobra mais os joelhos!']),
         priority: 'normal',
         category: 'base',
         cooldownMs: 8000,
@@ -74,7 +82,7 @@ export function evaluateFrame(frame: AnalysisFrame): VoiceFeedback[] {
 
   if (frame.base.weightDistribution < 50) {
     feedback.push({
-      message: 'Distribui o peso melhor!',
+      message: pickRandom(['Distribui o peso melhor!', 'Equilibra o peso entre os pés!']),
       priority: 'normal',
       category: 'base',
       cooldownMs: 10000,
@@ -86,15 +94,23 @@ export function evaluateFrame(frame: AnalysisFrame): VoiceFeedback[] {
     const punch = frame.activePunch;
     if (punch.quality === 'good') {
       feedback.push({
-        message: 'Bom golpe!',
+        message: pickRandom(['Bom golpe!', 'Mandou bem!', 'Golpe firme!']),
         priority: 'low',
         category: 'encouragement',
         cooldownMs: 4000,
         immediate: true,
       });
+    } else if (punch.quality === 'fair') {
+      feedback.push({
+        message: pickRandom(['Retorna a mão mais rápido', 'Traz a mão de volta!']),
+        priority: 'low',
+        category: 'punch',
+        cooldownMs: 6000,
+        immediate: true,
+      });
     } else if (punch.quality === 'poor') {
       feedback.push({
-        message: 'Estende mais o braço!',
+        message: pickRandom(['Estende mais o braço!', 'Gira mais o quadril!']),
         priority: 'normal',
         category: 'punch',
         cooldownMs: 6000,
@@ -106,7 +122,11 @@ export function evaluateFrame(frame: AnalysisFrame): VoiceFeedback[] {
   // Encouragement for good form
   if (frame.guard.overall >= 90 && frame.base.overall >= 90) {
     feedback.push({
-      message: 'Postura excelente, continua assim!',
+      message: pickRandom([
+        'Postura excelente, continua assim!',
+        'Tá mandando bem!',
+        'Ritmo bom, continua!',
+      ]),
       priority: 'low',
       category: 'encouragement',
       cooldownMs: 15000,

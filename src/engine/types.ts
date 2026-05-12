@@ -109,9 +109,9 @@ export interface SessionSummary {
 
 export interface VoiceFeedback {
   message: string;
+  ruleKey: string;
   priority: 'critical' | 'high' | 'normal' | 'low';
   category: 'guard' | 'base' | 'punch' | 'general' | 'encouragement';
   cooldownMs: number;
-  /** When true, feedback fires immediately without frame debounce (for single-frame events like punches). */
   immediate?: boolean;
 }

@@ -1,23 +1,12 @@
 import { useEffect, useRef, useCallback, useSyncExternalStore } from 'react';
 import type { AnalysisFrame } from '../engine/types';
 import { evaluateFrame, selectFeedback } from '../engine/CoachingRules';
+import { VOICE_MIN_SPEECH_INTERVAL, VOICE_DEBOUNCE_FRAMES } from '../engine/constants';
 
 interface UseVoiceCoachOptions {
   frame: AnalysisFrame | null;
   enabled: boolean;
 }
-
-/**
- * Minimum interval between any speech output (ms).
- * Prevents overlapping/rapid-fire speech.
- */
-const MIN_SPEECH_INTERVAL = 3000;
-
-/**
- * Minimum consecutive frames the same feedback must be selected
- * before it is spoken. Avoids reacting to momentary flickers.
- */
-const DEBOUNCE_FRAMES = 10;
 
 // External store for speechSynthesis.speaking state.
 // Uses a listener set so useSyncExternalStore can subscribe.
@@ -60,7 +49,7 @@ function getServerSnapshot(): boolean {
 export function useVoiceCoach({ frame, enabled }: UseVoiceCoachOptions) {
   const lastSpokenRef = useRef(new Map<string, number>());
   const lastSpeechTimeRef = useRef(0);
-  const pendingMessageRef = useRef<string | null>(null);
+  const pendingRuleRef = useRef<string | null>(null);
   const pendingCountRef = useRef(0);
 
   const isSpeaking = useSyncExternalStore(
@@ -77,7 +66,8 @@ export function useVoiceCoach({ frame, enabled }: UseVoiceCoachOptions) {
       return false;
     }
 
-    // Cancel any ongoing speech
+    // Safety-net: cancel any ongoing speech before queueing a new one.
+    // VOICE_MIN_SPEECH_INTERVAL prevents rapid cancel+speak sequences.
     speechSynthesis.cancel();
 
     const utterance = new SpeechSynthesisUtterance(text);
@@ -96,7 +86,7 @@ export function useVoiceCoach({ frame, enabled }: UseVoiceCoachOptions) {
 
   useEffect(() => {
     if (!enabled || !frame) {
-      pendingMessageRef.current = null;
+      pendingRuleRef.current = null;
       pendingCountRef.current = 0;
       return;
     }
@@ -107,47 +97,48 @@ export function useVoiceCoach({ frame, enabled }: UseVoiceCoachOptions) {
     const now = performance.now();
 
     // Global rate limit
-    if (now - lastSpeechTimeRef.current < MIN_SPEECH_INTERVAL) return;
+    if (now - lastSpeechTimeRef.current < VOICE_MIN_SPEECH_INTERVAL) return;
 
     const candidates = evaluateFrame(frame);
     const selected = selectFeedback(candidates, lastSpokenRef.current, now);
 
     if (!selected) {
-      pendingMessageRef.current = null;
+      pendingRuleRef.current = null;
       pendingCountRef.current = 0;
       return;
     }
 
     // Immediate feedback (e.g. single-frame punch events) bypasses the
     // per-candidate debounce so it is never silently dropped.
-    // Uses an early-return path to avoid disturbing pending debounce state
-    // that may be accumulating for a concurrent non-immediate message.
     if (selected.immediate) {
       const spoken = speak(selected.message);
       if (spoken) {
-        lastSpokenRef.current.set(selected.message, now);
+        lastSpokenRef.current.set(selected.ruleKey, now);
         lastSpeechTimeRef.current = now;
+        pendingRuleRef.current = null;
+        pendingCountRef.current = 0;
       }
       return;
     }
 
-    // Per-candidate debounce: same message must persist for N frames
-    if (selected.message === pendingMessageRef.current) {
+    // Per-candidate debounce: same rule must persist for N frames.
+    // Keyed on ruleKey so phrase variants don't reset the counter.
+    if (selected.ruleKey === pendingRuleRef.current) {
       pendingCountRef.current++;
     } else {
-      pendingMessageRef.current = selected.message;
+      pendingRuleRef.current = selected.ruleKey;
       pendingCountRef.current = 1;
     }
 
-    if (pendingCountRef.current < DEBOUNCE_FRAMES) return;
+    if (pendingCountRef.current < VOICE_DEBOUNCE_FRAMES) return;
 
-    pendingMessageRef.current = null;
+    pendingRuleRef.current = null;
     pendingCountRef.current = 0;
 
     // Only update cooldowns if speech actually fires
     const spoken = speak(selected.message);
     if (spoken) {
-      lastSpokenRef.current.set(selected.message, now);
+      lastSpokenRef.current.set(selected.ruleKey, now);
       lastSpeechTimeRef.current = now;
     }
   }, [frame, enabled, speak]);

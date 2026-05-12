@@ -31,6 +31,7 @@ export function evaluateFrame(frame: AnalysisFrame): VoiceFeedback[] {
   // Guard checks
   if (frame.guard.overall < 40) {
     feedback.push({
+      ruleKey: 'guard:critical',
       message: pickRandom(['Levanta a guarda!', 'Protege o rosto!', 'Mãos no queixo!']),
       priority: 'critical',
       category: 'guard',
@@ -39,6 +40,7 @@ export function evaluateFrame(frame: AnalysisFrame): VoiceFeedback[] {
   } else if (frame.guard.overall < 70) {
     if (frame.guard.leftHandHeight < 60 || frame.guard.rightHandHeight < 60) {
       feedback.push({
+        ruleKey: 'guard:hand-height',
         message: pickRandom([
           'Mãos mais altas, protege o rosto!',
           'Mantém as mãos altas',
@@ -51,6 +53,7 @@ export function evaluateFrame(frame: AnalysisFrame): VoiceFeedback[] {
     }
     if (frame.guard.elbowTuck < 60) {
       feedback.push({
+        ruleKey: 'guard:elbow-tuck',
         message: pickRandom(['Cotovelos junto ao corpo!', 'Cola os cotovelos!']),
         priority: 'high',
         category: 'guard',
@@ -61,6 +64,7 @@ export function evaluateFrame(frame: AnalysisFrame): VoiceFeedback[] {
 
   if (frame.guard.chinTuck < 50) {
     feedback.push({
+      ruleKey: 'guard:chin-tuck',
       message: pickRandom(['Abaixa o queixo!', 'Protege o queixo!']),
       priority: 'high',
       category: 'guard',
@@ -71,6 +75,7 @@ export function evaluateFrame(frame: AnalysisFrame): VoiceFeedback[] {
   // Base checks
   if (frame.base.overall < 40) {
     feedback.push({
+      ruleKey: 'base:critical',
       message: pickRandom(['Corrige a base!', 'Ajusta a posição dos pés!']),
       priority: 'critical',
       category: 'base',
@@ -79,6 +84,7 @@ export function evaluateFrame(frame: AnalysisFrame): VoiceFeedback[] {
   } else if (frame.base.overall < 70) {
     if (frame.base.footWidth < 60) {
       feedback.push({
+        ruleKey: 'base:foot-width',
         message: pickRandom(['Abre mais os pés!', 'Pés na largura dos ombros!']),
         priority: 'normal',
         category: 'base',
@@ -87,6 +93,7 @@ export function evaluateFrame(frame: AnalysisFrame): VoiceFeedback[] {
     }
     if (frame.base.kneeFlex < 60) {
       feedback.push({
+        ruleKey: 'base:knee-flex',
         message: pickRandom(['Flexiona os joelhos!', 'Dobra mais os joelhos!']),
         priority: 'normal',
         category: 'base',
@@ -97,6 +104,7 @@ export function evaluateFrame(frame: AnalysisFrame): VoiceFeedback[] {
 
   if (frame.base.weightDistribution < 50) {
     feedback.push({
+      ruleKey: 'base:weight',
       message: pickRandom(['Distribui o peso melhor!', 'Equilibra o peso entre os pés!']),
       priority: 'normal',
       category: 'base',
@@ -109,6 +117,7 @@ export function evaluateFrame(frame: AnalysisFrame): VoiceFeedback[] {
     const punch = frame.activePunch;
     if (punch.quality === 'good') {
       feedback.push({
+        ruleKey: 'punch:good',
         message: pickRandom(['Bom golpe!', 'Mandou bem!', 'Golpe firme!']),
         priority: 'low',
         category: 'encouragement',
@@ -117,6 +126,7 @@ export function evaluateFrame(frame: AnalysisFrame): VoiceFeedback[] {
       });
     } else if (punch.quality === 'fair') {
       feedback.push({
+        ruleKey: 'punch:fair',
         message: pickRandom(['Retorna a mão mais rápido', 'Traz a mão de volta!']),
         priority: 'low',
         category: 'punch',
@@ -125,6 +135,7 @@ export function evaluateFrame(frame: AnalysisFrame): VoiceFeedback[] {
       });
     } else if (punch.quality === 'poor') {
       feedback.push({
+        ruleKey: 'punch:poor',
         message: pickRandom(['Estende mais o braço!', 'Gira mais o quadril!']),
         priority: 'normal',
         category: 'punch',
@@ -137,6 +148,7 @@ export function evaluateFrame(frame: AnalysisFrame): VoiceFeedback[] {
   // Encouragement for good form
   if (frame.guard.overall >= 90 && frame.base.overall >= 90) {
     feedback.push({
+      ruleKey: 'form:excellent',
       message: pickRandom([
         'Postura excelente, continua assim!',
         'Tá mandando bem!',
@@ -160,6 +172,8 @@ const PRIORITY_ORDER: Record<VoiceFeedback['priority'], number> = {
 
 /**
  * Selects the highest-priority feedback item that is not on cooldown.
+ * Cooldown is keyed by ruleKey (not message) so phrase variants
+ * share the same cooldown window.
  */
 export function selectFeedback(
   candidates: VoiceFeedback[],
@@ -170,7 +184,7 @@ export function selectFeedback(
   let bestPriority = Number.POSITIVE_INFINITY;
 
   for (const fb of candidates) {
-    const lastTime = lastSpoken.get(fb.message);
+    const lastTime = lastSpoken.get(fb.ruleKey);
     if (lastTime !== undefined && now - lastTime < fb.cooldownMs) {
       continue;
     }

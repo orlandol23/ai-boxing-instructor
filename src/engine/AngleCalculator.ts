@@ -3,8 +3,6 @@ import type { PoseLandmarkIndex } from './types';
 import { PoseLandmark } from './types';
 import { VISIBILITY_THRESHOLD } from './constants';
 
-export type { FrameAngles };
-
 /**
  * Calculates the angle at vertex B formed by points A-B-C in degrees.
  * Returns a value between 0° and 180°.

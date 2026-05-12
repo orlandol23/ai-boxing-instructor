@@ -1,16 +1,21 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useCamera } from '../hooks/useCamera';
 import { useMediaPipe } from '../hooks/useMediaPipe';
 import { useBoxingAnalysis } from '../hooks/useBoxingAnalysis';
 import { useVoiceCoach } from '../hooks/useVoiceCoach';
+import { useSession } from '../hooks/useSession';
 import { CameraFeed } from '../components/Camera/CameraFeed';
 import { PoseCanvas } from '../components/Camera/PoseCanvas';
 import { CameraControls } from '../components/Camera/CameraControls';
 import { StatusBar } from '../components/HUD/StatusBar';
 import { ScorePanel } from '../components/HUD/ScorePanel';
 import { VoiceToggle } from '../components/HUD/VoiceToggle';
+import { SessionControls } from '../components/HUD/SessionControls';
+import { SessionSummary } from '../components/HUD/SessionSummary';
 
 export function TrainingPage() {
+  const navigate = useNavigate();
   const containerRef = useRef<HTMLDivElement>(null);
   const [dimensions, setDimensions] = useState({ width: 640, height: 480 });
   const [videoDimensions, setVideoDimensions] = useState({ width: 0, height: 0 });
@@ -34,8 +39,25 @@ export function TrainingPage() {
 
   const { frame, recentPunches, punchCount } = useBoxingAnalysis({ landmarks });
 
+  const {
+    phase,
+    currentRound,
+    roundElapsedMs,
+    summary,
+    startSession,
+    startRound,
+    endRound,
+    endSession,
+    recordCorrection,
+    reset: resetSession,
+  } = useSession({ frame });
+
   const [voiceEnabled, setVoiceEnabled] = useState(false);
-  const { isSpeaking } = useVoiceCoach({ frame, enabled: voiceEnabled });
+  const { isSpeaking } = useVoiceCoach({
+    frame,
+    enabled: voiceEnabled,
+    onSpoken: recordCorrection,
+  });
 
   // Resize canvas to match container
   const updateDimensions = useCallback(() => {
@@ -68,7 +90,6 @@ export function TrainingPage() {
     }
 
     video.addEventListener('loadedmetadata', onLoadedMetadata);
-    // If already loaded
     if (video.videoWidth > 0) {
       onLoadedMetadata();
     }
@@ -76,11 +97,27 @@ export function TrainingPage() {
     return () => video.removeEventListener('loadedmetadata', onLoadedMetadata);
   }, [videoRef, isReady]);
 
+  // Single-click "Iniciar treino": start session and round 1 together.
+  const handleStartSession = useCallback(() => {
+    startSession();
+    startRound();
+  }, [startSession, startRound]);
+
+  const handleRestart = useCallback(() => {
+    resetSession();
+    startSession();
+    startRound();
+  }, [resetSession, startSession, startRound]);
+
+  const handleHome = useCallback(() => {
+    resetSession();
+    navigate('/');
+  }, [resetSession, navigate]);
+
   const error = cameraError || poseError;
 
   return (
     <div className="flex flex-1 flex-col">
-      {/* Camera viewport */}
       <div ref={containerRef} className="relative flex-1 overflow-hidden bg-black">
         <CameraFeed videoRef={videoRef} facingMode={facingMode} />
 
@@ -108,6 +145,24 @@ export function TrainingPage() {
           punchCount={punchCount}
           recentPunches={recentPunches}
         />
+
+        <SessionControls
+          phase={phase}
+          currentRound={currentRound}
+          roundElapsedMs={roundElapsedMs}
+          onStartSession={handleStartSession}
+          onStartRound={startRound}
+          onEndRound={endRound}
+          onEndSession={endSession}
+        />
+
+        {phase === 'ended' && (
+          <SessionSummary
+            summary={summary}
+            onRestart={handleRestart}
+            onHome={handleHome}
+          />
+        )}
 
         <StatusBar
           isModelLoading={isModelLoading}

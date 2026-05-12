@@ -57,7 +57,7 @@ export class BoxingEngine {
       base,
       activePunch,
       landmarks,
-      angles: { ...(frameAngles as Record<string, number | null>) },
+      angles: { ...frameAngles },
     };
 
     this.lastLandmarks = landmarks;

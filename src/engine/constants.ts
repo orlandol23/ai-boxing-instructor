@@ -47,6 +47,10 @@ export const SCORE_COLORS = {
   critical: '#EF4444', // red — < 70
 } as const;
 
+// Voice coach thresholds
+export const VOICE_MIN_SPEECH_INTERVAL = 3000;
+export const VOICE_DEBOUNCE_FRAMES = 10;
+
 export function getScoreColor(score: number): string {
   if (score >= 90) return SCORE_COLORS.excellent;
   if (score >= 70) return SCORE_COLORS.attention;

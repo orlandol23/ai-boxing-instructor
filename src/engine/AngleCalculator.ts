@@ -1,4 +1,4 @@
-import type { Landmark } from './types';
+import type { Landmark, FrameAngles } from './types';
 import type { PoseLandmarkIndex } from './types';
 import { PoseLandmark } from './types';
 import { VISIBILITY_THRESHOLD } from './constants';
@@ -13,15 +13,6 @@ export function calculateAngle(a: Landmark, b: Landmark, c: Landmark): number {
   let angle = Math.abs(radians * (180 / Math.PI));
   if (angle > 180) angle = 360 - angle;
   return angle;
-}
-
-export interface FrameAngles {
-  leftElbow: number | null;
-  rightElbow: number | null;
-  leftShoulder: number | null;
-  rightShoulder: number | null;
-  leftKnee: number | null;
-  rightKnee: number | null;
 }
 
 function isVisible(...landmarks: Landmark[]): boolean {

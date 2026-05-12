@@ -1,3 +1,5 @@
+import { Volume2, Volume1, VolumeX } from 'lucide-react';
+
 interface VoiceToggleProps {
   enabled: boolean;
   isSpeaking: boolean;
@@ -11,6 +13,8 @@ export function VoiceToggle({ enabled, isSpeaking, onToggle }: VoiceToggleProps)
       : 'Coach de voz ativo'
     : 'Coach de voz desativado';
 
+  const Icon = enabled ? (isSpeaking ? Volume2 : Volume1) : VolumeX;
+
   return (
     <button
       type="button"
@@ -23,9 +27,7 @@ export function VoiceToggle({ enabled, isSpeaking, onToggle }: VoiceToggleProps)
       aria-label={label}
       aria-pressed={enabled}
     >
-      <span className="text-sm" aria-hidden="true">
-        {enabled ? (isSpeaking ? '\u{1F50A}' : '\u{1F508}') : '\u{1F507}'}
-      </span>
+      <Icon size={14} aria-hidden="true" />
       <span>Coach</span>
     </button>
   );

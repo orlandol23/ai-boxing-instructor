@@ -1,26 +1,182 @@
+/* ============================================================
+   BOXING AI — Design Tokens v2.0
+   Tailwind CSS 4 · tema base "Fight Night" (adulto)
+   + variante "Arcade Royale" (kids) via [data-theme="kids"]
+   Troca de tema em runtime: <html data-theme="adult|kids">
+   Fontes (Saira / Saira Condensed) são self-hosted via
+   @fontsource (importadas em src/main.tsx) — PWA offline.
+   ============================================================ */
+
 @import 'tailwindcss';
 
-@theme {
-  --color-boxing-dark: #0A0A0A;
-  --color-boxing-card: #1A1A1A;
-  --color-boxing-border: #2A2A2A;
-  --color-boxing-red: #DC2626;
-  --color-boxing-red-light: #EF4444;
-  --color-boxing-gold: #D4A843;
-  --color-boxing-gold-light: #F5D98C;
-  --color-score-good: #22C55E;
-  --color-score-warn: #EAB308;
-  --color-score-bad: #EF4444;
+/* ---------- Variáveis semânticas (themáveis em runtime) ---------- */
+:root,
+[data-theme='adult'] {
+  /* superfícies */
+  --bg: #0a0a0a;
+  --surface: #1a1a1a;
+  --surface-2: #242424;
+  --border: #2a2a2a;
+  --border-strong: #3f3f3f;
+  --overlay: rgba(0, 0, 0, 0.65);
 
-  --font-display: ui-sans-serif, system-ui, sans-serif;
-  --font-body: ui-sans-serif, system-ui, sans-serif;
+  /* texto */
+  --text: #f5f5f5;
+  --text-muted: #a3a3a3;
+  --text-dim: #737373;
+
+  /* ação primária (vermelho de combate) */
+  --primary: #dc2626;
+  --primary-hover: #ef4444;
+  --primary-pressed: #b91c1c;
+  --on-primary: #ffffff;
+
+  /* acento (dourado do campeão) */
+  --accent: #d4a843;
+  --accent-light: #f5d98c;
+  --accent-deep: #8f6e24;
+
+  /* progressão / XP */
+  --xp: #d4a843;
+  --xp-track: #2e291c;
+
+  /* escala semântica de score — IDÊNTICA nos dois temas */
+  --score-good: #22c55e; /* ≥ 90 */
+  --score-warn: #eab308; /* 70–89 */
+  --score-bad: #ef4444;  /* < 70  */
+
+  /* efeitos */
+  --glow-primary: none;
+  --glow-accent: none;
+  --ring: #d4a843;
 }
 
+[data-theme='kids'] {
+  --bg: #140a20;
+  --surface: #211238;
+  --surface-2: #2c1a47;
+  --border: #3d2563;
+  --border-strong: #5b3a8c;
+  --overlay: rgba(12, 4, 24, 0.68);
+
+  --text: #fbf7ff;
+  --text-muted: #c9b8e4;
+  --text-dim: #937fb5;
+
+  /* rosa neon */
+  --primary: #ff3d9a;
+  --primary-hover: #ff66b2;
+  --primary-pressed: #d62681;
+  --on-primary: #2a0518; /* texto escuro p/ AA sobre rosa */
+
+  /* lilás arcade */
+  --accent: #c084fc;
+  --accent-light: #e2ccfe;
+  --accent-deep: #7c3aed;
+
+  /* XP = ouro-estrela */
+  --xp: #ffc83d;
+  --xp-track: #3a2a55;
+
+  --score-good: #22c55e;
+  --score-warn: #eab308;
+  --score-bad: #ef4444;
+
+  --glow-primary: 0 0 24px rgba(255, 61, 154, 0.5);
+  --glow-accent: 0 0 18px rgba(192, 132, 252, 0.5);
+  --ring: #c084fc;
+}
+
+/* ---------- Mapeamento p/ utilities Tailwind 4 ---------- */
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-line: var(--border);
+  --color-line-strong: var(--border-strong);
+  --color-overlay: var(--overlay);
+
+  --color-fg: var(--text);
+  --color-fg-muted: var(--text-muted);
+  --color-fg-dim: var(--text-dim);
+
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-pressed: var(--primary-pressed);
+  --color-on-primary: var(--on-primary);
+
+  --color-accent: var(--accent);
+  --color-accent-light: var(--accent-light);
+  --color-accent-deep: var(--accent-deep);
+
+  --color-xp: var(--xp);
+  --color-score-good: var(--score-good);
+  --color-score-warn: var(--score-warn);
+  --color-score-bad: var(--score-bad);
+
+  /* ---- aliases legados (migração DS v1 → v2; remover ao fim) ---- */
+  --color-boxing-dark: var(--bg);
+  --color-boxing-card: var(--surface);
+  --color-boxing-border: var(--border);
+  --color-boxing-red: var(--primary);
+  --color-boxing-red-light: var(--primary-hover);
+  --color-boxing-gold: var(--accent);
+  --color-boxing-gold-light: var(--accent-light);
+
+  /* tipografia */
+  --font-display: 'Saira Condensed', ui-sans-serif, system-ui, sans-serif;
+  --font-sans: 'Saira', ui-sans-serif, system-ui, sans-serif;
+  --font-body: 'Saira', ui-sans-serif, system-ui, sans-serif;
+
+  /* escala p/ leitura à distância (treino a 2–3 m) */
+  --text-hud-timer: 6rem;       /* 96px — timer do round */
+  --text-hud-timer--line-height: 1;
+  --text-hud-value: 3.5rem;     /* 56px — score grande */
+  --text-hud-value--line-height: 1;
+  --text-display: 3rem;         /* 48px — hero/títulos de tela */
+  --text-display--line-height: 1.05;
+  --text-title: 1.75rem;        /* 28px */
+  --text-title--line-height: 1.2;
+
+  /* raio */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 20px;
+  --radius-2xl: 28px;
+}
+
+/* ---------- Regras globais ---------- */
 html, body, #root {
   height: 100%;
   margin: 0;
   padding: 0;
-  background-color: var(--color-boxing-dark);
-  color: #F5F5F5;
-  font-family: var(--font-body);
+  background-color: var(--bg);
+  color: var(--text);
+  font-family: var(--font-sans);
+}
+
+/* números do HUD: sempre tabulares */
+.num {
+  font-family: var(--font-display);
+  font-variant-numeric: tabular-nums lining-nums;
+}
+
+/* alvos de toque: 48px mínimo, 64px em controles usados durante o treino */
+:where(button, a, [role='button']) { min-height: 48px; min-width: 48px; }
+.tap-training { min-height: 64px; min-width: 64px; }
+
+/* foco visível (WCAG 2.4.7) */
+:where(button, a, input, select, [tabindex]):focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+/* movimento reduzido: desliga transições/animações decorativas */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }

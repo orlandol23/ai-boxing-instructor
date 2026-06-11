@@ -1,12 +1,21 @@
-import type { ReactNode } from 'react';
+import { useMemo, type ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Swords, Target, Dumbbell } from 'lucide-react';
+import { Swords, Target, Dumbbell, Flame, TrendingUp } from 'lucide-react';
+import { useGamification } from '../hooks/useGamification';
+import { progressSnapshot } from '../engine/gamification/selectors';
+import { rankLabel } from '../engine/gamification/xp';
+import { getTheme } from '../theme/theme';
+import { LevelChip } from '../components/Progress/LevelChip';
+import { XpBar } from '../components/Progress/XpBar';
 
 export function HomePage() {
   const navigate = useNavigate();
+  const { history } = useGamification();
+  const progress = useMemo(() => progressSnapshot(history), [history]);
 
   return (
-    <div className="flex flex-1 flex-col items-center justify-center gap-8 px-6">
+    <div className="min-h-0 flex-1 overflow-y-auto px-6 py-8">
+      <div className="mx-auto flex min-h-full max-w-xs flex-col items-center justify-center gap-6">
       {/* Logo / Title */}
       <div className="text-center">
         <h1 className="font-display text-display font-extrabold uppercase tracking-wide text-accent">
@@ -16,6 +25,44 @@ export function HomePage() {
           Seu instrutor virtual de boxe
         </p>
       </div>
+
+      {/* Progresso (F6): LVL chip + XP bar + streak + link p/ /progress */}
+      <section className="w-full max-w-xs rounded-xl border border-line bg-surface p-4">
+        <div className="flex items-center justify-between gap-2">
+          <LevelChip level={progress.level.level} />
+          <span className="font-display text-sm font-bold uppercase tracking-wider text-accent">
+            {rankLabel(progress.level.level, getTheme())}
+          </span>
+        </div>
+        <div className="mt-3">
+          <XpBar
+            current={progress.level.xpIntoLevel}
+            total={progress.level.xpForNextLevel}
+          />
+        </div>
+        <div className="mt-2 flex items-center justify-between text-sm">
+          <span className="inline-flex items-center gap-1 text-fg-muted">
+            <Flame
+              size={16}
+              aria-hidden="true"
+              className={progress.streak > 0 ? 'text-primary' : 'text-fg-dim'}
+            />
+            <span className="num font-semibold text-fg">{progress.streak}</span>
+            {progress.streak === 1 ? 'dia seguido' : 'dias seguidos'}
+          </span>
+          <span className="text-fg-muted">
+            Missões <span className="num font-semibold text-fg">{progress.questsDone}/3</span>
+          </span>
+        </div>
+        <button
+          type="button"
+          onClick={() => navigate('/progress')}
+          className="mt-3 flex w-full items-center justify-center gap-2 rounded-lg border border-line-strong bg-surface-2 py-2.5 text-sm font-semibold text-fg transition-colors hover:border-accent"
+        >
+          <TrendingUp size={16} aria-hidden="true" />
+          Ver progresso
+        </button>
+      </section>
 
       {/* Main CTA — Button primary xl (SPECS §6) */}
       <button
@@ -46,6 +93,7 @@ export function HomePage() {
       <p className="text-xs text-fg-dim">
         Posicione o celular num tripé a ~2m de distância
       </p>
+      </div>
     </div>
   );
 }

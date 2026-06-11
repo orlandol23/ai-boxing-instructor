@@ -1,10 +1,19 @@
-import { RotateCcw, Home } from 'lucide-react';
+import { RotateCcw, Home, ChevronsUp } from 'lucide-react';
 import type { PunchType, SessionSummary as SessionSummaryData } from '../../engine/types';
 import type { CoachFeedbackStatus } from '../../hooks/useCoachingFeedback';
+import type { SessionGains } from '../../engine/gamification/applySession';
+import { rankLabel } from '../../engine/gamification/xp';
+import { getTheme } from '../../theme/theme';
 import { CoachBubble } from './CoachBubble';
+import { LevelChip } from '../Progress/LevelChip';
+import { XpBar } from '../Progress/XpBar';
+import { MedalBadge } from '../Progress/MedalBadge';
+import { QuestCard } from '../Progress/QuestCard';
 
 interface SessionSummaryProps {
   summary: SessionSummaryData;
+  /** Ganhos de gamificação da sessão (null p/ sessão sem rounds). */
+  gains?: SessionGains | null;
   /** Estado do coach IA ('idle' oculta a seção — ex.: sessão sem rounds). */
   coachStatus?: CoachFeedbackStatus;
   coachFeedback?: string | null;
@@ -36,6 +45,7 @@ function scoreColor(score: number): string {
 
 export function SessionSummary({
   summary,
+  gains = null,
   coachStatus = 'idle',
   coachFeedback = null,
   onRestart,
@@ -58,6 +68,40 @@ export function SessionSummary({
             {formatDuration(summary.duration)} · shadow boxing
           </p>
         </header>
+
+        {/* XP da sessão + nível (F6) */}
+        {gains && (
+          <section className="rounded-xl border border-line bg-surface-2 p-4">
+            <div className="text-center">
+              <span className="num text-hud-value font-bold text-xp">
+                +{gains.totalSessionXp.toLocaleString('pt-BR')}
+              </span>
+              <span className="ml-1 font-display text-lg font-bold uppercase text-xp">XP</span>
+              <p className="mt-1 text-xs text-fg-muted">
+                golpes <span className="num text-fg">{gains.xp.punchXp}</span> · bônus de round{' '}
+                <span className="num text-fg">{gains.xp.roundBonusXp}</span> · missões{' '}
+                <span className="num text-fg">{gains.questXp}</span>
+              </p>
+            </div>
+
+            {gains.leveledUp && (
+              <p className="mt-3 flex items-center justify-center gap-1.5 rounded-lg border border-accent bg-surface px-3 py-2 text-sm font-semibold text-accent-light">
+                <ChevronsUp size={16} aria-hidden="true" />
+                Subiu de nível! LVL {gains.levelBefore.level} → {gains.levelAfter.level}
+                {gains.rankAfter !== gains.rankBefore &&
+                  ` · ${rankLabel(gains.levelAfter.level, getTheme())}`}
+              </p>
+            )}
+
+            <div className="mt-3 flex items-center gap-3">
+              <LevelChip level={gains.levelAfter.level} />
+              <XpBar
+                current={gains.levelAfter.xpIntoLevel}
+                total={gains.levelAfter.xpForNextLevel}
+              />
+            </div>
+          </section>
+        )}
 
         {/* médias e volume — número sempre junto da cor (SPECS §2) */}
         <section className="grid grid-cols-3 gap-2.5">
@@ -124,6 +168,32 @@ export function SessionSummary({
                 </li>
               ))}
             </ul>
+          </section>
+        )}
+
+        {gains && gains.newBadges.length > 0 && (
+          <section>
+            <h3 className="mb-2 text-xs uppercase tracking-widest text-fg-dim">
+              {gains.newBadges.length === 1 ? 'Nova conquista' : 'Novas conquistas'}
+            </h3>
+            <div className="flex flex-wrap justify-center gap-4 rounded-xl border border-accent bg-surface-2 p-3">
+              {gains.newBadges.map((badge) => (
+                <MedalBadge key={badge.id} badge={badge} unlocked size="sm" />
+              ))}
+            </div>
+          </section>
+        )}
+
+        {gains && gains.quests.length > 0 && (
+          <section>
+            <h3 className="mb-2 text-xs uppercase tracking-widest text-fg-dim">
+              Missões de hoje
+            </h3>
+            <div className="flex flex-col gap-1.5">
+              {gains.quests.map((status) => (
+                <QuestCard key={status.quest.id} status={status} />
+              ))}
+            </div>
           </section>
         )}
 

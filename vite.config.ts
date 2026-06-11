@@ -13,6 +13,8 @@ export default defineConfig({
       workbox: {
         // inclui as fontes self-hosted (woff2) no precache p/ offline
         globPatterns: ['**/*.{js,css,html,svg,woff2}'],
+        // /api/* são Vercel Functions — o SW não deve responder com o app shell
+        navigateFallbackDenylist: [/^\/api\//],
       },
       manifest: {
         name: 'AI Boxing Instructor',

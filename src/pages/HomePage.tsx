@@ -9,41 +9,41 @@ export function HomePage() {
     <div className="flex flex-1 flex-col items-center justify-center gap-8 px-6">
       {/* Logo / Title */}
       <div className="text-center">
-        <h1 className="font-display text-5xl font-bold tracking-wider text-boxing-gold">
-          BOXING AI
+        <h1 className="font-display text-display font-extrabold uppercase tracking-wide text-accent">
+          Boxing AI
         </h1>
-        <p className="mt-2 text-sm text-gray-400">
+        <p className="mt-2 text-sm text-fg-muted">
           Seu instrutor virtual de boxe
         </p>
       </div>
 
-      {/* Main CTA */}
+      {/* Main CTA — Button primary xl (SPECS §6) */}
       <button
         type="button"
         onClick={() => navigate('/training')}
-        className="flex w-full max-w-xs items-center justify-center gap-3 rounded-xl bg-boxing-red py-4 text-lg font-bold text-white shadow-lg transition-transform active:scale-95 hover:bg-boxing-red-light"
+        className="flex min-h-16 w-full max-w-xs items-center justify-center gap-3 rounded-xl bg-primary px-9 font-display text-[22px] font-bold uppercase tracking-wider text-on-primary transition-[background-color,transform] [box-shadow:var(--glow-primary)] hover:bg-primary-hover active:scale-[.96] active:bg-primary-pressed"
       >
-        <Swords size={24} />
-        Iniciar Treino
+        <Swords size={24} aria-hidden="true" />
+        Iniciar treino
       </button>
 
       {/* Mode cards */}
       <div className="grid w-full max-w-xs grid-cols-2 gap-3">
         <ModeCard
-          icon={<Target size={22} />}
-          title="Shadow Boxing"
+          icon={<Target size={24} aria-hidden="true" />}
+          title="Shadow"
           description="Treino livre"
           onClick={() => navigate('/training')}
         />
         <ModeCard
-          icon={<Dumbbell size={22} />}
+          icon={<Dumbbell size={24} aria-hidden="true" />}
           title="Técnica"
-          description="Drill focado"
+          description="Em breve"
           disabled
         />
       </div>
 
-      <p className="text-xs text-gray-500">
+      <p className="text-xs text-fg-dim">
         Posicione o celular num tripé a ~2m de distância
       </p>
     </div>
@@ -68,11 +68,13 @@ function ModeCard({
       type="button"
       onClick={onClick}
       disabled={disabled}
-      className="flex flex-col items-center gap-2 rounded-lg border border-boxing-border bg-boxing-card p-4 text-center transition-colors hover:border-boxing-gold/50 disabled:opacity-40 disabled:cursor-not-allowed"
+      className="flex flex-col items-center gap-1.5 rounded-xl border border-line bg-surface p-4 text-center transition-colors hover:border-accent disabled:cursor-not-allowed disabled:opacity-40"
     >
-      <div className="text-boxing-gold">{icon}</div>
-      <span className="text-sm font-bold">{title}</span>
-      <span className="text-xs text-gray-400">{description}</span>
+      <div className="text-accent">{icon}</div>
+      <span className="font-display text-base font-bold uppercase tracking-wide text-fg">
+        {title}
+      </span>
+      <span className="text-xs text-fg-muted">{description}</span>
     </button>
   );
 }

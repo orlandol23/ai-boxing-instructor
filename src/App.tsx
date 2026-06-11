@@ -7,7 +7,7 @@ import { TrainingPage } from './pages/TrainingPage';
 export default function App() {
   return (
     <BrowserRouter>
-      <div className="flex h-full flex-col bg-boxing-dark">
+      <div className="flex h-full flex-col bg-bg">
         <Header />
         <Routes>
           <Route path="/" element={<HomePage />} />

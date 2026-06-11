@@ -10,7 +10,6 @@ import { PoseCanvas } from '../components/Camera/PoseCanvas';
 import { CameraControls } from '../components/Camera/CameraControls';
 import { StatusBar } from '../components/HUD/StatusBar';
 import { ScorePanel } from '../components/HUD/ScorePanel';
-import { VoiceToggle } from '../components/HUD/VoiceToggle';
 import { SessionControls } from '../components/HUD/SessionControls';
 import { SessionSummary } from '../components/HUD/SessionSummary';
 
@@ -114,8 +113,6 @@ export function TrainingPage() {
     navigate('/');
   }, [resetSession, navigate]);
 
-  const error = cameraError || poseError;
-
   return (
     <div className="flex flex-1 flex-col">
       <div ref={containerRef} className="relative flex-1 overflow-hidden bg-black">
@@ -134,12 +131,6 @@ export function TrainingPage() {
 
         <CameraControls onToggleCamera={toggleCamera} fps={fps} />
 
-        <VoiceToggle
-          enabled={voiceEnabled}
-          isSpeaking={isSpeaking}
-          onToggle={() => setVoiceEnabled((v) => !v)}
-        />
-
         <ScorePanel
           frame={frame}
           punchCount={punchCount}
@@ -150,6 +141,9 @@ export function TrainingPage() {
           phase={phase}
           currentRound={currentRound}
           roundElapsedMs={roundElapsedMs}
+          voiceEnabled={voiceEnabled}
+          isSpeaking={isSpeaking}
+          onToggleVoice={() => setVoiceEnabled((v) => !v)}
           onStartSession={handleStartSession}
           onStartRound={startRound}
           onEndRound={endRound}
@@ -167,7 +161,8 @@ export function TrainingPage() {
         <StatusBar
           isModelLoading={isModelLoading}
           hasLandmarks={landmarks !== null}
-          error={error}
+          cameraError={cameraError}
+          poseError={poseError}
           isCameraReady={isReady}
         />
       </div>

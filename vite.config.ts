@@ -10,6 +10,10 @@ export default defineConfig({
     VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.svg', 'icons/*.svg'],
+      workbox: {
+        // inclui as fontes self-hosted (woff2) no precache p/ offline
+        globPatterns: ['**/*.{js,css,html,svg,woff2}'],
+      },
       manifest: {
         name: 'AI Boxing Instructor',
         short_name: 'BoxingAI',

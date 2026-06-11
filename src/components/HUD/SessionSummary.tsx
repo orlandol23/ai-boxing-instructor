@@ -36,40 +36,46 @@ export function SessionSummary({ summary, onRestart, onHome }: SessionSummaryPro
     .sort((a, b) => b.count - a.count);
 
   return (
-    <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/85 backdrop-blur-sm">
-      <div className="mx-4 flex max-h-[90vh] w-full max-w-md flex-col gap-4 overflow-y-auto rounded-2xl border border-boxing-border bg-boxing-card p-5">
-        <header className="flex flex-col">
-          <span className="text-xs uppercase tracking-wider text-gray-400">Treino finalizado</span>
-          <h2 className="font-display text-2xl font-bold text-boxing-gold">Resumo</h2>
+    <div className="absolute inset-0 z-20 flex items-center justify-center bg-overlay backdrop-blur-sm">
+      <div className="mx-4 flex max-h-[90vh] w-full max-w-md flex-col gap-4 overflow-y-auto rounded-2xl border border-line bg-surface p-5">
+        <header className="text-center">
+          <h2 className="font-display text-title font-extrabold uppercase tracking-wide text-fg">
+            Sessão concluída
+          </h2>
+          <p className="mt-1 text-sm text-fg-muted">
+            {summary.rounds} {summary.rounds === 1 ? 'round' : 'rounds'} ·{' '}
+            {formatDuration(summary.duration)} · shadow boxing
+          </p>
         </header>
 
-        <section className="grid grid-cols-3 gap-2 text-center">
-          <Stat label="Duração" value={formatDuration(summary.duration)} />
-          <Stat label="Rounds" value={String(summary.rounds)} />
-          <Stat label="Golpes" value={String(summary.totalPunches)} />
-        </section>
-
-        <section className="grid grid-cols-2 gap-2">
+        {/* médias e volume — número sempre junto da cor (SPECS §2) */}
+        <section className="grid grid-cols-3 gap-2.5">
           <Stat
-            label="Guarda média"
+            label="Guarda"
             value={Math.round(summary.avgGuardScore).toString()}
             valueClass={scoreColor(summary.avgGuardScore)}
           />
           <Stat
-            label="Base média"
+            label="Base"
             value={Math.round(summary.avgBaseScore).toString()}
             valueClass={scoreColor(summary.avgBaseScore)}
           />
+          <Stat label="Golpes" value={String(summary.totalPunches)} />
         </section>
 
         {punches.length > 0 && (
           <section>
-            <h3 className="mb-2 text-xs uppercase tracking-wider text-gray-400">Distribuição de golpes</h3>
+            <h3 className="mb-2 text-xs uppercase tracking-widest text-fg-dim">
+              Distribuição de golpes
+            </h3>
             <ul className="flex flex-col gap-1">
               {punches.map(({ type, count }) => (
-                <li key={type} className="flex items-center justify-between rounded-md bg-black/40 px-3 py-1.5 text-sm">
-                  <span className="text-gray-200">{PUNCH_LABELS[type]}</span>
-                  <span className="font-mono font-bold text-white">{count}</span>
+                <li
+                  key={type}
+                  className="flex items-center justify-between rounded-md bg-surface-2 px-3 py-2 text-sm"
+                >
+                  <span className="font-semibold text-fg">{PUNCH_LABELS[type]}</span>
+                  <span className="num text-lg font-bold leading-none text-fg">{count}</span>
                 </li>
               ))}
             </ul>
@@ -78,10 +84,15 @@ export function SessionSummary({ summary, onRestart, onHome }: SessionSummaryPro
 
         {summary.corrections.length > 0 && (
           <section>
-            <h3 className="mb-2 text-xs uppercase tracking-wider text-gray-400">Pontos para trabalhar</h3>
+            <h3 className="mb-2 text-xs uppercase tracking-widest text-fg-dim">
+              Pontos para trabalhar
+            </h3>
             <ul className="flex flex-col gap-1">
               {summary.corrections.map((c, i) => (
-                <li key={i} className="rounded-md bg-score-bad/15 px-3 py-1.5 text-sm text-gray-100">
+                <li
+                  key={i}
+                  className="rounded-md border-l-2 border-score-bad bg-surface-2 px-3 py-2 text-sm text-fg"
+                >
                   {c}
                 </li>
               ))}
@@ -91,10 +102,13 @@ export function SessionSummary({ summary, onRestart, onHome }: SessionSummaryPro
 
         {summary.highlights.length > 0 && (
           <section>
-            <h3 className="mb-2 text-xs uppercase tracking-wider text-gray-400">Destaques</h3>
+            <h3 className="mb-2 text-xs uppercase tracking-widest text-fg-dim">Destaques</h3>
             <ul className="flex flex-col gap-1">
               {summary.highlights.map((h, i) => (
-                <li key={i} className="rounded-md bg-score-good/15 px-3 py-1.5 text-sm text-gray-100">
+                <li
+                  key={i}
+                  className="rounded-md border-l-2 border-score-good bg-surface-2 px-3 py-2 text-sm text-fg"
+                >
                   {h}
                 </li>
               ))}
@@ -102,21 +116,21 @@ export function SessionSummary({ summary, onRestart, onHome }: SessionSummaryPro
           </section>
         )}
 
-        <footer className="mt-2 flex gap-2">
+        <footer className="mt-2 flex gap-2.5">
           <button
             type="button"
             onClick={onRestart}
-            className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-boxing-red py-3 text-sm font-bold text-white transition-transform active:scale-95 hover:bg-boxing-red-light"
+            className="flex min-h-14 flex-1 items-center justify-center gap-2 rounded-xl bg-primary font-display text-lg font-bold uppercase tracking-wider text-on-primary transition-[background-color,transform] [box-shadow:var(--glow-primary)] hover:bg-primary-hover active:scale-[.96] active:bg-primary-pressed"
           >
-            <RotateCcw size={16} />
-            Novo treino
+            <RotateCcw size={18} aria-hidden="true" />
+            Treinar de novo
           </button>
           <button
             type="button"
             onClick={onHome}
-            className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-black/60 py-3 text-sm font-bold text-white transition-transform active:scale-95 hover:bg-black/80"
+            className="flex min-h-14 flex-1 items-center justify-center gap-2 rounded-xl border border-line-strong bg-surface-2 font-display text-lg font-bold uppercase tracking-wider text-fg transition-[border-color,transform] hover:border-accent active:scale-[.96]"
           >
-            <Home size={16} />
+            <Home size={18} aria-hidden="true" />
             Início
           </button>
         </footer>
@@ -135,9 +149,11 @@ function Stat({
   valueClass?: string;
 }) {
   return (
-    <div className="flex flex-col rounded-md bg-black/40 px-2 py-2">
-      <span className="text-[10px] uppercase tracking-wider text-gray-400">{label}</span>
-      <span className={`font-mono text-lg font-bold ${valueClass ?? 'text-white'}`}>{value}</span>
+    <div className="flex flex-col items-center rounded-xl border border-line bg-surface-2 px-2 py-3 text-center">
+      <span className={`num text-2xl font-bold leading-none ${valueClass ?? 'text-fg'}`}>
+        {value}
+      </span>
+      <span className="mt-1 text-[11px] uppercase tracking-wider text-fg-muted">{label}</span>
     </div>
   );
 }

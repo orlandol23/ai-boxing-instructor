@@ -9,6 +9,13 @@ objetivos para fechar a fase com confiança.
 > endpoint `/api/coach` com Claude já mergeado (Fase 4). Fundação de
 > qualidade (CI, testes do engine, Error Boundary) entregue neste PR.
 
+> **Design System v2 (fundação) aplicado:** tokens themáveis
+> (`adult`/`kids` via `data-theme`), fontes Saira self-host, e as telas
+> existentes migradas para o visual Fight Night. Specs completas em
+> [`docs/design-system/SPECS.md`](design-system/SPECS.md) — gamificação
+> (XP/níveis/missões/badges), seletor de perfis e o tema kids "Arcade
+> Royale" (Fases 6/7) devem ser construídos sobre este kit.
+
 ---
 
 ## Fase 5 — Coach IA visível + Deploy (prioridade máxima)

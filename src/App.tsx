@@ -3,6 +3,7 @@ import { ErrorBoundary } from './components/ErrorBoundary';
 import { Header } from './components/Layout/Header';
 import { HomePage } from './pages/HomePage';
 import { TrainingPage } from './pages/TrainingPage';
+import { ProgressPage } from './pages/ProgressPage';
 
 export default function App() {
   return (
@@ -19,6 +20,7 @@ export default function App() {
               </ErrorBoundary>
             }
           />
+          <Route path="/progress" element={<ProgressPage />} />
         </Routes>
       </div>
     </BrowserRouter>

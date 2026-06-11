@@ -54,11 +54,31 @@ export function TrainingPage() {
   } = useSession({ frame });
 
   const [voiceEnabled, setVoiceEnabled] = useState(false);
-  const { isSpeaking } = useVoiceCoach({
+  const voiceEnabledRef = useRef(voiceEnabled);
+  useEffect(() => {
+    voiceEnabledRef.current = voiceEnabled;
+  }, [voiceEnabled]);
+
+  // Correções frame-a-frame só durante o round; fora dele a voz fica
+  // livre para ler o feedback do coach IA sem ser interrompida.
+  const { isSpeaking, speak, cancel: cancelSpeech } = useVoiceCoach({
     frame,
-    enabled: voiceEnabled,
+    enabled: voiceEnabled && phase === 'in_round',
     onSpoken: recordCorrection,
   });
+
+  // Desligar o toggle de voz também interrompe a leitura do coach IA.
+  useEffect(() => {
+    if (!voiceEnabled) cancelSpeech();
+  }, [voiceEnabled, cancelSpeech]);
+
+  const onCoachFeedback = useCallback(
+    (text: string) => {
+      // Voz opcional: lê o feedback do coach se o toggle estiver ativo.
+      if (voiceEnabledRef.current) speak(text);
+    },
+    [speak]
+  );
 
   const {
     status: coachStatus,
@@ -66,7 +86,7 @@ export function TrainingPage() {
     requestRoundFeedback,
     requestSessionFeedback,
     clear: clearCoach,
-  } = useCoachingFeedback();
+  } = useCoachingFeedback({ onFeedback: onCoachFeedback });
 
   // Resize canvas to match container
   const updateDimensions = useCallback(() => {
@@ -127,10 +147,11 @@ export function TrainingPage() {
 
   const handleRestart = useCallback(() => {
     clearCoach();
+    cancelSpeech();
     resetSession();
     startSession();
     startRound();
-  }, [clearCoach, resetSession, startSession, startRound]);
+  }, [clearCoach, cancelSpeech, resetSession, startSession, startRound]);
 
   const handleHome = useCallback(() => {
     clearCoach();

@@ -36,15 +36,15 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
     }
 
     return (
-      <div className="flex flex-1 items-center justify-center bg-boxing-dark p-4">
-        <div className="flex w-full max-w-md flex-col items-center gap-4 rounded-2xl border border-boxing-border bg-boxing-card p-6 text-center">
+      <div className="flex flex-1 items-center justify-center bg-bg p-4">
+        <div className="flex w-full max-w-md flex-col items-center gap-4 rounded-2xl border border-line bg-surface p-6 text-center">
           <span className="text-4xl" role="img" aria-label="Luva de boxe">
             🥊
           </span>
-          <h2 className="font-display text-xl font-bold text-boxing-gold">
+          <h2 className="font-display text-title font-bold uppercase tracking-wide text-accent">
             Ops, algo deu errado
           </h2>
-          <p className="text-sm text-gray-400">
+          <p className="text-sm text-fg-muted">
             Encontramos um problema inesperado durante o treino. Recarregue a
             página para continuar — seu progresso de hoje não some, é só
             recomeçar o round.
@@ -52,10 +52,10 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
           <button
             type="button"
             onClick={this.handleReload}
-            className="flex items-center gap-2 rounded-xl bg-boxing-red px-5 py-2.5 font-semibold text-white transition-colors hover:bg-boxing-red-light"
+            className="flex items-center gap-2 rounded-xl bg-primary px-6 font-display text-lg font-bold uppercase tracking-wider text-on-primary transition-[background-color,transform] [box-shadow:var(--glow-primary)] hover:bg-primary-hover active:scale-[.96] active:bg-primary-pressed"
           >
             <RotateCcw size={18} aria-hidden="true" />
-            Recarregar página
+            Recarregar
           </button>
         </div>
       </div>

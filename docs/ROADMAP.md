@@ -22,19 +22,27 @@ objetivos para fechar a fase com confiança.
 
 O backend do coach já existe; falta o usuário ver o valor.
 
-### 5.1 Integração frontend do coach IA
-- Hook `useCoachingFeedback` que envia o resumo do round/sessão para `/api/coach`.
-- Painel de feedback do coach ao fim de cada round e no resumo da sessão
-  (insights em PT-BR: o que foi bem, o que corrigir no próximo round).
-- Estados de carregamento/erro elegantes; app continua 100% funcional offline
-  ou sem chave de API (degradação graciosa).
+### 5.1 Integração frontend do coach IA ✅ Entregue
+- [x] Hook `useCoachingFeedback` que envia o resumo do round/sessão para
+  `/api/coach` (timeout 15s, abort ao sair, máx. 1 retry).
+- [x] Coach bubble (DS v2, SPECS §6) ao fim de cada round (descanso) e no
+  resumo da sessão, com insights em PT-BR.
+- [x] Estados de carregamento/erro elegantes; sem chave de API ou offline,
+  fallback amigável e o treino local segue 100% funcional.
+- [x] Voz opcional: com o Voice Coach ativado, o feedback do coach é lido
+  em voz alta ao chegar.
 
-**DoD:** ao terminar um round com a API configurada, um card de feedback do
-coach aparece em até ~5s; sem API, o resumo local continua como hoje.
+**DoD atendido:** ao terminar um round com a API configurada, o card de
+feedback do coach aparece em segundos; sem API, o resumo local continua
+como antes.
 
-### 5.2 Deploy Vercel com `ANTHROPIC_API_KEY`
+### 5.2 Deploy Vercel com `ANTHROPIC_API_KEY` (pendente — passo do dono)
 - Projeto conectado na Vercel, variável `ANTHROPIC_API_KEY` configurada.
 - `/api/health` verde em produção; PWA instalável servida por HTTPS.
+
+> **Nota:** o frontend do coach (5.1) já está pronto e degrada
+> graciosamente; para o coach IA funcionar de verdade, falta o deploy na
+> Vercel com a env var `ANTHROPIC_API_KEY` — passo manual do dono do repo.
 
 **DoD:** URL pública funcionando no celular (câmera + pose + coach IA).
 
@@ -133,7 +141,7 @@ long tasks > 50ms durante análise.
 | `returnSpeed` sempre `0` | `PunchClassifier` | 9 |
 | Modelo MediaPipe baixado da CDN a cada visita | `useMediaPipe` | 10 |
 | Card "Técnica" desabilitado na home | `HomePage` | 8 |
-| Coach IA sem UI (endpoint pronto, frontend pendente) | `/api/coach` | 5 |
+| ~~Coach IA sem UI (endpoint pronto, frontend pendente)~~ ✅ entregue (5.1) | `useCoachingFeedback` + `CoachBubble` | 5 |
 
 ---
 

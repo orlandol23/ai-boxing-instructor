@@ -17,6 +17,8 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.95.2",
+    "@fontsource/saira": "^5.2.11",
+    "@fontsource/saira-condensed": "^5.2.8",
     "@mediapipe/tasks-vision": "0.10.34",
     "lucide-react": "^1.7.0",
     "react": "^19.2.4",

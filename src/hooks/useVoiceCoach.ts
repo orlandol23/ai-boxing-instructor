@@ -1,4 +1,4 @@
-import { useEffect, useRef, useCallback, useSyncExternalStore } from 'react';
+import { useEffect, useLayoutEffect, useRef, useCallback, useSyncExternalStore } from 'react';
 import type { AnalysisFrame } from '../engine/types';
 import { evaluateFrame, selectFeedback } from '../engine/CoachingRules';
 import { VOICE_MIN_SPEECH_INTERVAL, VOICE_DEBOUNCE_FRAMES } from '../engine/constants';
@@ -6,6 +6,12 @@ import { VOICE_MIN_SPEECH_INTERVAL, VOICE_DEBOUNCE_FRAMES } from '../engine/cons
 interface UseVoiceCoachOptions {
   frame: AnalysisFrame | null;
   enabled: boolean;
+  /**
+   * Called every time a feedback rule is actually spoken. Receives the
+   * stable ruleKey of the selected rule so consumers (e.g. SessionTracker)
+   * can count recurring issues without re-implementing rule selection.
+   */
+  onSpoken?: (ruleKey: string) => void;
 }
 
 // External store for speechSynthesis.speaking state.
@@ -46,11 +52,15 @@ function getServerSnapshot(): boolean {
  * - Per-candidate frame debouncing (N consecutive frames)
  * - Cancels speech on disable/unmount
  */
-export function useVoiceCoach({ frame, enabled }: UseVoiceCoachOptions) {
+export function useVoiceCoach({ frame, enabled, onSpoken }: UseVoiceCoachOptions) {
   const lastSpokenRef = useRef(new Map<string, number>());
   const lastSpeechTimeRef = useRef(0);
   const pendingRuleRef = useRef<string | null>(null);
   const pendingCountRef = useRef(0);
+  const onSpokenRef = useRef(onSpoken);
+  useLayoutEffect(() => {
+    onSpokenRef.current = onSpoken;
+  }, [onSpoken]);
 
   const isSpeaking = useSyncExternalStore(
     subscribeSpeaking,
@@ -117,6 +127,7 @@ export function useVoiceCoach({ frame, enabled }: UseVoiceCoachOptions) {
         lastSpeechTimeRef.current = now;
         pendingRuleRef.current = null;
         pendingCountRef.current = 0;
+        onSpokenRef.current?.(selected.ruleKey);
       }
       return;
     }
@@ -140,6 +151,7 @@ export function useVoiceCoach({ frame, enabled }: UseVoiceCoachOptions) {
     if (spoken) {
       lastSpokenRef.current.set(selected.ruleKey, now);
       lastSpeechTimeRef.current = now;
+      onSpokenRef.current?.(selected.ruleKey);
     }
   }, [frame, enabled, speak]);
 

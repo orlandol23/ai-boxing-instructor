@@ -48,24 +48,51 @@ como antes.
 
 ---
 
-## Fase 6 — Persistência e evolução (Neon PostgreSQL)
+## Fase 6 — Gamificação + histórico de treinos ✅ Entregue
 
 Sem histórico não há progresso visível — essencial para manter a motivação.
+Arquitetura **local-first**: persistência em localStorage atrás da interface
+`HistoryStore` (`src/services/historyStore.ts`), com documento JSON
+**versionado por schema** e particionado por `profileId` — o F7 (perfis) não
+exigirá migração de dados.
 
-- Banco Neon (PostgreSQL serverless) com tabelas de sessões, rounds e golpes.
-- Endpoints `api/sessions` (salvar ao fim da sessão, listar histórico).
-- Tela de histórico: lista de treinos, médias de guarda/base, total de golpes.
-- Gráficos de evolução ao longo do tempo (score médio por semana, volume de
-  golpes, correções recorrentes diminuindo).
+- [x] Motor de gamificação (`src/engine/gamification/`, funções puras,
+  SPECS §5): XP por golpe (good +10 · fair +5 · poor +2) e bônus de round
+  (+30 guarda média ≥ 80, +20 base média ≥ 80); nível N = 250×N XP; ranks
+  por nível (1 Bronze · 10 Prata · 20 Ouro · 35 Campeão, nomes por tema —
+  skin kids pronta p/ o F7); streak de dias consecutivos com expiração à
+  meia-noite local; 8 badges permanentes; 3 missões diárias determinísticas
+  (seed = data local) verificadas contra o agregado do dia.
+- [x] Histórico por sessão (data, duração, rounds, golpes por tipo/qualidade,
+  médias de guarda/base, XP, feedback do coach IA quando houver) + agregados
+  diários para o gráfico semanal.
+- [x] Integração: "+XP" no punch feed; XP bar + LVL chip + streak na Home;
+  resumo de sessão com XP ganho (breakdown), level-up, badges novas (medal)
+  e missões do dia.
+- [x] Tela `/progress` (SPECS §7): nível/rank + XP bar, gráfico dos últimos
+  7 dias (cor pela faixa de score, sempre com número), grid de badges
+  (locked em grayscale) e próxima missão.
 
-**DoD:** terminar um treino salva a sessão; tela de histórico mostra evolução
-de pelo menos guarda média, base média e golpes por sessão.
+**DoD atendido:** terminar um treino credita XP, persiste a sessão e
+atualiza streak/badges/missões; `/progress` mostra a evolução da semana.
+
+### 6b — Sync na nuvem (Neon PostgreSQL) — futuro
+A interface `HistoryStore` foi desenhada para ganhar uma implementação
+remota sem tocar na UI nem no motor:
+- Banco Neon (PostgreSQL serverless) com tabelas de perfis/sessões/rounds.
+- Endpoints `api/sessions` (upsert ao fim da sessão, listar histórico) e
+  reconciliação local ↔ remoto (local-first continua sendo a fonte offline).
+
+**DoD:** o mesmo histórico aparece em dois dispositivos logados; offline
+tudo continua funcionando só com o storage local.
 
 ---
 
-## Fase 7 — Perfis e família
+## Fase 7 — Perfis e família (próxima fase)
 
 Projeto é dele **e da filha** — multiusuário é diferencial central.
+O storage do F6 já é particionado por `profileId` e os ranks já têm nomes
+por tema (`adult`/`kids`), então esta fase é sobretudo UI + seleção.
 
 - Perfis múltiplos locais (nome + avatar), seleção na home.
 - Sessões associadas ao perfil; histórico e gráficos por pessoa.
@@ -76,14 +103,14 @@ Projeto é dele **e da filha** — multiusuário é diferencial central.
 **DoD:** dois perfis usados em sequência geram históricos separados; cada
 perfil vê suas metas e progresso.
 
-### 7.1 Modo kids / gamificação
-- Conquistas (primeiro treino, 100 jabs, guarda 90+ por um round inteiro).
-- Streaks de treino (dias seguidos) com celebração visual.
+### 7.1 Modo kids
+- ~~Conquistas e streaks~~ → motor entregue no F6 (8 badges + streak);
+  falta a skin kids (sticker com glow, copy RPG das missões — SPECS §5/§6).
 - Linguagem e visual adaptados para criança no perfil kids (fontes maiores,
   feedback mais encorajador, rounds mais curtos por padrão).
 
-**DoD:** perfil kids tem ao menos 6 conquistas desbloqueáveis e streak visível
-na home.
+**DoD:** perfil kids vê as conquistas/streak com a skin Arcade Royale e a
+copy RPG das missões diárias.
 
 ---
 

@@ -172,5 +172,15 @@ export function useVoiceCoach({ frame, enabled, onSpoken }: UseVoiceCoachOptions
     };
   }, []);
 
-  return { isSpeaking };
+  const cancel = useCallback(() => {
+    if (typeof speechSynthesis !== 'undefined') {
+      speechSynthesis.cancel();
+      notifySpeakingChange();
+    }
+  }, []);
+
+  // `speak` é exposto para mensagens fora do fluxo frame-a-frame
+  // (ex.: ler o feedback do coach IA ao fim do round). Não bloqueia a
+  // UI: speechSynthesis é assíncrono por natureza.
+  return { isSpeaking, speak, cancel };
 }

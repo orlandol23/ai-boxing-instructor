@@ -1,8 +1,13 @@
 import { RotateCcw, Home } from 'lucide-react';
 import type { PunchType, SessionSummary as SessionSummaryData } from '../../engine/types';
+import type { CoachFeedbackStatus } from '../../hooks/useCoachingFeedback';
+import { CoachBubble } from './CoachBubble';
 
 interface SessionSummaryProps {
   summary: SessionSummaryData;
+  /** Estado do coach IA ('idle' oculta a seção — ex.: sessão sem rounds). */
+  coachStatus?: CoachFeedbackStatus;
+  coachFeedback?: string | null;
   onRestart: () => void;
   onHome: () => void;
 }
@@ -29,7 +34,13 @@ function scoreColor(score: number): string {
   return 'text-score-bad';
 }
 
-export function SessionSummary({ summary, onRestart, onHome }: SessionSummaryProps) {
+export function SessionSummary({
+  summary,
+  coachStatus = 'idle',
+  coachFeedback = null,
+  onRestart,
+  onHome,
+}: SessionSummaryProps) {
   const punches = (Object.keys(summary.punchBreakdown) as PunchType[])
     .map((type) => ({ type, count: summary.punchBreakdown[type] }))
     .filter((p) => p.count > 0)
@@ -113,6 +124,13 @@ export function SessionSummary({ summary, onRestart, onHome }: SessionSummaryPro
                 </li>
               ))}
             </ul>
+          </section>
+        )}
+
+        {coachStatus !== 'idle' && (
+          <section>
+            <h3 className="mb-2 text-xs uppercase tracking-widest text-fg-dim">Coach IA</h3>
+            <CoachBubble status={coachStatus} feedback={coachFeedback} context="session" />
           </section>
         )}
 

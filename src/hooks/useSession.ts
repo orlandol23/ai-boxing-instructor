@@ -13,7 +13,7 @@ interface UseSessionReturn {
   summary: SessionSummary;
   startSession: () => void;
   startRound: () => void;
-  endRound: () => void;
+  endRound: () => SessionSummary;
   endSession: () => SessionSummary;
   recordCorrection: (ruleKey: string) => void;
   reset: () => void;
@@ -76,11 +76,13 @@ export function useSession({ frame }: UseSessionOptions): UseSessionReturn {
     setRoundElapsedMs(0);
   }, [tracker]);
 
-  const endRound = useCallback(() => {
+  const endRound = useCallback((): SessionSummary => {
     tracker.endRound();
     roundStartRef.current = null;
     setPhase(tracker.getPhase());
     setRoundElapsedMs(0);
+    // Snapshot pós-round para consumidores (ex.: coach IA do round).
+    return tracker.getSummary();
   }, [tracker]);
 
   const endSession = useCallback((): SessionSummary => {

@@ -5,6 +5,7 @@ import { useMediaPipe } from '../hooks/useMediaPipe';
 import { useBoxingAnalysis } from '../hooks/useBoxingAnalysis';
 import { useVoiceCoach } from '../hooks/useVoiceCoach';
 import { useSession } from '../hooks/useSession';
+import { useCoachingFeedback } from '../hooks/useCoachingFeedback';
 import { CameraFeed } from '../components/Camera/CameraFeed';
 import { PoseCanvas } from '../components/Camera/PoseCanvas';
 import { CameraControls } from '../components/Camera/CameraControls';
@@ -12,6 +13,7 @@ import { StatusBar } from '../components/HUD/StatusBar';
 import { ScorePanel } from '../components/HUD/ScorePanel';
 import { SessionControls } from '../components/HUD/SessionControls';
 import { SessionSummary } from '../components/HUD/SessionSummary';
+import { CoachBubble } from '../components/HUD/CoachBubble';
 
 export function TrainingPage() {
   const navigate = useNavigate();
@@ -52,11 +54,39 @@ export function TrainingPage() {
   } = useSession({ frame });
 
   const [voiceEnabled, setVoiceEnabled] = useState(false);
-  const { isSpeaking } = useVoiceCoach({
+  const voiceEnabledRef = useRef(voiceEnabled);
+  useEffect(() => {
+    voiceEnabledRef.current = voiceEnabled;
+  }, [voiceEnabled]);
+
+  // Correções frame-a-frame só durante o round; fora dele a voz fica
+  // livre para ler o feedback do coach IA sem ser interrompida.
+  const { isSpeaking, speak, cancel: cancelSpeech } = useVoiceCoach({
     frame,
-    enabled: voiceEnabled,
+    enabled: voiceEnabled && phase === 'in_round',
     onSpoken: recordCorrection,
   });
+
+  // Desligar o toggle de voz também interrompe a leitura do coach IA.
+  useEffect(() => {
+    if (!voiceEnabled) cancelSpeech();
+  }, [voiceEnabled, cancelSpeech]);
+
+  const onCoachFeedback = useCallback(
+    (text: string) => {
+      // Voz opcional: lê o feedback do coach se o toggle estiver ativo.
+      if (voiceEnabledRef.current) speak(text);
+    },
+    [speak]
+  );
+
+  const {
+    status: coachStatus,
+    feedback: coachFeedback,
+    requestRoundFeedback,
+    requestSessionFeedback,
+    clear: clearCoach,
+  } = useCoachingFeedback({ onFeedback: onCoachFeedback });
 
   // Resize canvas to match container
   const updateDimensions = useCallback(() => {
@@ -102,16 +132,32 @@ export function TrainingPage() {
     startRound();
   }, [startSession, startRound]);
 
+  // Fim de round: encerra no tracker e pede o coaching da IA com o
+  // snapshot pós-round. Falhas do endpoint nunca afetam o treino.
+  const handleEndRound = useCallback(() => {
+    const finishedRound = currentRound;
+    const snapshot = endRound();
+    requestRoundFeedback(snapshot, finishedRound);
+  }, [currentRound, endRound, requestRoundFeedback]);
+
+  const handleEndSession = useCallback(() => {
+    const finalSummary = endSession();
+    requestSessionFeedback(finalSummary);
+  }, [endSession, requestSessionFeedback]);
+
   const handleRestart = useCallback(() => {
+    clearCoach();
+    cancelSpeech();
     resetSession();
     startSession();
     startRound();
-  }, [resetSession, startSession, startRound]);
+  }, [clearCoach, cancelSpeech, resetSession, startSession, startRound]);
 
   const handleHome = useCallback(() => {
+    clearCoach();
     resetSession();
     navigate('/');
-  }, [resetSession, navigate]);
+  }, [clearCoach, resetSession, navigate]);
 
   return (
     <div className="flex flex-1 flex-col">
@@ -146,13 +192,22 @@ export function TrainingPage() {
           onToggleVoice={() => setVoiceEnabled((v) => !v)}
           onStartSession={handleStartSession}
           onStartRound={startRound}
-          onEndRound={endRound}
-          onEndSession={endSession}
+          onEndRound={handleEndRound}
+          onEndSession={handleEndSession}
         />
+
+        {/* Coach IA do round — visível no descanso entre rounds */}
+        {phase === 'between_rounds' && coachStatus !== 'idle' && (
+          <div className="absolute inset-x-4 top-1/2 z-10 mx-auto max-w-md -translate-y-1/2">
+            <CoachBubble status={coachStatus} feedback={coachFeedback} context="round" />
+          </div>
+        )}
 
         {phase === 'ended' && (
           <SessionSummary
             summary={summary}
+            coachStatus={coachStatus}
+            coachFeedback={coachFeedback}
             onRestart={handleRestart}
             onHome={handleHome}
           />

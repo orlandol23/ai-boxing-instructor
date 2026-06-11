@@ -68,13 +68,15 @@ export interface BaseScore {
   weightDistribution: number;
 }
 
+export type PunchQuality = 'good' | 'fair' | 'poor';
+
 export interface PunchEvent {
   type: PunchType;
   timestamp: number;
   elbowExtension: number;
   returnSpeed: number;
   shoulderRotation: number;
-  quality: 'good' | 'fair' | 'poor';
+  quality: PunchQuality;
 }
 
 export interface FrameAngles {
@@ -96,6 +98,16 @@ export interface AnalysisFrame {
   angles: FrameAngles;
 }
 
+/** Resumo de um round individual (consumido pelo motor de gamificação). */
+export interface RoundSummary {
+  number: number;
+  durationMs: number;
+  punchCount: number;
+  avgGuardScore: number;
+  avgBaseScore: number;
+  punchQuality: Record<PunchQuality, number>;
+}
+
 export interface SessionSummary {
   duration: number;
   rounds: number;
@@ -105,6 +117,13 @@ export interface SessionSummary {
   avgBaseScore: number;
   corrections: string[];
   highlights: string[];
+  /**
+   * Campos detalhados para o motor de gamificação (F6). Opcionais por
+   * compatibilidade de tipo, mas o SessionTracker sempre os preenche.
+   */
+  roundDetails?: RoundSummary[];
+  punchQuality?: Record<PunchQuality, number>;
+  punchQualityByType?: Record<PunchType, Record<PunchQuality, number>>;
 }
 
 export interface VoiceFeedback {

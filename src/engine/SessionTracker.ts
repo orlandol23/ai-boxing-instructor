@@ -1,7 +1,9 @@
 import type {
   AnalysisFrame,
   PunchEvent,
+  PunchQuality,
   PunchType,
+  RoundSummary,
   SessionSummary,
 } from './types';
 
@@ -54,6 +56,27 @@ const EMPTY_PUNCH_BREAKDOWN: Record<PunchType, number> = {
 
 function newPunchBreakdown(): Record<PunchType, number> {
   return { ...EMPTY_PUNCH_BREAKDOWN };
+}
+
+function newQualityBreakdown(): Record<PunchQuality, number> {
+  return { good: 0, fair: 0, poor: 0 };
+}
+
+function newQualityByType(): Record<PunchType, Record<PunchQuality, number>> {
+  return {
+    jab: newQualityBreakdown(),
+    cross: newQualityBreakdown(),
+    lead_hook: newQualityBreakdown(),
+    rear_hook: newQualityBreakdown(),
+    lead_uppercut: newQualityBreakdown(),
+    rear_uppercut: newQualityBreakdown(),
+  };
+}
+
+function roundQuality(punches: PunchEvent[]): Record<PunchQuality, number> {
+  const quality = newQualityBreakdown();
+  for (const p of punches) quality[p.quality] += 1;
+  return quality;
 }
 
 function newRound(roundNumber: number, now: number): RoundStats {
@@ -211,6 +234,24 @@ export class SessionTracker {
     const endedAt = this.sessionEndedAt ?? now;
     const duration = Math.max(0, endedAt - startedAt);
 
+    const punchQuality = newQualityBreakdown();
+    const punchQualityByType = newQualityByType();
+    for (const r of rounds) {
+      for (const p of r.punches) {
+        punchQuality[p.quality] += 1;
+        punchQualityByType[p.type][p.quality] += 1;
+      }
+    }
+
+    const roundDetails: RoundSummary[] = rounds.map((r) => ({
+      number: r.number,
+      durationMs: Math.max(0, (r.endedAt ?? now) - r.startedAt),
+      punchCount: r.punches.length,
+      avgGuardScore: r.sampleCount > 0 ? r.guardScoreSum / r.sampleCount : 0,
+      avgBaseScore: r.sampleCount > 0 ? r.baseScoreSum / r.sampleCount : 0,
+      punchQuality: roundQuality(r.punches),
+    }));
+
     return {
       duration,
       rounds: this.completedRounds.length,
@@ -220,6 +261,9 @@ export class SessionTracker {
       avgBaseScore: totalSamples > 0 ? baseSum / totalSamples : 0,
       corrections: this.buildCorrections(),
       highlights: this.buildHighlights(rounds),
+      roundDetails,
+      punchQuality,
+      punchQualityByType,
     };
   }
 

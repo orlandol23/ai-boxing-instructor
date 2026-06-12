@@ -1,4 +1,5 @@
 import type { AnalysisFrame, PunchEvent, PunchType } from '../../engine/types';
+import { xpForPunch } from '../../engine/gamification/xp';
 
 interface ScorePanelProps {
   frame: AnalysisFrame | null;
@@ -103,6 +104,8 @@ function PunchBadge({ punch, rank }: { punch: PunchEvent; rank: number }) {
         {PUNCH_LABELS[punch.type] ?? punch.type}
       </span>
       <span className={`num font-bold leading-none ${quality.className}`}>{quality.label}</span>
+      {/* +XP do golpe (SPECS §6 — punch feed) */}
+      <span className="num font-bold leading-none text-xp">+{xpForPunch(punch.quality)}</span>
     </div>
   );
 }

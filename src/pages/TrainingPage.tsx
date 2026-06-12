@@ -6,6 +6,8 @@ import { useBoxingAnalysis } from '../hooks/useBoxingAnalysis';
 import { useVoiceCoach } from '../hooks/useVoiceCoach';
 import { useSession } from '../hooks/useSession';
 import { useCoachingFeedback } from '../hooks/useCoachingFeedback';
+import { useGamification } from '../hooks/useGamification';
+import type { SessionGains } from '../engine/gamification/applySession';
 import { CameraFeed } from '../components/Camera/CameraFeed';
 import { PoseCanvas } from '../components/Camera/PoseCanvas';
 import { CameraControls } from '../components/Camera/CameraControls';
@@ -52,6 +54,11 @@ export function TrainingPage() {
     recordCorrection,
     reset: resetSession,
   } = useSession({ frame });
+
+  // Gamificação (F6): registra a sessão concluída e guarda os ganhos
+  // (XP, badges, missões) para o resumo.
+  const { recordSession, attachCoachFeedback } = useGamification();
+  const [gains, setGains] = useState<SessionGains | null>(null);
 
   const [voiceEnabled, setVoiceEnabled] = useState(false);
   const voiceEnabledRef = useRef(voiceEnabled);
@@ -142,12 +149,25 @@ export function TrainingPage() {
 
   const handleEndSession = useCallback(() => {
     const finalSummary = endSession();
+    // Sessão sem nenhum round completo não entra no histórico/XP.
+    if (finalSummary.rounds > 0) {
+      setGains(recordSession(finalSummary));
+    }
     requestSessionFeedback(finalSummary);
-  }, [endSession, requestSessionFeedback]);
+  }, [endSession, recordSession, requestSessionFeedback]);
+
+  // O feedback do coach IA chega async, depois da sessão já registrada —
+  // anexa ao registro persistido quando estiver disponível.
+  useEffect(() => {
+    if (phase === 'ended' && coachStatus === 'success' && coachFeedback && gains) {
+      attachCoachFeedback(gains.record.id, coachFeedback);
+    }
+  }, [phase, coachStatus, coachFeedback, gains, attachCoachFeedback]);
 
   const handleRestart = useCallback(() => {
     clearCoach();
     cancelSpeech();
+    setGains(null);
     resetSession();
     startSession();
     startRound();
@@ -155,6 +175,7 @@ export function TrainingPage() {
 
   const handleHome = useCallback(() => {
     clearCoach();
+    setGains(null);
     resetSession();
     navigate('/');
   }, [clearCoach, resetSession, navigate]);
@@ -206,6 +227,7 @@ export function TrainingPage() {
         {phase === 'ended' && (
           <SessionSummary
             summary={summary}
+            gains={gains}
             coachStatus={coachStatus}
             coachFeedback={coachFeedback}
             onRestart={handleRestart}

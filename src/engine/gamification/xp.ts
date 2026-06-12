@@ -75,7 +75,8 @@ export const RANK_MIN_LEVEL: Record<RankId, number> = {
 
 const RANK_ORDER: RankId[] = ['champion', 'gold', 'silver', 'bronze'];
 
-/** Nomes por tema: cinturões no adulto, coroas no kids (UI kids chega no F7). */
+/** Nomes por tema: cinturões no adulto, coroas no kids (a UI passa o
+ *  tema do perfil ativo — ProfileContext, F7). */
 export const RANK_LABELS: Record<Theme, Record<RankId, string>> = {
   adult: {
     bronze: 'Cinturão Bronze',

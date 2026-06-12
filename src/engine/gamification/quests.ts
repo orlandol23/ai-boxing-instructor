@@ -14,7 +14,7 @@ import type { DailyAggregate } from './types';
 
 export interface QuestDefinition {
   id: string;
-  /** Copy adulta (PT-BR); a skin RPG do kids chega no F7. */
+  /** Copy adulta (PT-BR); a skin RPG do kids vive em src/theme/copy.ts. */
   description: string;
   /** Recompensa em XP ao completar. */
   xp: number;

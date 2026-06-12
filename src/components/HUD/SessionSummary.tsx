@@ -3,7 +3,7 @@ import type { PunchType, SessionSummary as SessionSummaryData } from '../../engi
 import type { CoachFeedbackStatus } from '../../hooks/useCoachingFeedback';
 import type { SessionGains } from '../../engine/gamification/applySession';
 import { rankLabel } from '../../engine/gamification/xp';
-import { getTheme } from '../../theme/theme';
+import { useAppTheme } from '../../contexts/ProfileContext';
 import { CoachBubble } from './CoachBubble';
 import { LevelChip } from '../Progress/LevelChip';
 import { XpBar } from '../Progress/XpBar';
@@ -51,6 +51,7 @@ export function SessionSummary({
   onRestart,
   onHome,
 }: SessionSummaryProps) {
+  const theme = useAppTheme();
   const punches = (Object.keys(summary.punchBreakdown) as PunchType[])
     .map((type) => ({ type, count: summary.punchBreakdown[type] }))
     .filter((p) => p.count > 0)
@@ -89,7 +90,7 @@ export function SessionSummary({
                 <ChevronsUp size={16} aria-hidden="true" />
                 Subiu de nível! LVL {gains.levelBefore.level} → {gains.levelAfter.level}
                 {gains.rankAfter !== gains.rankBefore &&
-                  ` · ${rankLabel(gains.levelAfter.level, getTheme())}`}
+                  ` · ${rankLabel(gains.levelAfter.level, theme)}`}
               </p>
             )}
 

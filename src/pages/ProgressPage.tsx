@@ -4,7 +4,8 @@ import { useGamification } from '../hooks/useGamification';
 import { BADGES } from '../engine/gamification/badges';
 import { progressSnapshot, weeklyChartData } from '../engine/gamification/selectors';
 import { rankLabel } from '../engine/gamification/xp';
-import { getTheme } from '../theme/theme';
+import { useAppTheme } from '../contexts/ProfileContext';
+import { uiCopy } from '../theme/copy';
 import { LevelChip } from '../components/Progress/LevelChip';
 import { XpBar } from '../components/Progress/XpBar';
 import { MedalBadge } from '../components/Progress/MedalBadge';
@@ -16,6 +17,7 @@ import { WeeklyChart } from '../components/Progress/WeeklyChart';
  * grid de badges (locked em grayscale) e a próxima missão do dia.
  */
 export function ProgressPage() {
+  const theme = useAppTheme();
   const { history } = useGamification();
   const progress = useMemo(() => progressSnapshot(history), [history]);
   const week = useMemo(() => weeklyChartData(history), [history]);
@@ -31,7 +33,7 @@ export function ProgressPage() {
           <div className="flex items-center justify-between gap-2">
             <LevelChip level={progress.level.level} />
             <span className="font-display text-lg font-bold uppercase tracking-wider text-accent">
-              {rankLabel(progress.level.level, getTheme())}
+              {rankLabel(progress.level.level, theme)}
             </span>
           </div>
           <div className="mt-3">
@@ -75,7 +77,7 @@ export function ProgressPage() {
             <QuestCard status={nextQuest} />
           ) : (
             <p className="rounded-[14px] border border-accent bg-surface p-3 text-sm font-semibold text-accent-light">
-              Missões de hoje completas — volte amanhã para 3 novas!
+              {uiCopy('questsAllDone', theme)}
             </p>
           )}
         </section>

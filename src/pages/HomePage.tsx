@@ -4,12 +4,14 @@ import { Swords, Target, Dumbbell, Flame, TrendingUp } from 'lucide-react';
 import { useGamification } from '../hooks/useGamification';
 import { progressSnapshot } from '../engine/gamification/selectors';
 import { rankLabel } from '../engine/gamification/xp';
-import { getTheme } from '../theme/theme';
+import { useProfiles } from '../contexts/ProfileContext';
+import { homeGreeting, uiCopy } from '../theme/copy';
 import { LevelChip } from '../components/Progress/LevelChip';
 import { XpBar } from '../components/Progress/XpBar';
 
 export function HomePage() {
   const navigate = useNavigate();
+  const { activeProfile, theme } = useProfiles();
   const { history } = useGamification();
   const progress = useMemo(() => progressSnapshot(history), [history]);
 
@@ -22,7 +24,9 @@ export function HomePage() {
           Boxing AI
         </h1>
         <p className="mt-2 text-sm text-fg-muted">
-          Seu instrutor virtual de boxe
+          {activeProfile
+            ? homeGreeting(activeProfile.name, theme)
+            : uiCopy('homeTagline', theme)}
         </p>
       </div>
 
@@ -31,7 +35,7 @@ export function HomePage() {
         <div className="flex items-center justify-between gap-2">
           <LevelChip level={progress.level.level} />
           <span className="font-display text-sm font-bold uppercase tracking-wider text-accent">
-            {rankLabel(progress.level.level, getTheme())}
+            {rankLabel(progress.level.level, theme)}
           </span>
         </div>
         <div className="mt-3">

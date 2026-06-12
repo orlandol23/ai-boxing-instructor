@@ -156,6 +156,31 @@ html, body, #root {
   font-family: var(--font-sans);
 }
 
+/* Medal/badge (SPECS §6) — skin 100% por tokens, sem cor hard-coded.
+   Adulto: círculo metálico dourado. Kids: sticker (radius 24, radial
+   lilás→rosa, glow, rotate −3°). */
+.medal-coin {
+  border: 2px solid var(--accent-deep);
+  border-radius: 9999px;
+  background: radial-gradient(
+    circle at 35% 30%,
+    var(--accent-light),
+    var(--accent) 55%,
+    var(--accent-deep)
+  );
+}
+[data-theme='kids'] .medal-coin {
+  border-radius: 24px;
+  background: radial-gradient(
+    circle at 35% 30%,
+    var(--accent-light),
+    var(--accent) 55%,
+    var(--primary)
+  );
+  box-shadow: var(--glow-accent);
+  transform: rotate(-3deg);
+}
+
 /* números do HUD: sempre tabulares */
 .num {
   font-family: var(--font-display);

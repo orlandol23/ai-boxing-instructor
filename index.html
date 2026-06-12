@@ -5,6 +5,26 @@
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#0A0A0A" />
+    <script>
+      // Tema do último perfil ativo ANTES do primeiro paint (sem flash).
+      // Lê o documento do ProfileStore (boxing-ai:profiles) direto do
+      // localStorage; qualquer problema → tema adulto (Fight Night).
+      (function () {
+        var theme = 'adult';
+        try {
+          var doc = JSON.parse(localStorage.getItem('boxing-ai:profiles') || 'null');
+          if (doc && Array.isArray(doc.profiles)) {
+            for (var i = 0; i < doc.profiles.length; i++) {
+              var p = doc.profiles[i];
+              if (p && p.id === doc.activeProfileId && p.isKid === true) theme = 'kids';
+            }
+          }
+        } catch (e) {
+          /* localStorage indisponível/corrompido → tema padrão */
+        }
+        document.documentElement.dataset.theme = theme;
+      })();
+    </script>
     <meta name="description" content="Instrutor virtual de boxe com IA - análise de pose em tempo real" />
     <link rel="apple-touch-icon" href="/favicon.svg" />
     <title>AI Boxing Instructor</title>

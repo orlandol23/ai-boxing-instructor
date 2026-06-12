@@ -4,8 +4,8 @@
  * Os tokens em src/styles/globals.css definem dois temas sobre o mesmo
  * sistema de componentes, selecionados via atributo `data-theme` no <html>:
  * - 'adult' — Fight Night (default)
- * - 'kids'  — Arcade Royale (pronto nos tokens; a UI de troca chega com o
- *   seletor de perfis na Fase 7)
+ * - 'kids'  — Arcade Royale (ativado pelo perfil com `isKid` no seletor
+ *   /profiles — ProfileContext, F7)
  */
 export type Theme = 'adult' | 'kids';
 

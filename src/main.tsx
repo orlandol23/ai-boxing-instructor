@@ -1,7 +1,8 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import App from './App';
-import { DEFAULT_THEME, setTheme } from './theme/theme';
+import { activeProfileOf, createProfileStore } from './services/profileStore';
+import { setTheme } from './theme/theme';
 
 // Fontes self-hosted (@fontsource) — empacotadas pelo Vite e pré-cacheadas
 // pelo service worker do PWA, funcionam offline (SPECS §8.5).
@@ -13,9 +14,11 @@ import '@fontsource/saira-condensed/800.css';
 
 import './styles/globals.css';
 
-// Tema Fight Night (adult) no boot; o tema kids é ativado pelo seletor
-// de perfis (Fase 7) via setTheme('kids').
-setTheme(DEFAULT_THEME);
+// Tema do último perfil ativo (F7). O script inline no index.html já
+// aplicou antes do primeiro paint; reaplicar aqui mantém index.html e
+// app consistentes mesmo se o inline for removido/falhar.
+const bootProfile = activeProfileOf(createProfileStore().load());
+setTheme(bootProfile?.isKid ? 'kids' : 'adult');
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

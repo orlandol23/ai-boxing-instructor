@@ -88,33 +88,53 @@ tudo continua funcionando só com o storage local.
 
 ---
 
-## Fase 7 — Perfis e família (próxima fase)
+## Fase 7 — Perfis e família ✅ Entregue
 
 Projeto é dele **e da filha** — multiusuário é diferencial central.
-O storage do F6 já é particionado por `profileId` e os ranks já têm nomes
-por tema (`adult`/`kids`), então esta fase é sobretudo UI + seleção.
+O storage do F6 já era particionado por `profileId`, então a fase foi
+UI + seleção + tema.
 
-- Perfis múltiplos locais (nome + avatar), seleção na home.
-- Sessões associadas ao perfil; histórico e gráficos por pessoa.
-- Métricas comparativas amigáveis (sem competição tóxica: "seu melhor", metas
-  pessoais por perfil).
-- Metas semanais por perfil (ex.: 3 treinos/semana, guarda média ≥ 80).
+- [x] Perfis múltiplos locais (`src/services/profileStore.ts`, mesmo
+  padrão do HistoryStore: localStorage, schema versionado, mutações
+  puras): nome, avatar de set curado, modo kids, perfil ativo. O 1º
+  perfil adota o id `default` e herda o histórico/XP pré-F7.
+- [x] Tela `/profiles` (SPECS §7): Profile cards (avatar com borda
+  accent, LVL chip do snapshot de gamificação do perfil, selecionado com
+  glow), card "novo perfil", criação/edição (nome, avatar, toggle "Modo
+  kids 👑") e exclusão com confirmação dupla. Primeiro uso cai no
+  seletor; avatar do perfil ativo no Header abre a tela.
+- [x] Sessões/histórico/gráficos por pessoa: `useGamification` lê e
+  escreve na partição do perfil ativo (`ProfileContext`); trocar de
+  perfil troca XP, badges, missões e histórico juntos.
+- [x] **Deletar perfil não apaga o histórico** no HistoryStore — só o
+  esconde (exclusão acidental não destrói meses de treino; o F6b pode
+  reconciliar).
+- [x] Boot sem flash: script inline no `index.html` aplica o tema do
+  último perfil ativo antes do primeiro paint.
 
-**DoD:** dois perfis usados em sequência geram históricos separados; cada
-perfil vê suas metas e progresso.
+**DoD atendido:** dois perfis usados em sequência geram históricos
+separados; cada perfil vê seu progresso e seu tema.
 
-### 7.1 Modo kids
-- ~~Conquistas e streaks~~ → motor entregue no F6 (8 badges + streak);
-  falta a skin kids (sticker com glow, copy RPG das missões — SPECS §5/§6).
-- Linguagem e visual adaptados para criança no perfil kids (fontes maiores,
-  feedback mais encorajador, rounds mais curtos por padrão).
+### 7.1 Modo kids ✅ Entregue (skin)
+- [x] Tema Arcade Royale aplicado ao app inteiro via tokens quando o
+  perfil ativo é kids; medal/badge com a skin sticker (radius 24, glow,
+  rotate −3° — `[data-theme='kids']`, 100% por tokens).
+- [x] Copy por tema em dicionário central (`src/theme/copy.ts`, SPECS
+  §8.3): ranks Cinturões vs Coroas (Bronze→Rainha do Ringue), skin RPG
+  das 8 missões diárias ("Defenda o castelo: guarda ≥ 80 no round"),
+  saudação da Home e nomes de badge onde a metáfora cabe. Feedback
+  técnico de treino é idêntico nos dois temas (precisão > tema).
+- Pendente p/ fase futura: rounds mais curtos por padrão no perfil kids
+  (depende das configurações de round do F8).
 
-**DoD:** perfil kids vê as conquistas/streak com a skin Arcade Royale e a
-copy RPG das missões diárias.
+**DoD atendido:** perfil kids vê conquistas/streak com a skin Arcade
+Royale e a copy RPG das missões diárias.
 
 ---
 
-## Fase 8 — Modos de treino
+## Fase 8 — Modos de treino (próxima fase)
+
+Modo Técnica/Drill + tela de configurações.
 
 - **Modo Técnica/Drill** (card hoje desabilitado na home): sequências guiadas
   (ex.: jab-jab-cross), o engine valida cada golpe da sequência e dá feedback
@@ -168,6 +188,8 @@ long tasks > 50ms durante análise.
 | `returnSpeed` sempre `0` | `PunchClassifier` | 9 |
 | Modelo MediaPipe baixado da CDN a cada visita | `useMediaPipe` | 10 |
 | Card "Técnica" desabilitado na home | `HomePage` | 8 |
+| Rounds mais curtos por padrão no perfil kids | `useSession` + configurações | 8 |
+| Histórico de perfil deletado fica órfão no localStorage (decisão: nunca apagar) | `profileStore` / futura "limpeza" em configurações | 8+ |
 | ~~Coach IA sem UI (endpoint pronto, frontend pendente)~~ ✅ entregue (5.1) | `useCoachingFeedback` + `CoachBubble` | 5 |
 
 ---

@@ -1,57 +1,57 @@
 # AI Boxing Instructor 🥊
 
-> Instrutor de boxe que analisa sua pose pela webcam **em tempo real** (MediaPipe, client-side) e devolve **coaching em PT-BR gerado por IA** (Claude), com gamificação e funcionamento offline (PWA).
+> A boxing coach that analyzes your form from the webcam **in real time** (MediaPipe, client-side) and returns **AI-generated coaching in Brazilian Portuguese** (Claude), with gamification and offline support (PWA).
 
 [![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=white)](https://react.dev/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![Vite](https://img.shields.io/badge/Vite-build-646CFF?logo=vite&logoColor=white)](https://vitejs.dev/)
 [![Tests](https://img.shields.io/badge/tests-Vitest-6E9F18?logo=vitest&logoColor=white)](https://vitest.dev/)
 
-**🔗 Demo:** _<!-- TODO: colar a URL da Vercel aqui depois do deploy, ex.: https://ai-boxing-instructor.vercel.app -->_
+**🔗 Demo:** _<!-- TODO: paste the Vercel URL here after deploy, e.g. https://ai-boxing-instructor.vercel.app -->_
 
-<!-- TODO: adicionar mídia em docs/ e referenciar aqui:
-![Detecção de pose + coach](docs/demo.gif)
-![Tela de treino](docs/screenshot-training.png)
+<!-- TODO: add media under docs/ and reference it here:
+![Pose detection + coach](docs/demo.gif)
+![Training screen](docs/screenshot-training.png)
 -->
 
 ---
 
-## O que faz
+## What it does
 
-- **Análise de pose em tempo real** pela câmera, 100% no navegador (MediaPipe Pose Landmarker via WASM, sem enviar vídeo para servidor).
-- **Avaliação técnica por frame:** guarda, base e *stance* (orthodox/southpaw) pontuadas de 0 a 100; classificação de golpes (jab, cross, hook e uppercut, lead/rear) por velocidade e extensão do braço.
-- **Coaching por IA em PT-BR:** ao fim de cada round/sessão, as métricas viram um texto curto e motivacional de um "treinador" (Claude Haiku), sem jargão técnico.
-- **Voz:** o coaching é lido em voz alta (Web Speech API).
-- **Gamificação:** XP, níveis, streaks, missões diárias e medalhas — tudo com lógica determinística e testada.
-- **Multi-perfil + tema kids** ("Arcade Royale") com copy alternativa para crianças.
-- **Offline-first (PWA):** o app abre e treina sem rede; só o coaching por IA exige conexão.
+- **Real-time pose analysis** from the camera, 100% in the browser (MediaPipe Pose Landmarker via WASM — no video ever leaves the device).
+- **Per-frame technical scoring:** guard, base, and stance (orthodox/southpaw) scored 0–100; punch classification (jab, cross, hook, uppercut — lead/rear) from arm velocity and extension.
+- **AI coaching in Brazilian Portuguese:** at the end of each round/session, the metrics become a short, motivational message from a "coach" (Claude Haiku), with no technical jargon.
+- **Voice:** the coaching is read aloud (Web Speech API).
+- **Gamification:** XP, levels, streaks, daily quests, and badges — all with deterministic, tested logic.
+- **Multi-profile + kids theme** ("Arcade Royale") with alternative copy for children.
+- **Offline-first (PWA):** the app opens and trains with no network; only the AI coaching requires a connection.
 
-## Arquitetura
+## Architecture
 
-Separação em camadas, cada uma testável de forma isolada:
+Layered separation — each layer is testable in isolation:
 
-| Camada | Pasta | Responsabilidade |
+| Layer | Folder | Responsibility |
 |---|---|---|
-| **Engine** | `src/engine/` | Lógica de boxe **pura** (stance, guarda, base, golpes, ângulos) + gamificação. Sem React, sem I/O → testável com fixtures. |
-| **Hooks** | `src/hooks/` | Ciclo de vida do MediaPipe, câmera, sessão, voz, coaching. Faz a ponte entre o mundo imperativo (RAF/WASM) e o React. |
-| **Services** | `src/services/` | Módulos puros de I/O: cliente do `/api/coach` e armazenamento local-first (perfis e histórico). |
-| **API** | `api/` | Vercel Functions (Node). `POST /api/coach` chama o Claude; `GET /api/health` é sanity check. |
-| **UI** | `src/components/`, `src/pages/` | Componentes apresentacionais, sem regra de negócio. |
+| **Engine** | `src/engine/` | Pure boxing logic (stance, guard, base, punches, angles) + gamification. No React, no I/O → testable with fixtures. |
+| **Hooks** | `src/hooks/` | MediaPipe, camera, session, voice, and coaching lifecycle. Bridges the imperative world (RAF/WASM) to React. |
+| **Services** | `src/services/` | Pure I/O modules: the `/api/coach` client and local-first storage (profiles and history). |
+| **API** | `api/` | Vercel Functions (Node). `POST /api/coach` calls Claude; `GET /api/health` is a sanity check. |
+| **UI** | `src/components/`, `src/pages/` | Presentational components, no business logic. |
 
-### Decisões técnicas (resumo)
+### Technical decisions (summary)
 
-- **Engine puro e sem estado de React** → a lógica difícil (heurísticas de pose, fórmulas de XP) é coberta por testes determinísticos com fixtures, não por testes de UI frágeis.
-- **`BoxingEngine.analyze()` é idempotente** para a mesma referência de `landmarks` → seguro chamar de `useMemo` mesmo sob React Strict Mode (double-invoke).
-- **Loop de detecção desacoplado do React:** roda em `requestAnimationFrame` usando `ref`s, com *frame skip* configurável e atualização de estado **throttled a ~30fps** — evita re-render a cada frame da câmera.
-- **Fallback GPU→CPU** na inicialização do MediaPipe → funciona em dispositivos sem WebGL.
-- **Cliente de IA resiliente e puro** (`coachClient.ts`): erros tipados com `reason` discriminado, *retry* só em falhas transitórias (rede/timeout/5xx), `AbortController` para timeout e cancelamento no unmount.
-- **Prompt caching** no system prompt do Claude (`cache_control: ephemeral`) → ~90% menos input tokens em chamadas repetidas na mesma sessão.
-- **Degradação graciosa:** sem `ANTHROPIC_API_KEY`, o `/api/coach` responde 503 e o app **esconde só a UI de coaching** — o resto continua funcionando.
-- **Storage local-first versionado:** documentos JSON em `localStorage` com `schemaVersion` + migração defensiva (dado corrompido cai em documento vazio, sem quebrar o app); deletar perfil não destrói o histórico.
+- **Pure, React-free engine** → the hard logic (pose heuristics, XP formulas) is covered by deterministic fixture-based tests, not by brittle UI tests.
+- **`BoxingEngine.analyze()` is idempotent** for the same `landmarks` reference → safe to call from `useMemo` even under React Strict Mode (double-invoke).
+- **Detection loop decoupled from React:** it runs in `requestAnimationFrame` using refs, with a configurable frame skip and React state updates **throttled to ~30fps** — avoiding a re-render on every camera frame.
+- **GPU→CPU fallback** on MediaPipe init → works on devices without WebGL.
+- **Resilient, pure AI client** (`coachClient.ts`): typed errors with a discriminated `reason`, retries only on transient failures (network/timeout/5xx), and uses `AbortController` for both timeout and unmount cancellation.
+- **Prompt caching** on the Claude system prompt (`cache_control: ephemeral`) → ~90% fewer input tokens on repeated calls within the same session.
+- **Graceful degradation:** without `ANTHROPIC_API_KEY`, `/api/coach` returns 503 and the app **hides only the coaching UI** — everything else keeps working.
+- **Versioned local-first storage:** JSON documents in `localStorage` with a `schemaVersion` + defensive migration (corrupt data falls back to an empty document without breaking the app); deleting a profile does not destroy its history.
 
-## Testes
+## Tests
 
-Suíte em **Vitest** com **18 arquivos de teste** cobrindo o que importa: heurísticas do engine (stance, guarda, base, ângulos, classificação de golpes), motor de gamificação (XP, streak, missões, medalhas), storage (perfis e histórico, incluindo migração de schema) e o cliente de IA (classificação de erro, retry, timeout, saneamento de payload). CI no GitHub Actions roda `lint` + `typecheck` + `test` + `build`.
+A **Vitest** suite with **18 test files** covering what matters: engine heuristics (stance, guard, base, angles, punch classification), the gamification engine (XP, streaks, quests, badges), storage (profiles and history, including schema migration), and the AI client (error classification, retry, timeout, payload sanitization). CI on GitHub Actions runs `lint` + `typecheck` + `test` + `build`.
 
 ```bash
 npm run test       # Vitest
@@ -59,59 +59,59 @@ npm run lint       # ESLint (src/ + api/)
 npm run typecheck  # tsc --noEmit
 ```
 
-## Rodando localmente
+## Running locally
 
 ```bash
 npm install --legacy-peer-deps
-cp .env.example .env.local      # defina ANTHROPIC_API_KEY para habilitar o coaching por IA
-npm run dev                     # frontend (Vite) em http://localhost:5173
+cp .env.example .env.local      # set ANTHROPIC_API_KEY to enable AI coaching
+npm run dev                     # frontend (Vite) at http://localhost:5173
 ```
 
-Para rodar o frontend **junto com as funções `api/`** (mesma origem, como em produção):
+To run the frontend **together with the `api/` functions** (same origin, like production):
 
 ```bash
 npm i -g vercel
 vercel dev
 ```
 
-> Sem `ANTHROPIC_API_KEY`, o app roda normalmente — apenas a faixa de coaching por IA fica oculta (degradação graciosa).
+> Without `ANTHROPIC_API_KEY`, the app still runs — only the AI coaching panel is hidden (graceful degradation).
 
 ## Deploy (Vercel)
 
-1. Importe o repositório no painel da Vercel (auto-detecta Vite).
-2. Em **Settings → Environment Variables**, defina `ANTHROPIC_API_KEY`.
-3. Push em `main` → deploy de produção; push em outras branches → preview deploys.
+1. Import the repository in the Vercel dashboard (Vite is auto-detected).
+2. Under **Settings → Environment Variables**, set `ANTHROPIC_API_KEY`.
+3. Pushing to `main` triggers a production deploy; pushing to other branches creates preview deploys.
 
 ## Stack
 
 - **Frontend:** React 19 + TypeScript (strict) + Vite + Tailwind CSS
-- **Visão computacional:** MediaPipe Pose Landmarker (client-side, WASM, GPU→CPU)
-- **IA:** Claude (Haiku) via Vercel Function `api/coach.ts`, com prompt caching
-- **Voz:** Web Speech API
-- **PWA:** vite-plugin-pwa (precache offline)
-- **Testes:** Vitest + Testing Library · **CI:** GitHub Actions
+- **Computer vision:** MediaPipe Pose Landmarker (client-side, WASM, GPU→CPU)
+- **AI:** Claude (Haiku) via the `api/coach.ts` Vercel Function, with prompt caching
+- **Voice:** Web Speech API
+- **PWA:** vite-plugin-pwa (offline precache)
+- **Tests:** Vitest + Testing Library · **CI:** GitHub Actions
 
-## Estrutura
+## Project structure
 
 ```
 src/
   components/   UI (Camera, HUD, Layout, Progress, Profiles)
-  contexts/     ProfileContext (perfil ativo + tema)
-  engine/       Análise de boxe (pura) + gamification/ (XP, streak, missões, medalhas)
+  contexts/     ProfileContext (active profile + theme)
+  engine/       Boxing analysis (pure) + gamification/ (XP, streaks, quests, badges)
   hooks/        useMediaPipe, useCamera, useSession, useCoachingFeedback, useVoiceCoach...
   pages/        Home, Training, Progress, Profiles
-  services/     coachClient, profileStore, historyStore (módulos puros)
-  theme/        tokens de tema + copy (adulto / kids)
+  services/     coachClient, profileStore, historyStore (pure modules)
+  theme/        theme tokens + copy (adult / kids)
 api/
-  coach.ts      POST /api/coach — coaching por IA (Claude + prompt caching)
+  coach.ts      POST /api/coach — AI coaching (Claude + prompt caching)
   health.ts     GET  /api/health — sanity check
 ```
 
 ## Status & roadmap
 
-- **Implementado:** análise de pose, scoring de guarda/base/stance, classificação de golpes, coaching por IA (PT-BR) + voz, gamificação, multi-perfil + tema kids, PWA offline.
-- **Futuro:** sincronização de progresso em nuvem (Neon/PostgreSQL) — hoje o armazenamento é local-first.
+- **Implemented:** pose analysis, guard/base/stance scoring, punch classification, AI coaching (Brazilian Portuguese) + voice, gamification, multi-profile + kids theme, offline PWA.
+- **Planned:** cloud sync of progress (Neon/PostgreSQL) — storage is currently local-first.
 
 ---
 
-_Projeto de portfólio. Roda inteiramente no cliente para análise de pose; nenhum vídeo sai do navegador._
+_Portfolio project. Pose analysis runs entirely on the client; no video ever leaves the browser._

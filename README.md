@@ -7,7 +7,7 @@
 [![Vite](https://img.shields.io/badge/Vite-build-646CFF?logo=vite&logoColor=white)](https://vitejs.dev/)
 [![Tests](https://img.shields.io/badge/tests-Vitest-6E9F18?logo=vitest&logoColor=white)](https://vitest.dev/)
 
-**🔗 Demo:** _<!-- TODO: paste the Vercel URL here after deploy, e.g. https://ai-boxing-instructor.vercel.app -->_
+**🔗 Live demo:** **[ai-boxing-instructor.vercel.app](https://ai-boxing-instructor.vercel.app)**
 
 <!-- TODO: add media under docs/ and reference it here:
 ![Pose detection + coach](docs/demo.gif)

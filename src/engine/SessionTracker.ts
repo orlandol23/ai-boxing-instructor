@@ -5,6 +5,7 @@ import type {
   PunchType,
   RoundSummary,
   SessionSummary,
+  SummaryNote,
 } from './types';
 
 export type SessionPhase = 'idle' | 'between_rounds' | 'in_round' | 'ended';
@@ -32,18 +33,30 @@ interface CorrectionEntry {
 const HIGH_SCORE_THRESHOLD = 85;
 const HIGHLIGHT_MIN_STREAK_MS = 8000;
 const RECURRING_CORRECTION_THRESHOLD = 3;
-const RULE_KEY_LABELS: Record<string, string> = {
-  'guard:critical': 'Guarda baixa em momentos críticos',
-  'guard:hand-height': 'Mãos caíram da altura ideal',
-  'guard:elbow-tuck': 'Cotovelos abertos com frequência',
-  'guard:chin-tuck': 'Queixo exposto recorrentemente',
-  'base:critical': 'Base fraca em momentos críticos',
-  'base:foot-width': 'Pés fechados demais',
-  'base:knee-flex': 'Joelhos travados ou pouco flexionados',
-  'base:weight': 'Distribuição de peso desbalanceada',
-  'punch:fair': 'Retorno da mão à guarda lento',
-  'punch:poor': 'Extensão de braço ou rotação insuficiente',
+/**
+ * Coaching ruleKey → i18n key of the correction sentence.
+ *
+ * `ruleKey` uses `:` and `-`, which collide with i18next's namespace and
+ * key separators, so the mapping is explicit rather than derived. A rule
+ * with no entry falls back to `notes.correction.generic`, which renders
+ * the raw ruleKey — new rules degrade, they never crash.
+ */
+export const CORRECTION_NOTE_KEYS: Record<string, string> = {
+  'guard:critical': 'notes.correction.guardCritical',
+  'guard:hand-height': 'notes.correction.guardHandHeight',
+  'guard:elbow-tuck': 'notes.correction.guardElbowTuck',
+  'guard:chin-tuck': 'notes.correction.guardChinTuck',
+  'base:critical': 'notes.correction.baseCritical',
+  'base:foot-width': 'notes.correction.baseFootWidth',
+  'base:knee-flex': 'notes.correction.baseKneeFlex',
+  'base:weight': 'notes.correction.baseWeight',
+  'punch:fair': 'notes.correction.punchFair',
+  'punch:poor': 'notes.correction.punchPoor',
 };
+
+export const GENERIC_CORRECTION_NOTE_KEY = 'notes.correction.generic';
+export const HIGH_SCORE_STREAK_NOTE_KEY = 'notes.highlight.highScoreStreak';
+export const GOOD_PUNCHES_NOTE_KEY = 'notes.highlight.goodPunches';
 
 const EMPTY_PUNCH_BREAKDOWN: Record<PunchType, number> = {
   jab: 0,
@@ -301,28 +314,36 @@ export class SessionTracker {
     r.highScoreStreakMs = 0;
   }
 
-  private buildCorrections(): string[] {
+  private buildCorrections(): SummaryNote[] {
     const recurring = [...this.corrections.entries()]
       .filter(([, entry]) => entry.count >= RECURRING_CORRECTION_THRESHOLD)
       .sort((a, b) => b[1].count - a[1].count);
 
-    return recurring.map(([ruleKey, entry]) => {
-      const label = RULE_KEY_LABELS[ruleKey] ?? ruleKey;
-      return `${label} (${entry.count}x)`;
+    return recurring.map(([ruleKey, entry]): SummaryNote => {
+      const key = CORRECTION_NOTE_KEYS[ruleKey];
+      return key
+        ? { key, params: { count: entry.count } }
+        : { key: GENERIC_CORRECTION_NOTE_KEY, params: { rule: ruleKey, count: entry.count } };
     });
   }
 
-  private buildHighlights(rounds: RoundStats[]): string[] {
-    const highlights: string[] = [];
+  private buildHighlights(rounds: RoundStats[]): SummaryNote[] {
+    const highlights: SummaryNote[] = [];
 
     for (const r of rounds) {
       if (r.longestHighScoreStreakMs >= HIGHLIGHT_MIN_STREAK_MS) {
         const seconds = Math.round(r.longestHighScoreStreakMs / 1000);
-        highlights.push(`Round ${r.number}: ${seconds}s seguidos com guarda e base acima de 85`);
+        highlights.push({
+          key: HIGH_SCORE_STREAK_NOTE_KEY,
+          params: { round: r.number, seconds },
+        });
       }
       const goodPunches = r.punches.filter((p) => p.quality === 'good').length;
       if (goodPunches >= 5) {
-        highlights.push(`Round ${r.number}: ${goodPunches} golpes de boa qualidade`);
+        highlights.push({
+          key: GOOD_PUNCHES_NOTE_KEY,
+          params: { round: r.number, count: goodPunches },
+        });
       }
     }
 

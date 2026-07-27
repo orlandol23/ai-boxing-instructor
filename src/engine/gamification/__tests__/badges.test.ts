@@ -15,6 +15,14 @@ describe('catálogo', () => {
     expect(BADGES).toHaveLength(8);
     expect(new Set(BADGES.map((b) => b.id)).size).toBe(8);
   });
+
+  it('expõe chaves de i18n derivadas do id — nunca copy literal', () => {
+    // O motor é language-free: só nomeia a frase, não a escreve.
+    for (const badge of BADGES) {
+      expect(badge.nameKey).toBe(`badges.${badge.id}.name`);
+      expect(badge.descriptionKey).toBe(`badges.${badge.id}.description`);
+    }
+  });
 });
 
 describe('critérios individuais', () => {
@@ -98,7 +106,7 @@ describe('evaluateBadges', () => {
   });
 
   it('badgeById resolve ids persistidos', () => {
-    expect(badgeById('iron_guard')?.name).toBe('Guarda de Ferro');
+    expect(badgeById('iron_guard')?.nameKey).toBe('badges.iron_guard.name');
     expect(badgeById('inexistente')).toBeUndefined();
   });
 });

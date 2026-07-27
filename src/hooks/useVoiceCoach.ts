@@ -1,4 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useCallback, useSyncExternalStore } from 'react';
+import { useTranslation } from 'react-i18next';
 import type { AnalysisFrame } from '../engine/types';
 import { evaluateFrame, selectFeedback } from '../engine/CoachingRules';
 import { VOICE_MIN_SPEECH_INTERVAL, VOICE_DEBOUNCE_FRAMES } from '../engine/constants';
@@ -53,6 +54,7 @@ function getServerSnapshot(): boolean {
  * - Cancels speech on disable/unmount
  */
 export function useVoiceCoach({ frame, enabled, onSpoken }: UseVoiceCoachOptions) {
+  const { t, i18n } = useTranslation();
   const lastSpokenRef = useRef(new Map<string, number>());
   const lastSpeechTimeRef = useRef(0);
   const pendingRuleRef = useRef<string | null>(null);
@@ -68,6 +70,11 @@ export function useVoiceCoach({ frame, enabled, onSpoken }: UseVoiceCoachOptions
     getServerSnapshot
   );
 
+  const localeRef = useRef(i18n.resolvedLanguage ?? i18n.language);
+  useLayoutEffect(() => {
+    localeRef.current = i18n.resolvedLanguage ?? i18n.language;
+  }, [i18n.resolvedLanguage, i18n.language]);
+
   const speak = useCallback((text: string): boolean => {
     if (
       typeof speechSynthesis === 'undefined' ||
@@ -81,7 +88,8 @@ export function useVoiceCoach({ frame, enabled, onSpoken }: UseVoiceCoachOptions
     speechSynthesis.cancel();
 
     const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = 'pt-BR';
+    // The spoken language follows the UI language (EN default, PT-BR opt-in).
+    utterance.lang = localeRef.current;
     utterance.rate = 1.1;
     utterance.pitch = 1.0;
     utterance.volume = 0.8;
@@ -121,7 +129,7 @@ export function useVoiceCoach({ frame, enabled, onSpoken }: UseVoiceCoachOptions
     // Immediate feedback (e.g. single-frame punch events) bypasses the
     // per-candidate debounce so it is never silently dropped.
     if (selected.immediate) {
-      const spoken = speak(selected.message);
+      const spoken = speak(t(selected.messageKey));
       if (spoken) {
         lastSpokenRef.current.set(selected.ruleKey, now);
         lastSpeechTimeRef.current = now;
@@ -146,14 +154,15 @@ export function useVoiceCoach({ frame, enabled, onSpoken }: UseVoiceCoachOptions
     pendingRuleRef.current = null;
     pendingCountRef.current = 0;
 
-    // Only update cooldowns if speech actually fires
-    const spoken = speak(selected.message);
+    // The engine hands back a stable phrase key; the sentence is resolved
+    // here, in the active language.
+    const spoken = speak(t(selected.messageKey));
     if (spoken) {
       lastSpokenRef.current.set(selected.ruleKey, now);
       lastSpeechTimeRef.current = now;
       onSpokenRef.current?.(selected.ruleKey);
     }
-  }, [frame, enabled, speak]);
+  }, [frame, enabled, speak, t]);
 
   // Cancel speech when disabled
   useEffect(() => {

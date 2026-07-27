@@ -14,8 +14,12 @@ import type { DailyAggregate } from './types';
 
 export interface QuestDefinition {
   id: string;
-  /** Copy adulta (PT-BR); a skin RPG do kids vive em src/theme/copy.ts. */
-  description: string;
+  /**
+   * i18n key of the quest description. The base key holds the adult copy;
+   * the `_kids` variant of the same key holds the RPG skin — same goal,
+   * same metric, different narration. Resolved in `src/theme/copy.ts`.
+   */
+  descriptionKey: string;
   /** Recompensa em XP ao completar. */
   xp: number;
   /** Valor-alvo de `progress` para concluir. */
@@ -29,60 +33,63 @@ function countOf(day: DailyAggregate, type: PunchType, quality?: PunchQuality): 
   return quality ? q[quality] : q.good + q.fair + q.poor;
 }
 
-/** Pool fixo — ids estáveis (são persistidos em completedQuests). */
+/**
+ * Pool fixo — ids estáveis (são persistidos em completedQuests).
+ * Copy lives in `src/i18n/locales/*` under `quests.<id>.description`.
+ */
 export const QUEST_POOL: readonly QuestDefinition[] = [
   {
     id: 'jabs_good_30',
-    description: '30 jabs bons',
+    descriptionKey: 'quests.jabs_good_30.description',
     xp: 50,
     target: 30,
     progress: (d) => countOf(d, 'jab', 'good'),
   },
   {
     id: 'crosses_good_20',
-    description: '20 crosses bons',
+    descriptionKey: 'quests.crosses_good_20.description',
     xp: 50,
     target: 20,
     progress: (d) => countOf(d, 'cross', 'good'),
   },
   {
     id: 'hooks_20',
-    description: '20 hooks (qualquer mão)',
+    descriptionKey: 'quests.hooks_20.description',
     xp: 45,
     target: 20,
     progress: (d) => countOf(d, 'lead_hook') + countOf(d, 'rear_hook'),
   },
   {
     id: 'punches_100',
-    description: '100 golpes no dia',
+    descriptionKey: 'quests.punches_100.description',
     xp: 60,
     target: 100,
     progress: (d) => d.totalPunches,
   },
   {
     id: 'good_punches_50',
-    description: '50 golpes bons no dia',
+    descriptionKey: 'quests.good_punches_50.description',
     xp: 60,
     target: 50,
     progress: (d) => d.goodPunches,
   },
   {
     id: 'rounds_3',
-    description: 'Complete 3 rounds',
+    descriptionKey: 'quests.rounds_3.description',
     xp: 40,
     target: 3,
     progress: (d) => d.rounds,
   },
   {
     id: 'guard_80_round',
-    description: 'Feche um round com guarda média ≥ 80',
+    descriptionKey: 'quests.guard_80_round.description',
     xp: 50,
     target: 1,
     progress: (d) => (d.bestRoundGuard >= 80 ? 1 : 0),
   },
   {
     id: 'base_80_round',
-    description: 'Feche um round com base média ≥ 80',
+    descriptionKey: 'quests.base_80_round.description',
     xp: 40,
     target: 1,
     progress: (d) => (d.bestRoundBase >= 80 ? 1 : 0),

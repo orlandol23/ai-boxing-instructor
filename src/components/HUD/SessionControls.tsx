@@ -1,4 +1,5 @@
 import { Play, Square, Flag, Volume2, VolumeX } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import type { SessionPhase } from '../../engine/SessionTracker';
 
 interface SessionControlsProps {
@@ -33,6 +34,8 @@ export function SessionControls({
   onEndRound,
   onEndSession,
 }: SessionControlsProps) {
+  const { t } = useTranslation();
+
   if (phase === 'ended') return null;
 
   return (
@@ -44,7 +47,7 @@ export function SessionControls({
             {formatClock(roundElapsedMs)}
           </div>
           <div className="mt-1 text-xs uppercase tracking-widest text-white/70">
-            Round {currentRound}
+            {t('training.round', { number: currentRound })}
           </div>
         </div>
       )}
@@ -53,14 +56,14 @@ export function SessionControls({
       <div className="absolute inset-x-0 bottom-4 z-10 flex items-center justify-center gap-5">
         {phase === 'idle' && (
           <PrimaryAction onClick={onStartSession} icon={<Play size={22} aria-hidden="true" />}>
-            Iniciar treino
+            {t('training.startTraining')}
           </PrimaryAction>
         )}
 
         {phase === 'between_rounds' && (
           <>
             <PrimaryAction onClick={onStartRound} icon={<Play size={22} aria-hidden="true" />}>
-              {currentRound === 0 ? 'Round 1' : `Round ${currentRound + 1}`}
+              {t('training.round', { number: currentRound === 0 ? 1 : currentRound + 1 })}
             </PrimaryAction>
             {currentRound > 0 && (
               <button
@@ -69,7 +72,7 @@ export function SessionControls({
                 className="tap-training flex items-center gap-2 rounded-xl border border-line-strong bg-surface-2 px-6 font-display text-lg font-bold uppercase tracking-wider text-fg transition-[border-color,transform] hover:border-accent active:scale-[.96]"
               >
                 <Flag size={20} aria-hidden="true" />
-                Finalizar
+                {t('training.finish')}
               </button>
             )}
           </>
@@ -79,7 +82,7 @@ export function SessionControls({
           <button
             type="button"
             onClick={onEndRound}
-            aria-label="Encerrar round"
+            aria-label={t('training.endRound')}
             className="tap-training flex h-[72px] w-[72px] items-center justify-center rounded-full bg-primary text-on-primary transition-[background-color,transform] [box-shadow:var(--glow-primary)] hover:bg-primary-hover active:scale-[.96] active:bg-primary-pressed"
           >
             <Square size={28} aria-hidden="true" />
@@ -123,11 +126,12 @@ function VoiceButton({
   isSpeaking: boolean;
   onToggle: () => void;
 }) {
+  const { t } = useTranslation();
   const label = enabled
     ? isSpeaking
-      ? 'Coach de voz ativo, falando'
-      : 'Coach de voz ativo'
-    : 'Coach de voz desativado';
+      ? t('training.voiceSpeaking')
+      : t('training.voiceOn')
+    : t('training.voiceOff');
   const Icon = enabled ? Volume2 : VolumeX;
 
   return (

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState, type RefObject } from 'react';
+import type { TextNote } from '../i18n/types';
 
 export type FacingMode = 'user' | 'environment';
 
@@ -13,7 +14,11 @@ interface UseCameraReturn {
   stream: MediaStream | null;
   facingMode: FacingMode;
   isReady: boolean;
-  error: string | null;
+  /**
+   * Failure as an i18n key, not a sentence — this hook talks to the
+   * platform, the UI decides which language to say it in.
+   */
+  error: TextNote | null;
   toggleCamera: () => void;
 }
 
@@ -24,7 +29,7 @@ export function useCamera(options: UseCameraOptions = {}): UseCameraReturn {
   const [stream, setStream] = useState<MediaStream | null>(null);
   const [facingMode, setFacingMode] = useState<FacingMode>(initialFacing);
   const [isReady, setIsReady] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<TextNote | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -78,32 +83,28 @@ export function useCamera(options: UseCameraOptions = {}): UseCameraReturn {
       } catch (err) {
         if (cancelled) return;
 
-        let message = 'Não foi possível acessar a câmera.';
+        let key = 'camera.error.generic';
 
         if (!window.isSecureContext) {
-          message =
-            'Não foi possível acessar a câmera porque a conexão não é segura. Acesse via HTTPS ou localhost.';
+          key = 'camera.error.insecureContext';
         } else if (err instanceof DOMException) {
           switch (err.name) {
             case 'NotAllowedError':
-              message =
-                'Permissão de câmera negada. Habilite nas configurações do navegador.';
+              key = 'camera.error.permissionDenied';
               break;
             case 'NotFoundError':
-              message = 'Nenhuma câmera foi encontrada neste dispositivo.';
+              key = 'camera.error.notFound';
               break;
             case 'NotReadableError':
-              message =
-                'Câmera em uso por outro aplicativo. Feche e tente novamente.';
+              key = 'camera.error.inUse';
               break;
             case 'OverconstrainedError':
-              message =
-                'Configurações de câmera não suportadas. Recarregue a página.';
+              key = 'camera.error.overconstrained';
               break;
           }
         }
 
-        setError(message);
+        setError({ key });
         setIsReady(false);
       }
     }

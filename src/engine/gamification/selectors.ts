@@ -40,8 +40,8 @@ export function progressSnapshot(
 
 export interface WeeklyDay {
   dateKey: string;
-  /** Rótulo curto do dia da semana (PT-BR). */
-  label: string;
+  /** i18n key of the short weekday label (`weekday.mon`, …). */
+  labelKey: string;
   isToday: boolean;
   sessions: number;
   totalPunches: number;
@@ -49,7 +49,16 @@ export interface WeeklyDay {
   avgScore: number | null;
 }
 
-const WEEKDAY_LABELS = ['DOM', 'SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SÁB'];
+/** Indexed by `Date#getDay()` (0 = Sunday). */
+export const WEEKDAY_LABEL_KEYS = [
+  'weekday.sun',
+  'weekday.mon',
+  'weekday.tue',
+  'weekday.wed',
+  'weekday.thu',
+  'weekday.fri',
+  'weekday.sat',
+];
 
 /** Os últimos 7 dias locais (hoje incluso, à direita) p/ o gráfico semanal. */
 export function weeklyChartData(
@@ -69,7 +78,7 @@ export function weeklyChartData(
     const weekday = new Date(y, m - 1, d, 12).getDay();
     return {
       dateKey,
-      label: WEEKDAY_LABELS[weekday],
+      labelKey: WEEKDAY_LABEL_KEYS[weekday],
       isToday: i === 6,
       sessions: day?.sessions ?? 0,
       totalPunches: day?.totalPunches ?? 0,

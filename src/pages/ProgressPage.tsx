@@ -1,11 +1,10 @@
 import { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Flame } from 'lucide-react';
 import { useGamification } from '../hooks/useGamification';
 import { BADGES } from '../engine/gamification/badges';
 import { progressSnapshot, weeklyChartData } from '../engine/gamification/selectors';
-import { rankLabel } from '../engine/gamification/xp';
-import { useAppTheme } from '../contexts/ProfileContext';
-import { uiCopy } from '../theme/copy';
+import { rankLabel, uiCopy, useCopy } from '../theme/copy';
 import { LevelChip } from '../components/Progress/LevelChip';
 import { XpBar } from '../components/Progress/XpBar';
 import { MedalBadge } from '../components/Progress/MedalBadge';
@@ -17,7 +16,8 @@ import { WeeklyChart } from '../components/Progress/WeeklyChart';
  * grid de badges (locked em grayscale) e a próxima missão do dia.
  */
 export function ProgressPage() {
-  const theme = useAppTheme();
+  const { t, theme } = useCopy();
+  const { i18n } = useTranslation();
   const { history } = useGamification();
   const progress = useMemo(() => progressSnapshot(history), [history]);
   const week = useMemo(() => weeklyChartData(history), [history]);
@@ -33,7 +33,7 @@ export function ProgressPage() {
           <div className="flex items-center justify-between gap-2">
             <LevelChip level={progress.level.level} />
             <span className="font-display text-lg font-bold uppercase tracking-wider text-accent">
-              {rankLabel(progress.level.level, theme)}
+              {rankLabel(t, progress.level.level, theme)}
             </span>
           </div>
           <div className="mt-3">
@@ -44,9 +44,9 @@ export function ProgressPage() {
           </div>
           <div className="mt-2 flex items-center justify-between text-sm text-fg-muted">
             <span>
-              Total{' '}
+              {t('progress.total')}{' '}
               <span className="num font-semibold text-fg">
-                {history.totalXp.toLocaleString('pt-BR')}
+                {history.totalXp.toLocaleString(i18n.resolvedLanguage)}
               </span>{' '}
               XP
             </span>
@@ -57,7 +57,7 @@ export function ProgressPage() {
                 className={progress.streak > 0 ? 'text-primary' : 'text-fg-dim'}
               />
               <span className="num font-semibold text-fg">{progress.streak}</span>
-              {progress.streak === 1 ? 'dia seguido' : 'dias seguidos'}
+              {progress.streak === 1 ? t('home.streakDaysOne') : t('home.streakDaysOther')}
             </span>
           </div>
         </section>
@@ -68,16 +68,16 @@ export function ProgressPage() {
         {/* Próxima missão do dia */}
         <section>
           <h3 className="mb-2 flex items-baseline justify-between text-xs uppercase tracking-widest text-fg-dim">
-            Próxima missão
+            {t('progress.nextQuest')}
             <span className="num normal-case tracking-normal text-fg-muted">
-              {progress.questsDone}/3 hoje
+              {t('progress.questsToday', { done: progress.questsDone, total: 3 })}
             </span>
           </h3>
           {nextQuest ? (
             <QuestCard status={nextQuest} />
           ) : (
             <p className="rounded-[14px] border border-accent bg-surface p-3 text-sm font-semibold text-accent-light">
-              {uiCopy('questsAllDone', theme)}
+              {uiCopy(t, 'home.questsAllDone', theme)}
             </p>
           )}
         </section>
@@ -85,7 +85,7 @@ export function ProgressPage() {
         {/* Badges */}
         <section>
           <h3 className="mb-3 flex items-baseline justify-between text-xs uppercase tracking-widest text-fg-dim">
-            Conquistas
+            {t('progress.achievements')}
             <span className="num normal-case tracking-normal text-fg-muted">
               {unlockedIds.size}/{BADGES.length}
             </span>

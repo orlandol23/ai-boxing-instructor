@@ -3,15 +3,15 @@ import { useNavigate } from 'react-router-dom';
 import { Swords, Target, Dumbbell, Flame, TrendingUp } from 'lucide-react';
 import { useGamification } from '../hooks/useGamification';
 import { progressSnapshot } from '../engine/gamification/selectors';
-import { rankLabel } from '../engine/gamification/xp';
 import { useProfiles } from '../contexts/ProfileContext';
-import { homeGreeting, uiCopy } from '../theme/copy';
+import { homeGreeting, rankLabel, uiCopy, useCopy } from '../theme/copy';
 import { LevelChip } from '../components/Progress/LevelChip';
 import { XpBar } from '../components/Progress/XpBar';
 
 export function HomePage() {
   const navigate = useNavigate();
-  const { activeProfile, theme } = useProfiles();
+  const { t, theme } = useCopy();
+  const { activeProfile } = useProfiles();
   const { history } = useGamification();
   const progress = useMemo(() => progressSnapshot(history), [history]);
 
@@ -21,12 +21,12 @@ export function HomePage() {
       {/* Logo / Title */}
       <div className="text-center">
         <h1 className="font-display text-display font-extrabold uppercase tracking-wide text-accent">
-          Boxing AI
+          {t('app.name')}
         </h1>
         <p className="mt-2 text-sm text-fg-muted">
           {activeProfile
-            ? homeGreeting(activeProfile.name, theme)
-            : uiCopy('homeTagline', theme)}
+            ? homeGreeting(t, activeProfile.name, theme)
+            : uiCopy(t, 'home.tagline', theme)}
         </p>
       </div>
 
@@ -35,7 +35,7 @@ export function HomePage() {
         <div className="flex items-center justify-between gap-2">
           <LevelChip level={progress.level.level} />
           <span className="font-display text-sm font-bold uppercase tracking-wider text-accent">
-            {rankLabel(progress.level.level, theme)}
+            {rankLabel(t, progress.level.level, theme)}
           </span>
         </div>
         <div className="mt-3">
@@ -52,10 +52,11 @@ export function HomePage() {
               className={progress.streak > 0 ? 'text-primary' : 'text-fg-dim'}
             />
             <span className="num font-semibold text-fg">{progress.streak}</span>
-            {progress.streak === 1 ? 'dia seguido' : 'dias seguidos'}
+            {progress.streak === 1 ? t('home.streakDaysOne') : t('home.streakDaysOther')}
           </span>
           <span className="text-fg-muted">
-            Missões <span className="num font-semibold text-fg">{progress.questsDone}/3</span>
+            {t('home.quests')}{' '}
+            <span className="num font-semibold text-fg">{progress.questsDone}/3</span>
           </span>
         </div>
         <button
@@ -64,7 +65,7 @@ export function HomePage() {
           className="mt-3 flex w-full items-center justify-center gap-2 rounded-lg border border-line-strong bg-surface-2 py-2.5 text-sm font-semibold text-fg transition-colors hover:border-accent"
         >
           <TrendingUp size={16} aria-hidden="true" />
-          Ver progresso
+          {t('home.viewProgress')}
         </button>
       </section>
 
@@ -75,28 +76,26 @@ export function HomePage() {
         className="flex min-h-16 w-full max-w-xs items-center justify-center gap-3 rounded-xl bg-primary px-9 font-display text-[22px] font-bold uppercase tracking-wider text-on-primary transition-[background-color,transform] [box-shadow:var(--glow-primary)] hover:bg-primary-hover active:scale-[.96] active:bg-primary-pressed"
       >
         <Swords size={24} aria-hidden="true" />
-        Iniciar treino
+        {t('home.startTraining')}
       </button>
 
       {/* Mode cards */}
       <div className="grid w-full max-w-xs grid-cols-2 gap-3">
         <ModeCard
           icon={<Target size={24} aria-hidden="true" />}
-          title="Shadow"
-          description="Treino livre"
+          title={t('home.modeShadowTitle')}
+          description={t('home.modeShadowDescription')}
           onClick={() => navigate('/training')}
         />
         <ModeCard
           icon={<Dumbbell size={24} aria-hidden="true" />}
-          title="Técnica"
-          description="Em breve"
+          title={t('home.modeTechniqueTitle')}
+          description={t('home.modeTechniqueDescription')}
           disabled
         />
       </div>
 
-      <p className="text-xs text-fg-dim">
-        Posicione o celular num tripé a ~2m de distância
-      </p>
+      <p className="text-xs text-fg-dim">{t('home.setupHint')}</p>
       </div>
     </div>
   );

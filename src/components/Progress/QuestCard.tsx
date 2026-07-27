@@ -1,7 +1,6 @@
 import { Check, Target } from 'lucide-react';
 import type { QuestStatus } from '../../engine/gamification/quests';
-import { useAppTheme } from '../../contexts/ProfileContext';
-import { questDescription } from '../../theme/copy';
+import { questDescription, useCopy } from '../../theme/copy';
 
 /**
  * Quest card (SPECS §6): borda dashed `--border-strong`, radius 14;
@@ -10,7 +9,7 @@ import { questDescription } from '../../theme/copy';
  * do dicionário de copy por tema (skin RPG no kids — SPECS §8.3).
  */
 export function QuestCard({ status }: { status: QuestStatus }) {
-  const theme = useAppTheme();
+  const { t, theme } = useCopy();
   const { quest, progress, done } = status;
 
   return (
@@ -29,15 +28,15 @@ export function QuestCard({ status }: { status: QuestStatus }) {
       </span>
       <div className="min-w-0 flex-1">
         <p className="truncate text-sm font-semibold text-fg">
-          {questDescription(quest, theme)}
+          {questDescription(t, quest, theme)}
         </p>
         <p className="num text-xs text-fg-muted">
           {progress}/{quest.target}
-          {done ? ' · concluída' : ''}
+          {done ? ` · ${t('quest.done')}` : ''}
         </p>
       </div>
       <span className="num shrink-0 text-lg font-bold leading-none text-xp">
-        +{quest.xp} XP
+        {t('quest.xp', { xp: quest.xp })}
       </span>
     </div>
   );

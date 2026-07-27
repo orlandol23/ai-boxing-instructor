@@ -1,4 +1,5 @@
-import type { AnalysisFrame, PunchEvent, PunchType } from '../../engine/types';
+import { useTranslation } from 'react-i18next';
+import type { AnalysisFrame, PunchEvent } from '../../engine/types';
 import { xpForPunch } from '../../engine/gamification/xp';
 
 interface ScorePanelProps {
@@ -7,16 +8,9 @@ interface ScorePanelProps {
   recentPunches: PunchEvent[];
 }
 
-const PUNCH_LABELS: Record<PunchType, string> = {
-  jab: 'Jab',
-  cross: 'Cross',
-  lead_hook: 'Lead Hook',
-  rear_hook: 'Rear Hook',
-  lead_uppercut: 'Lead Upper',
-  rear_uppercut: 'Rear Upper',
-};
-
 export function ScorePanel({ frame, punchCount, recentPunches }: ScorePanelProps) {
+  const { t } = useTranslation();
+
   if (!frame) return null;
 
   const { stance, guard, base } = frame;
@@ -26,9 +20,11 @@ export function ScorePanel({ frame, punchCount, recentPunches }: ScorePanelProps
       {/* Contador de golpes + postura — canto sup. esquerdo */}
       <div className="absolute left-3 top-20 z-10 rounded-md bg-overlay px-3.5 py-2 text-center backdrop-blur-xs">
         <div className="num text-4xl font-bold leading-none text-white">{punchCount}</div>
-        <div className="mt-0.5 text-xs uppercase tracking-widest text-white/70">golpes</div>
+        <div className="mt-0.5 text-xs uppercase tracking-widest text-white/70">
+          {t('training.punches')}
+        </div>
         <div className="mt-0.5 text-xs text-white/50">
-          {stance === 'unknown' ? '—' : stance === 'orthodox' ? 'Ortodoxa' : 'Canhota'}
+          {stance === 'unknown' ? '—' : t(`stance.${stance}`)}
         </div>
       </div>
 
@@ -46,8 +42,8 @@ export function ScorePanel({ frame, punchCount, recentPunches }: ScorePanelProps
 
       {/* ScoreBars — acima dos controles de round */}
       <div className="absolute inset-x-3 bottom-28 z-10 flex flex-col gap-2">
-        <ScoreBar label="Guarda" score={guard.overall} />
-        <ScoreBar label="Base" score={base.overall} />
+        <ScoreBar label={t('training.guard')} score={guard.overall} />
+        <ScoreBar label={t('training.base')} score={base.overall} />
       </div>
     </>
   );
@@ -81,10 +77,10 @@ function ScoreBar({ label, score }: { label: string; score: number }) {
   );
 }
 
-const QUALITY_TEXT = {
-  good: { label: 'Bom', className: 'text-score-good' },
-  fair: { label: 'Ok', className: 'text-score-warn' },
-  poor: { label: 'Fraco', className: 'text-score-bad' },
+const QUALITY_CLASSES = {
+  good: 'text-score-good',
+  fair: 'text-score-warn',
+  poor: 'text-score-bad',
 } as const;
 
 /* decaimento do feed: mais novo em destaque (SPECS §6 — punch feed) */
@@ -95,15 +91,17 @@ const RANK_STYLES = [
 ] as const;
 
 function PunchBadge({ punch, rank }: { punch: PunchEvent; rank: number }) {
-  const quality = QUALITY_TEXT[punch.quality];
+  const { t } = useTranslation();
   const rankStyle = RANK_STYLES[Math.min(rank, RANK_STYLES.length - 1)];
 
   return (
     <div className={`flex items-center gap-2 rounded-md bg-overlay backdrop-blur-xs ${rankStyle}`}>
       <span className="font-display font-bold uppercase leading-none text-white">
-        {PUNCH_LABELS[punch.type] ?? punch.type}
+        {t(`punchType.${punch.type}`)}
       </span>
-      <span className={`num font-bold leading-none ${quality.className}`}>{quality.label}</span>
+      <span className={`num font-bold leading-none ${QUALITY_CLASSES[punch.quality]}`}>
+        {t(`quality.${punch.quality}`)}
+      </span>
       {/* +XP do golpe (SPECS §6 — punch feed) */}
       <span className="num font-bold leading-none text-xp">+{xpForPunch(punch.quality)}</span>
     </div>

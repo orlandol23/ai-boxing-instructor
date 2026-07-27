@@ -4,6 +4,7 @@ import {
   FilesetResolver,
 } from '@mediapipe/tasks-vision';
 import type { Landmark } from '../engine/types';
+import type { TextNote } from '../i18n/types';
 
 /** Target UI update rate in ms (~30 fps for React state updates) */
 const UI_UPDATE_INTERVAL = 33;
@@ -19,7 +20,8 @@ interface UseMediaPipeReturn {
   landmarks: Landmark[] | null;
   isLoading: boolean;
   fps: number;
-  error: string | null;
+  /** Failure as an i18n key + the raw technical detail, never a sentence. */
+  error: TextNote | null;
 }
 
 export function useMediaPipe(options: UseMediaPipeOptions): UseMediaPipeReturn {
@@ -27,7 +29,7 @@ export function useMediaPipe(options: UseMediaPipeOptions): UseMediaPipeReturn {
   const [landmarks, setLandmarks] = useState<Landmark[] | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [fps, setFps] = useState(0);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<TextNote | null>(null);
 
   const landmarkerRef = useRef<PoseLandmarker | null>(null);
   const rafRef = useRef<number>(0);
@@ -81,9 +83,10 @@ export function useMediaPipe(options: UseMediaPipeOptions): UseMediaPipeReturn {
         setIsLoading(false);
       } catch (err) {
         if (!cancelled) {
-          setError(
-            `Erro ao carregar modelo de pose: ${err instanceof Error ? err.message : 'desconhecido'}`
-          );
+          setError({
+            key: 'status.modelLoadError',
+            params: { detail: err instanceof Error ? err.message : 'unknown' },
+          });
           setIsLoading(false);
         }
       }
@@ -168,9 +171,10 @@ export function useMediaPipe(options: UseMediaPipeOptions): UseMediaPipeReturn {
           }
         } catch (e) {
           running = false;
-          setError(
-            `Erro na detecção de pose: ${e instanceof Error ? e.message : 'erro desconhecido'}`
-          );
+          setError({
+            key: 'status.detectionError',
+            params: { detail: e instanceof Error ? e.message : 'unknown' },
+          });
           landmarkerRef.current?.close();
           landmarkerRef.current = null;
           cancelAnimationFrame(rafRef.current);

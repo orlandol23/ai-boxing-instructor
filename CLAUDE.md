@@ -26,7 +26,7 @@ peers, drops that package from the tree and rewrites the lockfile, which breaks
 
 ```bash
 npm run dev        # Vite dev server on :5173
-npm run test       # Vitest — 222 tests across 18 files
+npm run test       # Vitest — 269 tests across 21 files
 npm run lint       # ESLint over src/ and api/
 npm run typecheck  # tsc -b
 npm run build      # tsc -b && vite build
@@ -41,18 +41,32 @@ Keep the test count in `README.md` in sync when tests are added.
 
 | Path              | Responsibility                                            |
 | ----------------- | --------------------------------------------------------- |
-| `src/engine/`     | Pure boxing + gamification logic. No React, no I/O.        |
+| `src/engine/`     | Pure boxing + gamification logic. No React, no I/O, no i18n.|
 | `src/hooks/`      | MediaPipe, camera, session, voice, coaching lifecycle.     |
 | `src/services/`   | `/api/coach` client, local-first profile/history storage.  |
 | `api/`            | Vercel Functions: `POST /api/coach`, `GET /api/health`.    |
 | `src/components/` | Presentational only, no business logic.                    |
+| `src/i18n/`       | i18next setup + bundled `en` / `pt-BR` locale resources.    |
 
 Keep the engine free of React and I/O — it is covered by deterministic
-fixture-based tests, which is why the suite is fast and stable.
+fixture-based tests, which is why the suite is fast and stable. Keep it free
+of i18next too: the engine returns stable i18n **keys** (plus interpolation
+params) and the UI translates them, so engine tests assert keys, not prose.
+
+Copy has two axes: **language** (i18next resource bundles) and **theme**
+(adult/kids, mapped to i18next's `context` suffix `_kids`). `src/theme/copy.ts`
+owns the theme axis only. A missing `_kids` entry falls back to the adult copy
+on purpose — never "fix" that by duplicating strings.
 
 ## Notes
 
 - Without `ANTHROPIC_API_KEY`, `/api/coach` returns 503 and the app hides only
   the coaching UI. Everything else keeps working; do not break that path.
+- `api/coach.ts` holds one **static** system prompt per locale, selected by a
+  validated `locale` field. Keep them module-level constants — building the
+  prompt per request would defeat `cache_control: ephemeral` (~90% input-token
+  saving on repeat calls).
+- Locale files must stay key-for-key identical; `src/i18n/__tests__` fails the
+  build on drift. Add new copy to both `en.ts` and `pt-BR.ts`.
 - Pose analysis runs entirely client-side. No video should ever leave the
   browser.

@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { Plus, Trash2 } from 'lucide-react';
 import { useProfiles } from '../contexts/ProfileContext';
 import {
@@ -24,6 +25,7 @@ type FormState =
  * Header. Selecionar um perfil troca tema + partição de histórico/XP.
  */
 export function ProfilesPage() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { profiles, activeProfile, createProfile, updateProfile, deleteProfile, selectProfile } =
     useProfiles();
@@ -52,11 +54,9 @@ export function ProfilesPage() {
       <div className="mx-auto flex w-full max-w-md flex-col gap-6">
         <header className="text-center">
           <h1 className="font-display text-title font-extrabold uppercase tracking-wide text-fg">
-            Quem vai treinar?
+            {t('profiles.title')}
           </h1>
-          <p className="mt-1 text-sm text-fg-muted">
-            Cada perfil tem seu próprio nível, histórico e tema.
-          </p>
+          <p className="mt-1 text-sm text-fg-muted">{t('profiles.subtitle')}</p>
         </header>
 
         <div className="grid grid-cols-2 gap-3">
@@ -81,7 +81,7 @@ export function ProfilesPage() {
                 <Plus size={28} aria-hidden="true" />
               </span>
               <span className="font-display text-lg font-bold uppercase tracking-wide">
-                Novo perfil
+                {t('profiles.newProfile')}
               </span>
             </button>
           )}
@@ -124,6 +124,7 @@ interface ProfileFormProps {
 }
 
 function ProfileForm({ profile, canDismiss, onCancel, onCreate, onSave, onDelete }: ProfileFormProps) {
+  const { t } = useTranslation();
   const [name, setName] = useState(profile?.name ?? '');
   const [avatar, setAvatar] = useState(profile?.avatar ?? DEFAULT_AVATAR);
   const [isKid, setIsKid] = useState(profile?.isKid ?? false);
@@ -162,14 +163,18 @@ function ProfileForm({ profile, canDismiss, onCancel, onCreate, onSave, onDelete
     <form
       onSubmit={handleSubmit}
       className="flex flex-col gap-4 rounded-[20px] border border-line bg-surface p-4"
-      aria-label={profile ? `Editar perfil ${profile.name}` : 'Criar perfil'}
+      aria-label={
+        profile
+          ? t('profiles.editProfileNamed', { name: profile.name })
+          : t('profiles.createProfile')
+      }
     >
       <h2 className="font-display text-lg font-bold uppercase tracking-wide text-fg">
-        {profile ? 'Editar perfil' : 'Criar perfil'}
+        {profile ? t('profiles.editProfile') : t('profiles.createProfile')}
       </h2>
 
       <label className="flex flex-col gap-1.5 text-sm font-semibold text-fg">
-        Nome
+        {t('profiles.name')}
         <input
           type="text"
           value={name}
@@ -177,13 +182,13 @@ function ProfileForm({ profile, canDismiss, onCancel, onCreate, onSave, onDelete
           maxLength={MAX_PROFILE_NAME_LENGTH}
           required
           autoFocus={!profile}
-          placeholder="Como te chamamos no ringue?"
+          placeholder={t('profiles.namePlaceholder')}
           className="min-h-12 rounded-md border border-line-strong bg-surface-2 px-3 text-base font-normal text-fg placeholder:text-fg-dim"
         />
       </label>
 
       <fieldset>
-        <legend className="mb-1.5 text-sm font-semibold text-fg">Avatar</legend>
+        <legend className="mb-1.5 text-sm font-semibold text-fg">{t('profiles.avatar')}</legend>
         <div className="grid grid-cols-6 gap-1.5">
           {AVATARS.map((emoji) => (
             <button
@@ -191,7 +196,7 @@ function ProfileForm({ profile, canDismiss, onCancel, onCreate, onSave, onDelete
               type="button"
               onClick={() => setAvatar(emoji)}
               aria-pressed={avatar === emoji}
-              aria-label={`Avatar ${emoji}`}
+              aria-label={t('profiles.avatarOption', { emoji })}
               className={`flex items-center justify-center rounded-md border text-2xl transition-colors ${
                 avatar === emoji
                   ? 'border-accent bg-surface-2 [box-shadow:var(--glow-accent)]'
@@ -213,10 +218,8 @@ function ProfileForm({ profile, canDismiss, onCancel, onCreate, onSave, onDelete
         className="flex min-h-14 items-center justify-between border-t border-line pt-3 text-left"
       >
         <span>
-          <span className="block text-sm font-semibold text-fg">Modo kids 👑</span>
-          <span className="block text-xs text-fg-muted">
-            Tema Arcade Royale + missões em modo aventura
-          </span>
+          <span className="block text-sm font-semibold text-fg">{t('profiles.kidsMode')}</span>
+          <span className="block text-xs text-fg-muted">{t('profiles.kidsModeHint')}</span>
         </span>
         <span
           aria-hidden="true"
@@ -237,7 +240,7 @@ function ProfileForm({ profile, canDismiss, onCancel, onCreate, onSave, onDelete
           type="submit"
           className="flex min-h-12 flex-1 items-center justify-center rounded-xl bg-primary font-display text-lg font-bold uppercase tracking-wider text-on-primary transition-[background-color,transform] [box-shadow:var(--glow-primary)] hover:bg-primary-hover active:scale-[.96]"
         >
-          {profile ? 'Salvar' : 'Criar e treinar'}
+          {profile ? t('profiles.save') : t('profiles.createAndTrain')}
         </button>
         {canDismiss && (
           <button
@@ -245,7 +248,7 @@ function ProfileForm({ profile, canDismiss, onCancel, onCreate, onSave, onDelete
             onClick={onCancel}
             className="flex min-h-12 flex-1 items-center justify-center rounded-xl border border-line-strong bg-surface-2 font-display text-lg font-bold uppercase tracking-wider text-fg transition-colors hover:border-accent"
           >
-            Cancelar
+            {t('profiles.cancel')}
           </button>
         )}
       </div>
@@ -262,12 +265,9 @@ function ProfileForm({ profile, canDismiss, onCancel, onCreate, onSave, onDelete
             }`}
           >
             <Trash2 size={16} aria-hidden="true" />
-            {confirmingDelete ? 'Tocar de novo para confirmar exclusão' : 'Excluir perfil'}
+            {confirmingDelete ? t('profiles.deleteConfirm') : t('profiles.delete')}
           </button>
-          <p className="mt-2 text-xs text-fg-dim">
-            Excluir o perfil não apaga o histórico de treinos salvo neste
-            aparelho — ele apenas deixa de aparecer.
-          </p>
+          <p className="mt-2 text-xs text-fg-dim">{t('profiles.deleteHint')}</p>
         </div>
       )}
     </form>

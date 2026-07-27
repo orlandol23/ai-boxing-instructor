@@ -1,4 +1,5 @@
 import { Volume2 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import type { CoachFeedbackStatus } from '../../hooks/useCoachingFeedback';
 
 interface CoachBubbleProps {
@@ -8,23 +9,25 @@ interface CoachBubbleProps {
   context: 'round' | 'session';
 }
 
-const LOADING_TEXT: Record<CoachBubbleProps['context'], string> = {
-  round: 'Coach analisando o round...',
-  session: 'Coach analisando seu treino...',
+const LOADING_KEYS: Record<CoachBubbleProps['context'], string> = {
+  round: 'coach.loadingRound',
+  session: 'coach.loadingSession',
 };
 
 // Fallback amigável — nunca erro técnico cru (resiliência da Fase 5).
-const UNAVAILABLE_TEXT: Record<CoachBubbleProps['context'], string> = {
-  round: 'Coach IA indisponível agora — segue o treino!',
-  session: 'Coach IA indisponível — confira as métricas acima.',
+const UNAVAILABLE_KEYS: Record<CoachBubbleProps['context'], string> = {
+  round: 'coach.unavailableRound',
+  session: 'coach.unavailableSession',
 };
 
 /**
  * Coach bubble do Design System v2 (SPECS §6): borda `--accent`,
  * radius 16 com canto superior esquerdo 4, bg `--surface-2` e avatar
- * `volume-2` ao lado. Texto >= 16px (text-base), PT-BR.
+ * `volume-2` ao lado. Texto >= 16px (text-base), no idioma ativo.
  */
 export function CoachBubble({ status, feedback, context }: CoachBubbleProps) {
+  const { t } = useTranslation();
+
   if (status === 'idle') return null;
 
   return (
@@ -43,14 +46,14 @@ export function CoachBubble({ status, feedback, context }: CoachBubbleProps) {
       >
         {status === 'loading' && (
           <p className="animate-pulse text-base leading-relaxed text-fg-muted">
-            {LOADING_TEXT[context]}
+            {t(LOADING_KEYS[context])}
           </p>
         )}
         {status === 'success' && feedback && (
           <p className="whitespace-pre-line text-base leading-relaxed text-fg">{feedback}</p>
         )}
         {status === 'unavailable' && (
-          <p className="text-base leading-relaxed text-fg-muted">{UNAVAILABLE_TEXT[context]}</p>
+          <p className="text-base leading-relaxed text-fg-muted">{t(UNAVAILABLE_KEYS[context])}</p>
         )}
       </div>
     </div>

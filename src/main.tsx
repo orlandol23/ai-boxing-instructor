@@ -4,6 +4,10 @@ import App from './App';
 import { activeProfileOf, createProfileStore } from './services/profileStore';
 import { setTheme } from './theme/theme';
 
+// i18n: English by default, PT-BR detected from the browser. Resources are
+// bundled (not fetched) so the PWA renders text offline.
+import './i18n';
+
 // Fontes self-hosted (@fontsource) — empacotadas pelo Vite e pré-cacheadas
 // pelo service worker do PWA, funcionam offline (SPECS §8.5).
 import '@fontsource/saira/400.css';

@@ -1,5 +1,12 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { SessionTracker } from '../SessionTracker';
+import {
+  CORRECTION_NOTE_KEYS,
+  GENERIC_CORRECTION_NOTE_KEY,
+  GOOD_PUNCHES_NOTE_KEY,
+  HIGH_SCORE_STREAK_NOTE_KEY,
+  SessionTracker,
+} from '../SessionTracker';
+import { COACHING_PHRASE_KEYS } from '../CoachingRules';
 import { makeBase, makeFrame, makeGuard, makePunch } from './fixtures';
 
 describe('SessionTracker', () => {
@@ -142,13 +149,24 @@ describe('SessionTracker', () => {
   });
 
   describe('corrections', () => {
-    it('surfaces corrections repeated 3 or more times with a friendly label', () => {
+    it('surfaces corrections repeated 3 or more times as a key + count', () => {
       tracker.startRound(1000);
       tracker.recordCorrection('guard:hand-height', 1100);
       tracker.recordCorrection('guard:hand-height', 1200);
       tracker.recordCorrection('guard:hand-height', 1300);
       const summary = tracker.getSummary(2000);
-      expect(summary.corrections).toContain('Mãos caíram da altura ideal (3x)');
+      expect(summary.corrections).toContainEqual({
+        key: 'notes.correction.guardHandHeight',
+        params: { count: 3 },
+      });
+    });
+
+    it('maps every coaching rule to a correction key', () => {
+      // Any rule the coach can fire must have a sentence to show for it.
+      for (const ruleKey of Object.keys(COACHING_PHRASE_KEYS)) {
+        if (ruleKey === 'punch:good' || ruleKey === 'form:excellent') continue; // praise, not a fix
+        expect(CORRECTION_NOTE_KEYS[ruleKey], `sem nota p/ ${ruleKey}`).toBeTruthy();
+      }
     });
 
     it('hides corrections below the recurrence threshold', () => {
@@ -163,14 +181,23 @@ describe('SessionTracker', () => {
       for (let i = 0; i < 3; i += 1) tracker.recordCorrection('base:foot-width', 1100 + i);
       for (let i = 0; i < 5; i += 1) tracker.recordCorrection('guard:critical', 1100 + i);
       const corrections = tracker.getSummary(2000).corrections;
-      expect(corrections[0]).toBe('Guarda baixa em momentos críticos (5x)');
-      expect(corrections[1]).toBe('Pés fechados demais (3x)');
+      expect(corrections[0]).toEqual({
+        key: 'notes.correction.guardCritical',
+        params: { count: 5 },
+      });
+      expect(corrections[1]).toEqual({
+        key: 'notes.correction.baseFootWidth',
+        params: { count: 3 },
+      });
     });
 
-    it('falls back to the raw rule key for unknown rules', () => {
+    it('falls back to a generic note carrying the raw rule key', () => {
       tracker.startRound(1000);
       for (let i = 0; i < 3; i += 1) tracker.recordCorrection('custom:rule', 1100 + i);
-      expect(tracker.getSummary(2000).corrections).toContain('custom:rule (3x)');
+      expect(tracker.getSummary(2000).corrections).toContainEqual({
+        key: GENERIC_CORRECTION_NOTE_KEY,
+        params: { rule: 'custom:rule', count: 3 },
+      });
     });
 
     it('ignores corrections recorded outside a round', () => {
@@ -196,7 +223,10 @@ describe('SessionTracker', () => {
       }
       tracker.endRound(9500);
       const highlights = tracker.getSummary(10000).highlights;
-      expect(highlights.some((h) => h.includes('Round 1') && h.includes('9s'))).toBe(true);
+      expect(highlights).toContainEqual({
+        key: HIGH_SCORE_STREAK_NOTE_KEY,
+        params: { round: 1, seconds: 9 },
+      });
     });
 
     it('does not highlight streaks broken by low-score frames', () => {
@@ -220,7 +250,10 @@ describe('SessionTracker', () => {
       }
       tracker.endRound(5000);
       const highlights = tracker.getSummary(6000).highlights;
-      expect(highlights).toContain('Round 1: 5 golpes de boa qualidade');
+      expect(highlights).toContainEqual({
+        key: GOOD_PUNCHES_NOTE_KEY,
+        params: { round: 1, count: 5 },
+      });
     });
 
     it('does not highlight rounds with fewer than 5 good punches', () => {

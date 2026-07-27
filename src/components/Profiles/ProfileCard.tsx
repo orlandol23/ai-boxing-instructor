@@ -1,4 +1,5 @@
 import { Pencil } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import type { Profile } from '../../services/profileStore';
 import { LevelChip } from '../Progress/LevelChip';
 
@@ -17,6 +18,8 @@ interface ProfileCardProps {
  * glow (no adulto o token de glow vale `none`).
  */
 export function ProfileCard({ profile, level, selected, onSelect, onEdit }: ProfileCardProps) {
+  const { t } = useTranslation();
+
   return (
     <div
       className={`relative flex flex-col items-center gap-2.5 rounded-[20px] border bg-surface p-4 pt-5 transition-colors ${
@@ -29,7 +32,9 @@ export function ProfileCard({ profile, level, selected, onSelect, onEdit }: Prof
         type="button"
         onClick={onSelect}
         aria-pressed={selected}
-        aria-label={`Treinar como ${profile.name}${profile.isKid ? ' (modo kids)' : ''}`}
+        aria-label={t(profile.isKid ? 'profiles.trainAsKid' : 'profiles.trainAs', {
+          name: profile.name,
+        })}
         className="flex flex-col items-center gap-2.5"
       >
         <span
@@ -45,13 +50,13 @@ export function ProfileCard({ profile, level, selected, onSelect, onEdit }: Prof
       <LevelChip level={level} />
       {profile.isKid && (
         <span className="text-[11px] font-semibold uppercase tracking-wider text-accent-light">
-          Modo kids 👑
+          {t('profiles.kidsMode')}
         </span>
       )}
       <button
         type="button"
         onClick={onEdit}
-        aria-label={`Editar perfil ${profile.name}`}
+        aria-label={t('profiles.editProfileNamed', { name: profile.name })}
         className="absolute right-1 top-1 flex items-center justify-center rounded-full text-fg-dim transition-colors hover:text-fg"
       >
         <Pencil size={16} aria-hidden="true" />

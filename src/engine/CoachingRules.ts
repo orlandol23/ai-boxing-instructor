@@ -2,6 +2,63 @@ import type { AnalysisFrame, VoiceFeedback } from './types';
 
 const PHRASE_STABILITY_WINDOW_MS = 1000;
 
+/**
+ * Interchangeable phrase variants per rule, as i18n keys.
+ *
+ * The engine stays language-free: it decides *which phrase* fires, never
+ * what the phrase says. Adding a locale means adding entries under
+ * `coaching.*` in `src/i18n/locales/*` — no engine change, no test change.
+ * `src/i18n/__tests__/locales.test.ts` asserts every key listed here
+ * exists in every locale.
+ */
+export const COACHING_PHRASE_KEYS = {
+  'guard:critical': [
+    'coaching.guard.critical.raiseGuard',
+    'coaching.guard.critical.protectFace',
+    'coaching.guard.critical.handsOnChin',
+  ],
+  'guard:hand-height': [
+    'coaching.guard.handHeight.handsHigher',
+    'coaching.guard.handHeight.keepHandsUp',
+    'coaching.guard.handHeight.guardDropping',
+  ],
+  'guard:elbow-tuck': [
+    'coaching.guard.elbowTuck.elbowsIn',
+    'coaching.guard.elbowTuck.tuckElbows',
+  ],
+  'guard:chin-tuck': [
+    'coaching.guard.chinTuck.chinDown',
+    'coaching.guard.chinTuck.protectChin',
+  ],
+  'base:critical': ['coaching.base.critical.fixBase', 'coaching.base.critical.adjustFeet'],
+  'base:foot-width': [
+    'coaching.base.footWidth.widerStance',
+    'coaching.base.footWidth.shoulderWidth',
+  ],
+  'base:knee-flex': [
+    'coaching.base.kneeFlex.bendKnees',
+    'coaching.base.kneeFlex.moreKneeBend',
+  ],
+  'base:weight': [
+    'coaching.base.weight.distributeWeight',
+    'coaching.base.weight.balanceWeight',
+  ],
+  'punch:good': [
+    'coaching.punch.good.goodPunch',
+    'coaching.punch.good.niceOne',
+    'coaching.punch.good.solidShot',
+  ],
+  'punch:fair': ['coaching.punch.fair.snapItBack', 'coaching.punch.fair.handBackFaster'],
+  'punch:poor': ['coaching.punch.poor.extendMore', 'coaching.punch.poor.rotateHips'],
+  'form:excellent': [
+    'coaching.form.excellent.greatPosture',
+    'coaching.form.excellent.doingGreat',
+    'coaching.form.excellent.goodRhythm',
+  ],
+} as const satisfies Record<string, readonly string[]>;
+
+export type CoachingRuleKey = keyof typeof COACHING_PHRASE_KEYS;
+
 function hashString(value: string): number {
   let hash = 0;
   for (let i = 0; i < value.length; i += 1) {
@@ -10,13 +67,15 @@ function hashString(value: string): number {
   return hash;
 }
 
-function pickRandom(phrases: string[]): string {
-  if (phrases.length === 0) return '';
-
+/**
+ * Picks one phrase key for a rule. Stable within a 1s window so the same
+ * frame burst does not flicker between variants.
+ */
+function pickPhraseKey(ruleKey: CoachingRuleKey): string {
+  const keys: readonly string[] = COACHING_PHRASE_KEYS[ruleKey];
   const bucket = Math.floor(Date.now() / PHRASE_STABILITY_WINDOW_MS);
-  const seed = `${bucket}:${phrases.join('|')}`;
-  const index = hashString(seed) % phrases.length;
-  return phrases[index];
+  const seed = `${bucket}:${keys.join('|')}`;
+  return keys[hashString(seed) % keys.length];
 }
 
 /**
@@ -32,7 +91,7 @@ export function evaluateFrame(frame: AnalysisFrame): VoiceFeedback[] {
   if (frame.guard.overall < 40) {
     feedback.push({
       ruleKey: 'guard:critical',
-      message: pickRandom(['Levanta a guarda!', 'Protege o rosto!', 'Mãos no queixo!']),
+      messageKey: pickPhraseKey('guard:critical'),
       priority: 'critical',
       category: 'guard',
       cooldownMs: 5000,
@@ -41,11 +100,7 @@ export function evaluateFrame(frame: AnalysisFrame): VoiceFeedback[] {
     if (frame.guard.leftHandHeight < 60 || frame.guard.rightHandHeight < 60) {
       feedback.push({
         ruleKey: 'guard:hand-height',
-        message: pickRandom([
-          'Mãos mais altas, protege o rosto!',
-          'Mantém as mãos altas',
-          'Guarda tá caindo um pouco',
-        ]),
+        messageKey: pickPhraseKey('guard:hand-height'),
         priority: 'high',
         category: 'guard',
         cooldownMs: 8000,
@@ -54,7 +109,7 @@ export function evaluateFrame(frame: AnalysisFrame): VoiceFeedback[] {
     if (frame.guard.elbowTuck < 60) {
       feedback.push({
         ruleKey: 'guard:elbow-tuck',
-        message: pickRandom(['Cotovelos junto ao corpo!', 'Cola os cotovelos!']),
+        messageKey: pickPhraseKey('guard:elbow-tuck'),
         priority: 'high',
         category: 'guard',
         cooldownMs: 8000,
@@ -65,7 +120,7 @@ export function evaluateFrame(frame: AnalysisFrame): VoiceFeedback[] {
   if (frame.guard.chinTuck < 50) {
     feedback.push({
       ruleKey: 'guard:chin-tuck',
-      message: pickRandom(['Abaixa o queixo!', 'Protege o queixo!']),
+      messageKey: pickPhraseKey('guard:chin-tuck'),
       priority: 'high',
       category: 'guard',
       cooldownMs: 10000,
@@ -76,7 +131,7 @@ export function evaluateFrame(frame: AnalysisFrame): VoiceFeedback[] {
   if (frame.base.overall < 40) {
     feedback.push({
       ruleKey: 'base:critical',
-      message: pickRandom(['Corrige a base!', 'Ajusta a posição dos pés!']),
+      messageKey: pickPhraseKey('base:critical'),
       priority: 'critical',
       category: 'base',
       cooldownMs: 5000,
@@ -85,7 +140,7 @@ export function evaluateFrame(frame: AnalysisFrame): VoiceFeedback[] {
     if (frame.base.footWidth < 60) {
       feedback.push({
         ruleKey: 'base:foot-width',
-        message: pickRandom(['Abre mais os pés!', 'Pés na largura dos ombros!']),
+        messageKey: pickPhraseKey('base:foot-width'),
         priority: 'normal',
         category: 'base',
         cooldownMs: 8000,
@@ -94,7 +149,7 @@ export function evaluateFrame(frame: AnalysisFrame): VoiceFeedback[] {
     if (frame.base.kneeFlex < 60) {
       feedback.push({
         ruleKey: 'base:knee-flex',
-        message: pickRandom(['Flexiona os joelhos!', 'Dobra mais os joelhos!']),
+        messageKey: pickPhraseKey('base:knee-flex'),
         priority: 'normal',
         category: 'base',
         cooldownMs: 8000,
@@ -105,7 +160,7 @@ export function evaluateFrame(frame: AnalysisFrame): VoiceFeedback[] {
   if (frame.base.weightDistribution < 50) {
     feedback.push({
       ruleKey: 'base:weight',
-      message: pickRandom(['Distribui o peso melhor!', 'Equilibra o peso entre os pés!']),
+      messageKey: pickPhraseKey('base:weight'),
       priority: 'normal',
       category: 'base',
       cooldownMs: 10000,
@@ -118,7 +173,7 @@ export function evaluateFrame(frame: AnalysisFrame): VoiceFeedback[] {
     if (punch.quality === 'good') {
       feedback.push({
         ruleKey: 'punch:good',
-        message: pickRandom(['Bom golpe!', 'Mandou bem!', 'Golpe firme!']),
+        messageKey: pickPhraseKey('punch:good'),
         priority: 'low',
         category: 'encouragement',
         cooldownMs: 4000,
@@ -127,7 +182,7 @@ export function evaluateFrame(frame: AnalysisFrame): VoiceFeedback[] {
     } else if (punch.quality === 'fair') {
       feedback.push({
         ruleKey: 'punch:fair',
-        message: pickRandom(['Retorna a mão mais rápido', 'Traz a mão de volta!']),
+        messageKey: pickPhraseKey('punch:fair'),
         priority: 'low',
         category: 'punch',
         cooldownMs: 6000,
@@ -136,7 +191,7 @@ export function evaluateFrame(frame: AnalysisFrame): VoiceFeedback[] {
     } else if (punch.quality === 'poor') {
       feedback.push({
         ruleKey: 'punch:poor',
-        message: pickRandom(['Estende mais o braço!', 'Gira mais o quadril!']),
+        messageKey: pickPhraseKey('punch:poor'),
         priority: 'normal',
         category: 'punch',
         cooldownMs: 6000,
@@ -149,11 +204,7 @@ export function evaluateFrame(frame: AnalysisFrame): VoiceFeedback[] {
   if (frame.guard.overall >= 90 && frame.base.overall >= 90) {
     feedback.push({
       ruleKey: 'form:excellent',
-      message: pickRandom([
-        'Postura excelente, continua assim!',
-        'Tá mandando bem!',
-        'Ritmo bom, continua!',
-      ]),
+      messageKey: pickPhraseKey('form:excellent'),
       priority: 'low',
       category: 'encouragement',
       cooldownMs: 15000,
@@ -172,7 +223,7 @@ const PRIORITY_ORDER: Record<VoiceFeedback['priority'], number> = {
 
 /**
  * Selects the highest-priority feedback item that is not on cooldown.
- * Cooldown is keyed by ruleKey (not message) so phrase variants
+ * Cooldown is keyed by ruleKey (not messageKey) so phrase variants
  * share the same cooldown window.
  */
 export function selectFeedback(

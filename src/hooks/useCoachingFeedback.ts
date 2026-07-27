@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import type { SessionSummary } from '../engine/types';
 import {
   buildCoachPayload,
@@ -22,7 +23,7 @@ interface UseCoachingFeedbackOptions {
 
 interface UseCoachingFeedbackReturn {
   status: CoachFeedbackStatus;
-  /** Texto de coaching em PT-BR (apenas quando status === 'success'). */
+  /** Texto de coaching no idioma ativo (apenas quando status === 'success'). */
   feedback: string | null;
   requestRoundFeedback: (summary: SessionSummary, roundNumber: number) => void;
   requestSessionFeedback: (summary: SessionSummary) => void;
@@ -39,10 +40,15 @@ interface UseCoachingFeedbackReturn {
  * vira apenas status 'unavailable', e o fluxo de treino segue intacto.
  * Requisições em voo são abortadas ao desmontar, ao limpar ou quando uma
  * nova requisição chega (a mais recente sempre vence).
+ *
+ * O idioma ativo viaja no payload (`locale`), e as notas estruturadas do
+ * engine são traduzidas aqui antes de irem para a IA — o coach responde
+ * na mesma língua da interface.
  */
 export function useCoachingFeedback(
   options: UseCoachingFeedbackOptions = {}
 ): UseCoachingFeedbackReturn {
+  const { t, i18n } = useTranslation();
   const [status, setStatus] = useState<CoachFeedbackStatus>('idle');
   const [feedback, setFeedback] = useState<string | null>(null);
 
@@ -51,6 +57,13 @@ export function useCoachingFeedback(
   const optionsRef = useRef(options);
   useEffect(() => {
     optionsRef.current = options;
+  });
+
+  // `request` is a stable callback, so the active language is read through
+  // a ref: switching EN/PT never re-creates it (and never re-fires it).
+  const i18nRef = useRef({ t, language: i18n.resolvedLanguage ?? i18n.language });
+  useEffect(() => {
+    i18nRef.current = { t, language: i18n.resolvedLanguage ?? i18n.language };
   });
 
   const request = useCallback(
@@ -63,7 +76,13 @@ export function useCoachingFeedback(
       setStatus('loading');
       setFeedback(null);
 
-      void requestCoaching(buildCoachPayload(type, summary, roundNumber), {
+      const payload = buildCoachPayload(type, summary, {
+        roundNumber,
+        locale: i18nRef.current.language,
+        translate: (key, params) => i18nRef.current.t(key, params ?? {}),
+      });
+
+      void requestCoaching(payload, {
         signal: controller.signal,
         timeoutMs: optionsRef.current.timeoutMs ?? COACH_TIMEOUT_MS,
       })

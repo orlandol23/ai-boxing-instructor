@@ -2,8 +2,10 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   buildCoachPayload,
   requestCoaching,
+  normalizeCoachLocale,
   CoachRequestError,
   COACH_ENDPOINT,
+  DEFAULT_COACH_LOCALE,
 } from '../coachClient';
 import { SessionTracker } from '../../engine/SessionTracker';
 import type { SessionSummary } from '../../engine/types';
@@ -29,10 +31,22 @@ function makeSummary(overrides: Partial<SessionSummary> = {}): SessionSummary {
     },
     avgGuardScore: 78.4,
     avgBaseScore: 84.9,
-    corrections: ['Mãos caíram da altura ideal (4x)'],
-    highlights: ['Round 1: 10s seguidos com guarda e base acima de 85'],
+    corrections: [{ key: 'notes.correction.guardHandHeight', params: { count: 4 } }],
+    highlights: [
+      { key: 'notes.highlight.highScoreStreak', params: { round: 1, seconds: 10 } },
+    ],
     ...overrides,
   };
+}
+
+/** Stand-in for i18next's `t`: renders a note as `key(param=value,…)`. */
+function fakeTranslate(key: string, params?: Record<string, string | number>): string {
+  const suffix = params
+    ? `(${Object.entries(params)
+        .map(([k, v]) => `${k}=${v}`)
+        .join(',')})`
+    : '';
+  return `${key}${suffix}`;
 }
 
 type FetchResponse = Pick<Response, 'ok' | 'status'> & { json: () => Promise<unknown> };
@@ -55,20 +69,35 @@ afterEach(() => {
 
 describe('buildCoachPayload', () => {
   it('monta payload de sessão sem roundNumber', () => {
-    const payload = buildCoachPayload('session', makeSummary());
+    const payload = buildCoachPayload('session', makeSummary(), {
+      translate: fakeTranslate,
+    });
 
     expect(payload.type).toBe('session');
     expect(payload.roundNumber).toBeUndefined();
     expect(payload.summary.duration).toBe(180_000);
     expect(payload.summary.totalPunches).toBe(30);
     expect(payload.summary.punchBreakdown.jab).toBe(18);
-    expect(payload.summary.corrections).toEqual(['Mãos caíram da altura ideal (4x)']);
+    expect(payload.summary.corrections).toEqual([
+      'notes.correction.guardHandHeight(count=4)',
+    ]);
+    expect(payload.summary.highlights).toEqual([
+      'notes.highlight.highScoreStreak(round=1,seconds=10)',
+    ]);
   });
 
   it('monta payload de round com roundNumber', () => {
-    const payload = buildCoachPayload('round', makeSummary(), 2);
+    const payload = buildCoachPayload('round', makeSummary(), { roundNumber: 2 });
     expect(payload.type).toBe('round');
     expect(payload.roundNumber).toBe(2);
+  });
+
+  it('traduz as notas do engine no limite da rede (a IA nunca vê chaves)', () => {
+    const payload = buildCoachPayload('session', makeSummary(), {
+      translate: (key) => (key.includes('guardHandHeight') ? 'Hands dropped' : 'Nice streak'),
+    });
+    expect(payload.summary.corrections).toEqual(['Hands dropped']);
+    expect(payload.summary.highlights).toEqual(['Nice streak']);
   });
 
   it('saneia valores negativos/não-finitos para 0 (validação do api/coach)', () => {
@@ -97,9 +126,37 @@ describe('buildCoachPayload', () => {
 
   it('copia arrays do summary (mutações posteriores não vazam pro payload)', () => {
     const summary = makeSummary();
-    const payload = buildCoachPayload('session', summary);
-    summary.corrections.push('mutação');
+    const payload = buildCoachPayload('session', summary, { translate: fakeTranslate });
+    summary.corrections.push({ key: 'notes.correction.generic', params: { count: 1 } });
     expect(payload.summary.corrections).toHaveLength(1);
+  });
+
+  describe('locale', () => {
+    it('vai no corpo da requisição, saneado', () => {
+      expect(buildCoachPayload('session', makeSummary(), { locale: 'pt-BR' }).locale).toBe(
+        'pt-BR'
+      );
+      expect(buildCoachPayload('session', makeSummary(), { locale: 'en' }).locale).toBe('en');
+    });
+
+    it('idioma ausente ou desconhecido cai no default (nunca vaza pro prompt)', () => {
+      expect(buildCoachPayload('session', makeSummary()).locale).toBe(DEFAULT_COACH_LOCALE);
+      expect(
+        buildCoachPayload('session', makeSummary(), { locale: 'pt' }).locale
+      ).toBe(DEFAULT_COACH_LOCALE);
+      expect(
+        buildCoachPayload('session', makeSummary(), { locale: 'de-DE' }).locale
+      ).toBe(DEFAULT_COACH_LOCALE);
+    });
+
+    it('normalizeCoachLocale aceita só a allow-list', () => {
+      expect(normalizeCoachLocale('en')).toBe('en');
+      expect(normalizeCoachLocale('pt-BR')).toBe('pt-BR');
+      expect(normalizeCoachLocale('PT-br')).toBe('en');
+      expect(normalizeCoachLocale('')).toBe('en');
+      expect(normalizeCoachLocale(null)).toBe('en');
+      expect(normalizeCoachLocale(undefined)).toBe('en');
+    });
   });
 
   it('formata as métricas acumuladas por um SessionTracker real', () => {
@@ -124,7 +181,10 @@ describe('buildCoachPayload', () => {
     );
     const summary = tracker.endSession(180_000);
 
-    const payload = buildCoachPayload('round', summary, 1);
+    const payload = buildCoachPayload('round', summary, {
+      roundNumber: 1,
+      translate: fakeTranslate,
+    });
 
     expect(payload.roundNumber).toBe(1);
     expect(payload.summary.rounds).toBe(1);
@@ -158,7 +218,10 @@ describe('buildCoachPayload', () => {
 });
 
 describe('requestCoaching', () => {
-  const payload = buildCoachPayload('round', makeSummary(), 1);
+  const payload = buildCoachPayload('round', makeSummary(), {
+    roundNumber: 1,
+    translate: fakeTranslate,
+  });
 
   it('devolve o texto de coaching no sucesso (uma única chamada)', async () => {
     const fetchFn = vi.fn().mockResolvedValue(jsonResponse(200, { coaching: ' Round bom! ' }));

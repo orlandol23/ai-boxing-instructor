@@ -12,10 +12,18 @@ import {
 import { historyStorageKey } from '../../services/historyStore';
 import { DEFAULT_PROFILE_ID } from '../../engine/gamification/types';
 import { summary } from '../../engine/gamification/__tests__/fixtures';
+import i18n, { DEFAULT_LOCALE, LOCALE_STORAGE_KEY } from '../../i18n';
+import { badgeName, questDescription } from '../../theme/copy';
+import { BADGES } from '../../engine/gamification/badges';
+import { QUEST_POOL } from '../../engine/gamification/quests';
 
 /**
  * Integração F7: ProfileProvider + tema no <html> + partição do
  * histórico/gamificação por perfil ativo (localStorage real do jsdom).
+ *
+ * Também fixa a separação dos dois eixos de copy: o PERFIL escolhe o tema
+ * (adult/kids), o IDIOMA é escolhido pelo usuário e persistido à parte —
+ * trocar de perfil nunca mexe no idioma, e vice-versa.
  */
 
 function wrapper({ children }: { children: ReactNode }) {
@@ -26,9 +34,10 @@ function useHarness() {
   return { profiles: useProfiles(), gamification: useGamification(), theme: useAppTheme() };
 }
 
-beforeEach(() => {
+beforeEach(async () => {
   window.localStorage.clear();
   document.documentElement.dataset.theme = 'adult';
+  await i18n.changeLanguage(DEFAULT_LOCALE);
 });
 
 describe('ProfileProvider — tema segue o perfil ativo', () => {
@@ -145,5 +154,66 @@ describe('ProfileProvider + useGamification — partição por perfil', () => {
     expect(result.current.profiles.activeProfile).toBeNull();
     // histórico do perfil deletado continua no storage (decisão do F7)
     expect(window.localStorage.getItem(historyStorageKey(kidId))).not.toBeNull();
+  });
+});
+
+describe('ProfileProvider — tema e idioma são eixos independentes', () => {
+  it('trocar de perfil muda o tema e NÃO mexe no idioma', async () => {
+    await i18n.changeLanguage('pt-BR');
+    const { result } = renderHook(useHarness, { wrapper });
+
+    act(() => {
+      result.current.profiles.createProfile({ name: 'Orlando' });
+    });
+    expect(result.current.theme).toBe('adult');
+    expect(i18n.resolvedLanguage).toBe('pt-BR');
+
+    act(() => {
+      result.current.profiles.createProfile({ name: 'Alice', isKid: true });
+    });
+    expect(result.current.theme).toBe('kids');
+    expect(i18n.resolvedLanguage).toBe('pt-BR');
+  });
+
+  it('trocar de idioma muda a copy e NÃO mexe no tema do perfil ativo', async () => {
+    const { result } = renderHook(useHarness, { wrapper });
+    act(() => {
+      result.current.profiles.createProfile({ name: 'Alice', isKid: true });
+    });
+    expect(document.documentElement.dataset.theme).toBe('kids');
+
+    await act(async () => {
+      await i18n.changeLanguage('pt-BR');
+    });
+    expect(result.current.theme).toBe('kids');
+    expect(document.documentElement.dataset.theme).toBe('kids');
+  });
+
+  it('a copy resolve os dois eixos ao mesmo tempo (idioma × tema)', async () => {
+    const ironGuard = BADGES.find((b) => b.id === 'iron_guard')!;
+    const hooks = QUEST_POOL.find((q) => q.id === 'hooks_20')!;
+    const t = i18n.t.bind(i18n);
+
+    expect(badgeName(t, ironGuard, 'adult')).toBe('Iron Guard');
+    expect(badgeName(t, ironGuard, 'kids')).toBe('Castle Shield');
+
+    await i18n.changeLanguage('pt-BR');
+    expect(badgeName(t, ironGuard, 'adult')).toBe('Guarda de Ferro');
+    expect(badgeName(t, ironGuard, 'kids')).toBe('Escudo do Castelo');
+    expect(questDescription(t, hooks, 'kids')).toContain('Giro real');
+  });
+
+  it('o idioma é persistido na sua própria chave, separado dos perfis', async () => {
+    const { result } = renderHook(useHarness, { wrapper });
+    act(() => {
+      result.current.profiles.createProfile({ name: 'Orlando' });
+    });
+
+    await act(async () => {
+      await i18n.changeLanguage('pt-BR');
+    });
+
+    expect(window.localStorage.getItem(LOCALE_STORAGE_KEY)).toBe('pt-BR');
+    expect(window.localStorage.getItem(PROFILES_STORAGE_KEY)).not.toContain('pt-BR');
   });
 });

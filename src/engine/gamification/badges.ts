@@ -38,8 +38,15 @@ export interface BadgeContext {
 
 export interface BadgeDefinition {
   id: BadgeId;
-  name: string;
-  description: string;
+  /**
+   * i18n key of the badge name. The `_kids` variant of the same key holds
+   * the Arcade Royale skin; where the RPG metaphor adds nothing (neutral
+   * counters like "100 Punches") the locale simply omits it and the base
+   * key is used for both themes.
+   */
+  nameKey: string;
+  /** i18n key of the unlock criterion. Never themed — precision > skin. */
+  descriptionKey: string;
   icon: BadgeIcon;
   check(ctx: BadgeContext): boolean;
 }
@@ -53,40 +60,44 @@ const ALL_PUNCH_TYPES: PunchType[] = [
   'rear_uppercut',
 ];
 
-/** Catálogo fixo — a ordem define o grid da tela de progresso. */
+/**
+ * Catálogo fixo — a ordem define o grid da tela de progresso.
+ * Copy lives in `src/i18n/locales/*` under `badges.<id>.*`; the engine
+ * only owns the ids, the criteria and the icon.
+ */
 export const BADGES: readonly BadgeDefinition[] = [
   {
     id: 'first_session',
-    name: 'Primeira Sessão',
-    description: 'Complete seu primeiro treino',
+    nameKey: 'badges.first_session.name',
+    descriptionKey: 'badges.first_session.description',
     icon: 'medal',
     check: (c) => c.lifetime.sessions >= 1,
   },
   {
     id: 'punches_100',
-    name: '100 Golpes',
-    description: 'Acumule 100 golpes no total',
+    nameKey: 'badges.punches_100.name',
+    descriptionKey: 'badges.punches_100.description',
     icon: 'zap',
     check: (c) => c.lifetime.punches >= 100,
   },
   {
     id: 'punches_1000',
-    name: '1000 Golpes',
-    description: 'Acumule 1000 golpes no total',
+    nameKey: 'badges.punches_1000.name',
+    descriptionKey: 'badges.punches_1000.description',
     icon: 'trophy',
     check: (c) => c.lifetime.punches >= 1000,
   },
   {
     id: 'iron_guard',
-    name: 'Guarda de Ferro',
-    description: 'Guarda média ≥ 90 numa sessão',
+    nameKey: 'badges.iron_guard.name',
+    descriptionKey: 'badges.iron_guard.description',
     icon: 'shield',
     check: (c) => c.session.rounds >= 1 && c.session.avgGuardScore >= 90,
   },
   {
     id: 'perfect_session',
-    name: 'Sessão Perfeita',
-    description: 'Um round com guarda e base ≥ 90',
+    nameKey: 'badges.perfect_session.name',
+    descriptionKey: 'badges.perfect_session.description',
     icon: 'star',
     check: (c) =>
       c.session.roundDetails.some(
@@ -95,22 +106,22 @@ export const BADGES: readonly BadgeDefinition[] = [
   },
   {
     id: 'streak_7',
-    name: '7 Dias Seguidos',
-    description: 'Treine 7 dias consecutivos',
+    nameKey: 'badges.streak_7.name',
+    descriptionKey: 'badges.streak_7.description',
     icon: 'flame',
     check: (c) => c.streakCount >= 7,
   },
   {
     id: 'streak_30',
-    name: '30 Dias Seguidos',
-    description: 'Treine 30 dias consecutivos',
+    nameKey: 'badges.streak_30.name',
+    descriptionKey: 'badges.streak_30.description',
     icon: 'flame',
     check: (c) => c.streakCount >= 30,
   },
   {
     id: 'full_arsenal',
-    name: 'Arsenal Completo',
-    description: 'Acerte os 6 tipos de golpe numa mesma sessão',
+    nameKey: 'badges.full_arsenal.name',
+    descriptionKey: 'badges.full_arsenal.description',
     icon: 'swords',
     check: (c) => ALL_PUNCH_TYPES.every((t) => c.session.punchBreakdown[t] >= 1),
   },

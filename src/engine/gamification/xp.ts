@@ -1,5 +1,4 @@
 import type { PunchQuality, RoundSummary } from '../types';
-import type { Theme } from '../../theme/theme';
 
 /**
  * Regras de XP, níveis e ranks (SPECS §5).
@@ -75,21 +74,16 @@ export const RANK_MIN_LEVEL: Record<RankId, number> = {
 
 const RANK_ORDER: RankId[] = ['champion', 'gold', 'silver', 'bronze'];
 
-/** Nomes por tema: cinturões no adulto, coroas no kids (a UI passa o
- *  tema do perfil ativo — ProfileContext, F7). */
-export const RANK_LABELS: Record<Theme, Record<RankId, string>> = {
-  adult: {
-    bronze: 'Cinturão Bronze',
-    silver: 'Cinturão Prata',
-    gold: 'Cinturão Ouro',
-    champion: 'Campeão',
-  },
-  kids: {
-    bronze: 'Coroa de Bronze',
-    silver: 'Coroa de Prata',
-    gold: 'Coroa de Ouro',
-    champion: 'Rainha do Ringue',
-  },
+/**
+ * i18n key per rank. The base key is the adult skin (belts); the `_kids`
+ * variant of the same key is the Arcade Royale skin (crowns) — resolved
+ * by `rankLabel()` in `src/theme/copy.ts`, never here.
+ */
+export const RANK_LABEL_KEYS: Record<RankId, string> = {
+  bronze: 'ranks.bronze',
+  silver: 'ranks.silver',
+  gold: 'ranks.gold',
+  champion: 'ranks.champion',
 };
 
 export function rankForLevel(level: number): RankId {
@@ -99,8 +93,9 @@ export function rankForLevel(level: number): RankId {
   return 'bronze';
 }
 
-export function rankLabel(level: number, theme: Theme = 'adult'): string {
-  return RANK_LABELS[theme][rankForLevel(level)];
+/** Stable i18n key for the rank a level belongs to. */
+export function rankLabelKey(level: number): string {
+  return RANK_LABEL_KEYS[rankForLevel(level)];
 }
 
 /* ------------------------------------------------------------ sessão/XP */

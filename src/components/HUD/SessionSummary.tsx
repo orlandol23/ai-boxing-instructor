@@ -1,9 +1,9 @@
 import { RotateCcw, Home, ChevronsUp } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import type { PunchType, SessionSummary as SessionSummaryData } from '../../engine/types';
 import type { CoachFeedbackStatus } from '../../hooks/useCoachingFeedback';
 import type { SessionGains } from '../../engine/gamification/applySession';
-import { rankLabel } from '../../engine/gamification/xp';
-import { useAppTheme } from '../../contexts/ProfileContext';
+import { rankLabel, useCopy } from '../../theme/copy';
 import { CoachBubble } from './CoachBubble';
 import { LevelChip } from '../Progress/LevelChip';
 import { XpBar } from '../Progress/XpBar';
@@ -21,20 +21,12 @@ interface SessionSummaryProps {
   onHome: () => void;
 }
 
-const PUNCH_LABELS: Record<PunchType, string> = {
-  jab: 'Jab',
-  cross: 'Cross',
-  lead_hook: 'Lead Hook',
-  rear_hook: 'Rear Hook',
-  lead_uppercut: 'Lead Upper',
-  rear_uppercut: 'Rear Upper',
-};
-
-function formatDuration(ms: number): string {
+function durationParts(ms: number): { minutes: number; seconds: string } {
   const totalSeconds = Math.floor(ms / 1000);
-  const m = Math.floor(totalSeconds / 60);
-  const s = totalSeconds % 60;
-  return `${m}min ${s.toString().padStart(2, '0')}s`;
+  return {
+    minutes: Math.floor(totalSeconds / 60),
+    seconds: (totalSeconds % 60).toString().padStart(2, '0'),
+  };
 }
 
 function scoreColor(score: number): string {
@@ -51,7 +43,8 @@ export function SessionSummary({
   onRestart,
   onHome,
 }: SessionSummaryProps) {
-  const theme = useAppTheme();
+  const { t, theme } = useCopy();
+  const { i18n } = useTranslation();
   const punches = (Object.keys(summary.punchBreakdown) as PunchType[])
     .map((type) => ({ type, count: summary.punchBreakdown[type] }))
     .filter((p) => p.count > 0)
@@ -62,11 +55,12 @@ export function SessionSummary({
       <div className="mx-4 flex max-h-[90vh] w-full max-w-md flex-col gap-4 overflow-y-auto rounded-2xl border border-line bg-surface p-5">
         <header className="text-center">
           <h2 className="font-display text-title font-extrabold uppercase tracking-wide text-fg">
-            Sessão concluída
+            {t('summary.title')}
           </h2>
           <p className="mt-1 text-sm text-fg-muted">
-            {summary.rounds} {summary.rounds === 1 ? 'round' : 'rounds'} ·{' '}
-            {formatDuration(summary.duration)} · shadow boxing
+            {summary.rounds}{' '}
+            {summary.rounds === 1 ? t('summary.roundsOne') : t('summary.roundsOther')} ·{' '}
+            {t('summary.duration', durationParts(summary.duration))} · {t('summary.mode')}
           </p>
         </header>
 
@@ -75,22 +69,27 @@ export function SessionSummary({
           <section className="rounded-xl border border-line bg-surface-2 p-4">
             <div className="text-center">
               <span className="num text-hud-value font-bold text-xp">
-                +{gains.totalSessionXp.toLocaleString('pt-BR')}
+                +{gains.totalSessionXp.toLocaleString(i18n.resolvedLanguage)}
               </span>
               <span className="ml-1 font-display text-lg font-bold uppercase text-xp">XP</span>
               <p className="mt-1 text-xs text-fg-muted">
-                golpes <span className="num text-fg">{gains.xp.punchXp}</span> · bônus de round{' '}
-                <span className="num text-fg">{gains.xp.roundBonusXp}</span> · missões{' '}
-                <span className="num text-fg">{gains.questXp}</span>
+                {t('summary.xpPunches')}{' '}
+                <span className="num text-fg">{gains.xp.punchXp}</span> ·{' '}
+                {t('summary.xpRoundBonus')}{' '}
+                <span className="num text-fg">{gains.xp.roundBonusXp}</span> ·{' '}
+                {t('summary.xpQuests')} <span className="num text-fg">{gains.questXp}</span>
               </p>
             </div>
 
             {gains.leveledUp && (
               <p className="mt-3 flex items-center justify-center gap-1.5 rounded-lg border border-accent bg-surface px-3 py-2 text-sm font-semibold text-accent-light">
                 <ChevronsUp size={16} aria-hidden="true" />
-                Subiu de nível! LVL {gains.levelBefore.level} → {gains.levelAfter.level}
+                {t('summary.levelUp', {
+                  from: gains.levelBefore.level,
+                  to: gains.levelAfter.level,
+                })}
                 {gains.rankAfter !== gains.rankBefore &&
-                  ` · ${rankLabel(gains.levelAfter.level, theme)}`}
+                  ` · ${rankLabel(t, gains.levelAfter.level, theme)}`}
               </p>
             )}
 
@@ -107,22 +106,22 @@ export function SessionSummary({
         {/* médias e volume — número sempre junto da cor (SPECS §2) */}
         <section className="grid grid-cols-3 gap-2.5">
           <Stat
-            label="Guarda"
+            label={t('summary.guard')}
             value={Math.round(summary.avgGuardScore).toString()}
             valueClass={scoreColor(summary.avgGuardScore)}
           />
           <Stat
-            label="Base"
+            label={t('summary.base')}
             value={Math.round(summary.avgBaseScore).toString()}
             valueClass={scoreColor(summary.avgBaseScore)}
           />
-          <Stat label="Golpes" value={String(summary.totalPunches)} />
+          <Stat label={t('summary.punches')} value={String(summary.totalPunches)} />
         </section>
 
         {punches.length > 0 && (
           <section>
             <h3 className="mb-2 text-xs uppercase tracking-widest text-fg-dim">
-              Distribuição de golpes
+              {t('summary.punchDistribution')}
             </h3>
             <ul className="flex flex-col gap-1">
               {punches.map(({ type, count }) => (
@@ -130,7 +129,7 @@ export function SessionSummary({
                   key={type}
                   className="flex items-center justify-between rounded-md bg-surface-2 px-3 py-2 text-sm"
                 >
-                  <span className="font-semibold text-fg">{PUNCH_LABELS[type]}</span>
+                  <span className="font-semibold text-fg">{t(`punchType.${type}`)}</span>
                   <span className="num text-lg font-bold leading-none text-fg">{count}</span>
                 </li>
               ))}
@@ -141,15 +140,15 @@ export function SessionSummary({
         {summary.corrections.length > 0 && (
           <section>
             <h3 className="mb-2 text-xs uppercase tracking-widest text-fg-dim">
-              Pontos para trabalhar
+              {t('summary.workOn')}
             </h3>
             <ul className="flex flex-col gap-1">
-              {summary.corrections.map((c, i) => (
+              {summary.corrections.map((note, i) => (
                 <li
-                  key={i}
+                  key={`${note.key}-${i}`}
                   className="rounded-md border-l-2 border-score-bad bg-surface-2 px-3 py-2 text-sm text-fg"
                 >
-                  {c}
+                  {t(note.key, note.params)}
                 </li>
               ))}
             </ul>
@@ -158,14 +157,16 @@ export function SessionSummary({
 
         {summary.highlights.length > 0 && (
           <section>
-            <h3 className="mb-2 text-xs uppercase tracking-widest text-fg-dim">Destaques</h3>
+            <h3 className="mb-2 text-xs uppercase tracking-widest text-fg-dim">
+              {t('summary.highlights')}
+            </h3>
             <ul className="flex flex-col gap-1">
-              {summary.highlights.map((h, i) => (
+              {summary.highlights.map((note, i) => (
                 <li
-                  key={i}
+                  key={`${note.key}-${i}`}
                   className="rounded-md border-l-2 border-score-good bg-surface-2 px-3 py-2 text-sm text-fg"
                 >
-                  {h}
+                  {t(note.key, note.params)}
                 </li>
               ))}
             </ul>
@@ -175,7 +176,9 @@ export function SessionSummary({
         {gains && gains.newBadges.length > 0 && (
           <section>
             <h3 className="mb-2 text-xs uppercase tracking-widest text-fg-dim">
-              {gains.newBadges.length === 1 ? 'Nova conquista' : 'Novas conquistas'}
+              {gains.newBadges.length === 1
+                ? t('summary.newBadgeOne')
+                : t('summary.newBadgeOther')}
             </h3>
             <div className="flex flex-wrap justify-center gap-4 rounded-xl border border-accent bg-surface-2 p-3">
               {gains.newBadges.map((badge) => (
@@ -188,7 +191,7 @@ export function SessionSummary({
         {gains && gains.quests.length > 0 && (
           <section>
             <h3 className="mb-2 text-xs uppercase tracking-widest text-fg-dim">
-              Missões de hoje
+              {t('summary.todaysQuests')}
             </h3>
             <div className="flex flex-col gap-1.5">
               {gains.quests.map((status) => (
@@ -200,7 +203,9 @@ export function SessionSummary({
 
         {coachStatus !== 'idle' && (
           <section>
-            <h3 className="mb-2 text-xs uppercase tracking-widest text-fg-dim">Coach IA</h3>
+            <h3 className="mb-2 text-xs uppercase tracking-widest text-fg-dim">
+              {t('coach.title')}
+            </h3>
             <CoachBubble status={coachStatus} feedback={coachFeedback} context="session" />
           </section>
         )}
@@ -212,7 +217,7 @@ export function SessionSummary({
             className="flex min-h-14 flex-1 items-center justify-center gap-2 rounded-xl bg-primary font-display text-lg font-bold uppercase tracking-wider text-on-primary transition-[background-color,transform] [box-shadow:var(--glow-primary)] hover:bg-primary-hover active:scale-[.96] active:bg-primary-pressed"
           >
             <RotateCcw size={18} aria-hidden="true" />
-            Treinar de novo
+            {t('summary.trainAgain')}
           </button>
           <button
             type="button"
@@ -220,7 +225,7 @@ export function SessionSummary({
             className="flex min-h-14 flex-1 items-center justify-center gap-2 rounded-xl border border-line-strong bg-surface-2 font-display text-lg font-bold uppercase tracking-wider text-fg transition-[border-color,transform] hover:border-accent active:scale-[.96]"
           >
             <Home size={18} aria-hidden="true" />
-            Início
+            {t('summary.home')}
           </button>
         </footer>
       </div>

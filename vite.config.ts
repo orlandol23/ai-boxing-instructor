@@ -19,7 +19,7 @@ export default defineConfig({
       manifest: {
         name: 'AI Boxing Instructor',
         short_name: 'BoxingAI',
-        description: 'Instrutor virtual de boxe com análise de pose em tempo real',
+        description: 'Virtual boxing instructor with real-time pose analysis',
         theme_color: '#0A0A0A',
         background_color: '#0A0A0A',
         display: 'standalone',

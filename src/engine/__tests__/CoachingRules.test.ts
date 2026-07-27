@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { evaluateFrame, selectFeedback } from '../CoachingRules';
+import { COACHING_PHRASE_KEYS, evaluateFrame, selectFeedback } from '../CoachingRules';
 import type { VoiceFeedback } from '../types';
 import { makeBase, makeFrame, makeGuard, makePunch } from './fixtures';
 
@@ -127,35 +127,62 @@ describe('evaluateFrame', () => {
     expect(ruleKeys(feedback)).toEqual(['form:excellent']);
   });
 
-  it('uses messages from a known phrase set', () => {
+  it('names a phrase from the rule\'s key set, never a literal sentence', () => {
     const feedback = evaluateFrame(
       makeFrame({ guard: makeGuard({ overall: 10 }) })
     );
     const critical = feedback.find((f) => f.ruleKey === 'guard:critical');
-    expect(['Levanta a guarda!', 'Protege o rosto!', 'Mãos no queixo!']).toContain(
-      critical!.message
-    );
+    expect(COACHING_PHRASE_KEYS['guard:critical']).toContain(critical!.messageKey);
+  });
+
+  it('every emitted messageKey belongs to its own rule\'s key set', () => {
+    // Sweeps every rule in one pass: a copy/paste slip that points a rule
+    // at another rule's phrases fails here, in any language.
+    const frames = [
+      makeFrame({ guard: makeGuard({ overall: 10 }) }),
+      makeFrame({ guard: makeGuard({ overall: 60, leftHandHeight: 50, elbowTuck: 50 }) }),
+      makeFrame({ guard: makeGuard({ chinTuck: 10 }) }),
+      makeFrame({ base: makeBase({ overall: 10 }) }),
+      makeFrame({ base: makeBase({ overall: 55, footWidth: 50, kneeFlex: 50 }) }),
+      makeFrame({ base: makeBase({ weightDistribution: 10 }) }),
+      makeFrame({ activePunch: makePunch({ quality: 'good' }) }),
+      makeFrame({ activePunch: makePunch({ quality: 'fair' }) }),
+      makeFrame({ activePunch: makePunch({ quality: 'poor' }) }),
+      makeFrame({ guard: makeGuard({ overall: 95 }), base: makeBase({ overall: 95 }) }),
+    ];
+
+    const seen = new Set<string>();
+    for (const frame of frames) {
+      for (const fb of evaluateFrame(frame)) {
+        seen.add(fb.ruleKey);
+        const known = COACHING_PHRASE_KEYS[fb.ruleKey as keyof typeof COACHING_PHRASE_KEYS];
+        expect(known, `rule sem conjunto de frases: ${fb.ruleKey}`).toBeDefined();
+        expect(known).toContain(fb.messageKey);
+      }
+    }
+    // ...and the sweep really did cover the whole catalogue.
+    expect(seen.size).toBe(Object.keys(COACHING_PHRASE_KEYS).length);
   });
 });
 
 describe('selectFeedback', () => {
   const guardCritical: VoiceFeedback = {
     ruleKey: 'guard:critical',
-    message: 'Levanta a guarda!',
+    messageKey: 'coaching.guard.critical.raiseGuard',
     priority: 'critical',
     category: 'guard',
     cooldownMs: 5000,
   };
   const footWidth: VoiceFeedback = {
     ruleKey: 'base:foot-width',
-    message: 'Abre mais os pés!',
+    messageKey: 'coaching.base.footWidth.widerStance',
     priority: 'normal',
     category: 'base',
     cooldownMs: 8000,
   };
   const praise: VoiceFeedback = {
     ruleKey: 'punch:good',
-    message: 'Bom golpe!',
+    messageKey: 'coaching.punch.good.goodPunch',
     priority: 'low',
     category: 'encouragement',
     cooldownMs: 4000,

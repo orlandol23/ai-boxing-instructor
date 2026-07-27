@@ -1,8 +1,7 @@
 import { Flame, Medal, Shield, Star, Swords, Trophy, Zap } from 'lucide-react';
 import type { ComponentType } from 'react';
 import type { BadgeDefinition, BadgeIcon } from '../../engine/gamification/badges';
-import { useAppTheme } from '../../contexts/ProfileContext';
-import { badgeName } from '../../theme/copy';
+import { badgeDescription, badgeName, useCopy } from '../../theme/copy';
 
 const ICONS: Record<BadgeIcon, ComponentType<{ size?: number | string; className?: string; 'aria-hidden'?: boolean }>> = {
   medal: Medal,
@@ -29,7 +28,8 @@ interface MedalBadgeProps {
  * dicionário de copy por tema.
  */
 export function MedalBadge({ badge, unlocked, size = 'md' }: MedalBadgeProps) {
-  const theme = useAppTheme();
+  const { t, theme } = useCopy();
+  const description = badgeDescription(t, badge);
   const Icon = ICONS[badge.icon];
   const diameter = size === 'sm' ? 56 : 76;
 
@@ -46,11 +46,13 @@ export function MedalBadge({ badge, unlocked, size = 'md' }: MedalBadgeProps) {
         <Icon size={size === 'sm' ? 24 : 32} className="text-black/70" aria-hidden />
       </div>
       <span className="text-xs font-semibold leading-tight text-fg">
-        {badgeName(badge, theme)}
+        {badgeName(t, badge, theme)}
       </span>
       {size === 'md' && (
         <span className="text-[11px] leading-tight text-fg-muted">
-          {unlocked ? badge.description : `Bloqueada — ${badge.description.toLowerCase()}`}
+          {unlocked
+            ? description
+            : t('badges.locked', { description: description.toLowerCase() })}
         </span>
       )}
     </div>

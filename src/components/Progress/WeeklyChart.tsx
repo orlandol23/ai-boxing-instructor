@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import type { WeeklyDay } from '../../engine/gamification/selectors';
 
 function barColorClass(score: number): string {
@@ -12,6 +13,7 @@ function barColorClass(score: number): string {
  * treino fica apagado (`--surface-2` a 8%). Média da semana em destaque.
  */
 export function WeeklyChart({ days }: { days: WeeklyDay[] }) {
+  const { t } = useTranslation();
   const trained = days.filter((d) => d.avgScore !== null);
   const weekAvg =
     trained.length > 0
@@ -22,7 +24,7 @@ export function WeeklyChart({ days }: { days: WeeklyDay[] }) {
     <div className="rounded-xl border border-line bg-surface p-4">
       <header className="mb-3 flex items-baseline justify-between">
         <h3 className="text-xs uppercase tracking-widest text-fg-dim">
-          Últimos 7 dias · score médio
+          {t('progress.weeklyTitle')}
         </h3>
         <span className="num text-3xl font-bold leading-none text-fg">
           {weekAvg !== null ? weekAvg : '—'}
@@ -39,6 +41,7 @@ export function WeeklyChart({ days }: { days: WeeklyDay[] }) {
 }
 
 function DayBar({ day }: { day: WeeklyDay }) {
+  const { t } = useTranslation();
   const score = day.avgScore !== null ? Math.round(day.avgScore) : null;
 
   return (
@@ -65,7 +68,7 @@ function DayBar({ day }: { day: WeeklyDay }) {
           day.isToday ? 'font-bold text-accent' : 'text-fg-dim'
         }`}
       >
-        {day.label}
+        {t(day.labelKey)}
       </span>
     </div>
   );

@@ -1,16 +1,25 @@
 <!doctype html>
-<html lang="pt-BR" data-theme="adult">
+<html lang="en" data-theme="adult">
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#0A0A0A" />
     <script>
-      // Tema do último perfil ativo ANTES do primeiro paint (sem flash).
-      // Lê o documento do ProfileStore (boxing-ai:profiles) direto do
-      // localStorage; qualquer problema → tema adulto (Fight Night).
+      // Tema do último perfil ativo E idioma escolhido, ANTES do primeiro
+      // paint (sem flash). Lê o ProfileStore (boxing-ai:profiles) e a chave
+      // de idioma (boxing-ai:locale) direto do localStorage; qualquer
+      // problema → tema adulto (Fight Night) + inglês.
       (function () {
         var theme = 'adult';
+        try {
+          var locale = localStorage.getItem('boxing-ai:locale');
+          if (locale === 'en' || locale === 'pt-BR') {
+            document.documentElement.lang = locale;
+          }
+        } catch (e) {
+          /* localStorage indisponível → idioma padrão do <html> */
+        }
         try {
           var doc = JSON.parse(localStorage.getItem('boxing-ai:profiles') || 'null');
           if (doc && Array.isArray(doc.profiles)) {
@@ -25,7 +34,7 @@
         document.documentElement.dataset.theme = theme;
       })();
     </script>
-    <meta name="description" content="Instrutor virtual de boxe com IA - análise de pose em tempo real" />
+    <meta name="description" content="AI boxing instructor with real-time pose analysis, in English and Brazilian Portuguese" />
     <link rel="apple-touch-icon" href="/favicon.svg" />
     <title>AI Boxing Instructor</title>
   </head>

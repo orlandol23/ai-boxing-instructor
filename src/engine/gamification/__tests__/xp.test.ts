@@ -4,8 +4,9 @@ import {
   computeSessionXp,
   levelFromTotalXp,
   levelUpCost,
+  RANK_LABEL_KEYS,
   rankForLevel,
-  rankLabel,
+  rankLabelKey,
   totalXpForLevel,
   xpForPunch,
 } from '../xp';
@@ -58,10 +59,20 @@ describe('ranks', () => {
     expect(rankForLevel(99)).toBe('champion');
   });
 
-  it('nome do rank vem do tema (kids preparado p/ F7)', () => {
-    expect(rankLabel(1)).toBe('Cinturão Bronze');
-    expect(rankLabel(35, 'adult')).toBe('Campeão');
-    expect(rankLabel(35, 'kids')).toBe('Rainha do Ringue');
+  it('o motor devolve a CHAVE do rank; tema e idioma resolvem na UI', () => {
+    expect(rankLabelKey(1)).toBe('ranks.bronze');
+    expect(rankLabelKey(9)).toBe('ranks.bronze');
+    expect(rankLabelKey(10)).toBe('ranks.silver');
+    expect(rankLabelKey(20)).toBe('ranks.gold');
+    expect(rankLabelKey(35)).toBe('ranks.champion');
+  });
+
+  it('todo rank tem uma chave estável e única', () => {
+    const keys = Object.values(RANK_LABEL_KEYS);
+    expect(new Set(keys).size).toBe(keys.length);
+    for (const [rank, key] of Object.entries(RANK_LABEL_KEYS)) {
+      expect(key).toBe(`ranks.${rank}`);
+    }
   });
 });
 

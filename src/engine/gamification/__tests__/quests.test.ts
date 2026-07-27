@@ -8,6 +8,14 @@ function poolQuest(id: string) {
   return quest;
 }
 
+describe('catálogo', () => {
+  it('expõe chaves de i18n derivadas do id — nunca copy literal', () => {
+    for (const quest of QUEST_POOL) {
+      expect(quest.descriptionKey).toBe(`quests.${quest.id}.description`);
+    }
+  });
+});
+
 describe('dailyQuests (sorteio determinístico)', () => {
   it('a mesma data gera sempre as mesmas 3 missões', () => {
     const a = dailyQuests('2026-06-11').map((q) => q.id);

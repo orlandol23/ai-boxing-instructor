@@ -98,6 +98,22 @@ export interface AnalysisFrame {
   angles: FrameAngles;
 }
 
+/**
+ * A piece of user-visible text the engine wants to say, expressed as a
+ * stable i18n key plus its interpolation data.
+ *
+ * The engine is pure, React-free and I/O-free — and that includes being
+ * language-free. It never formats a sentence; it names one. The UI layer
+ * (and the AI-coach payload builder) resolves the key against the active
+ * locale. Tests assert keys, not prose.
+ */
+export interface SummaryNote {
+  /** i18n key, e.g. `notes.correction.guardHandHeight`. */
+  key: string;
+  /** Interpolation values for the key, e.g. `{ count: 4 }`. */
+  params?: Record<string, string | number>;
+}
+
 /** Resumo de um round individual (consumido pelo motor de gamificação). */
 export interface RoundSummary {
   number: number;
@@ -115,8 +131,10 @@ export interface SessionSummary {
   punchBreakdown: Record<PunchType, number>;
   avgGuardScore: number;
   avgBaseScore: number;
-  corrections: string[];
-  highlights: string[];
+  /** Recurring issues, as i18n keys + `{ count }` (never formatted text). */
+  corrections: SummaryNote[];
+  /** Good moments, as i18n keys + params (never formatted text). */
+  highlights: SummaryNote[];
   /**
    * Campos detalhados para o motor de gamificação (F6). Opcionais por
    * compatibilidade de tipo, mas o SessionTracker sempre os preenche.
@@ -127,7 +145,12 @@ export interface SessionSummary {
 }
 
 export interface VoiceFeedback {
-  message: string;
+  /**
+   * i18n key of the phrase to speak. Rules ship several interchangeable
+   * variants per `ruleKey`; the engine picks which *key* to use, the UI
+   * resolves it against the active locale.
+   */
+  messageKey: string;
   ruleKey: string;
   priority: 'critical' | 'high' | 'normal' | 'low';
   category: 'guard' | 'base' | 'punch' | 'general' | 'encouragement';

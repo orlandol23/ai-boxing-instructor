@@ -9,11 +9,6 @@
 
 **🔗 Live demo:** **[ai-boxing-instructor.vercel.app](https://ai-boxing-instructor.vercel.app)**
 
-<!-- TODO: add media under docs/ and reference it here:
-![Pose detection + coach](docs/demo.gif)
-![Training screen](docs/screenshot-training.png)
--->
-
 ---
 
 ## What it does
@@ -51,7 +46,7 @@ Layered separation — each layer is testable in isolation:
 
 ## Tests
 
-A **Vitest** suite with **18 test files** covering what matters: engine heuristics (stance, guard, base, angles, punch classification), the gamification engine (XP, streaks, quests, badges), storage (profiles and history, including schema migration), and the AI client (error classification, retry, timeout, payload sanitization). CI on GitHub Actions runs `lint` + `typecheck` + `test` + `build`.
+A **Vitest** suite with **222 tests across 18 test files** covering what matters: engine heuristics (stance, guard, base, angles, punch classification), the gamification engine (XP, streaks, quests, badges), storage (profiles and history, including schema migration), and the AI client (error classification, retry, timeout, payload sanitization). CI on GitHub Actions runs `lint` + `typecheck` + `test` + `build`.
 
 ```bash
 npm run test       # Vitest
@@ -62,7 +57,7 @@ npm run typecheck  # tsc --noEmit
 ## Running locally
 
 ```bash
-npm install --legacy-peer-deps
+npm ci
 cp .env.example .env.local      # set ANTHROPIC_API_KEY to enable AI coaching
 npm run dev                     # frontend (Vite) at http://localhost:5173
 ```

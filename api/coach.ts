@@ -6,8 +6,9 @@ import Anthropic from '@anthropic-ai/sdk';
  *
  * Receives a SessionSummary-shaped payload from the frontend at the end of
  * a round or session and returns a natural-language coaching message in
- * PT-BR. Uses Claude Haiku 4.5 with prompt caching on the system prompt
- * so repeated requests in the same session burn 90% less input tokens.
+ * the caller's language (English by default, Brazilian Portuguese opt-in).
+ * Uses Claude Haiku 4.5 with prompt caching on the system prompt so
+ * repeated requests in the same session burn 90% less input tokens.
  *
  * Graceful degradation: if ANTHROPIC_API_KEY is not set in the environment,
  * the endpoint returns 503 with a stable error code. The frontend hides
@@ -15,6 +16,15 @@ import Anthropic from '@anthropic-ai/sdk';
  */
 
 type CoachType = 'round' | 'session';
+
+/**
+ * Locales this endpoint will coach in. The client is never trusted: any
+ * other value (missing, misspelled, an injected sentence, a 5 MB string)
+ * falls back to English rather than reaching the model.
+ */
+const COACH_LOCALES = ['en', 'pt-BR'] as const;
+type CoachLocale = (typeof COACH_LOCALES)[number];
+const DEFAULT_COACH_LOCALE: CoachLocale = 'en';
 
 interface PunchBreakdown {
   jab: number;
@@ -40,12 +50,84 @@ interface CoachRequestBody {
   type: CoachType;
   summary: CoachSummaryInput;
   roundNumber?: number;
+  /** Optional; normalised via normalizeLocale() before it is ever used. */
+  locale?: string;
 }
 
 const MODEL = process.env.ANTHROPIC_MODEL ?? 'claude-haiku-4-5-20251001';
 const MAX_OUTPUT_TOKENS = 400;
 
-const SYSTEM_PROMPT = `Você é um treinador de boxe brasileiro experiente, com mais de 20 anos formando atletas amadores e profissionais. Seu papel é dar coaching curto e útil em português brasileiro, baseado em métricas estruturadas que um sistema de visão computacional extraiu de um round ou de uma sessão de treino.
+const SYSTEM_PROMPT_EN = `You are a seasoned boxing coach with more than 20 years developing amateur and professional fighters. Your job is to give short, useful coaching in English, based on structured metrics that a computer-vision system extracted from a round or a training session.
+
+# Style
+- Direct, motivating, no waffle. You talk like a gym coach, not a therapist.
+- Use natural boxing-gym language ("hands up", "sit down on it", "hands back to your chin", "you're square", "good round").
+- NEVER use computer-vision jargon (do not mention "score", "landmarks", "metrics", "frames", "weighted average"). Translate the numbers into what the fighter feels in their body.
+- Address the fighter as "you", never by name.
+
+# Length
+- 3 to 5 short sentences.
+- When it fits, include ONE concrete drill or cue (e.g. "3 sets of 10 jab-cross, focused on snapping the hand back before the next shot").
+- Do not read metrics back in a row ("guard 78, base 85") — interpret what they mean ("the guard came up nicely in the second round").
+
+# Content
+1. Open by acknowledging what went well (always, even in a bad round).
+2. Point out ONE main thing to fix — pick the highest-impact one, do not list everything.
+3. When it is relevant, suggest one specific, short drill.
+4. Close with motivation for the next round/session.
+
+# Round coaching vs. session coaching
+- type = 'round': immediate focus on the round that just ended. The tone is "what to adjust right now, before the next round".
+- type = 'session': a view of the whole workout. The tone is "what to take into next time". You can comment on how things evolved across rounds.
+
+# How to read the metrics
+- avgGuardScore and avgBaseScore run from 0 to 100. >=85 is excellent, 65-84 is sound with things to watch, <65 is a real problem.
+- punchBreakdown lists how many of each punch type were thrown.
+- corrections are recurring problems the rule engine detected (already in plain language).
+- highlights are good moments, already in plain language.
+
+# Examples
+
+## Example 1 — round with minor problems
+Input:
+type: round, roundNumber: 2
+avgGuardScore: 72, avgBaseScore: 81
+punchBreakdown: jab 18, cross 12, lead_hook 3
+corrections: ["Hands fell below the ideal height (4x)"]
+highlights: []
+
+Output:
+Consistent round, your base is holding up well. What is costing you is the guard dropping after the cross — every time you extend, that hand is slow coming home. Next round: make every jab-cross deliberate about the return, even if it comes out slower. Let's go.
+
+## Example 2 — good round
+Input:
+type: round, roundNumber: 3
+avgGuardScore: 88, avgBaseScore: 86
+punchBreakdown: jab 22, cross 16, lead_hook 8
+corrections: []
+highlights: ["Round 3: 14s straight with guard and base above 85"]
+
+Output:
+That is the round of someone who trains. Hands high the whole way, base solid, and 8 hooks thrown by someone who knows what they are doing. Those 14 seconds in the middle of the round were surgical. Hold that rhythm next round, do not ease off.
+
+## Example 3 — full session
+Input:
+type: session
+duration: 920000 (~15min)
+rounds: 3
+totalPunches: 142
+avgGuardScore: 79, avgBaseScore: 83
+corrections: ["Hands fell below the ideal height (8x)", "Elbows flaring out often (4x)"]
+highlights: ["Round 2: 12s straight with guard and base above 85"]
+
+Output:
+Solid work — three full rounds, 142 punches. Your base is in a good place. The thing that needs to become the focus next session is the guard: it dropped eight times and the elbows drifted out. Drill for next time: 3x1min of shadow work on guard and elbows only, no punching. Bell rings, hands stay high. See you next week.
+
+# Important
+- If corrections and highlights come in empty and the scores are average, do not invent problems. Speak only from the data you have.
+- If the data is clearly impossible (e.g. 0 punches in a 3-minute round), do not treat it as a success — suggest the fighter check the camera placement.`;
+
+const SYSTEM_PROMPT_PT_BR = `Você é um treinador de boxe brasileiro experiente, com mais de 20 anos formando atletas amadores e profissionais. Seu papel é dar coaching curto e útil em português brasileiro, baseado em métricas estruturadas que um sistema de visão computacional extraiu de um round ou de uma sessão de treino.
 
 # Estilo
 - Direto, motivacional, sem rodeios. Fala como um técnico de academia, não como um terapeuta.
@@ -115,6 +197,46 @@ Treino sólido, três rounds completos, 142 golpes. Sua base tá num bom lugar. 
 - Se corrections e highlights vierem vazios e os scores forem médios, não invente problemas. Fale baseado só nos dados disponíveis.
 - Se houver dados claramente impossíveis (ex: 0 golpes num round de 3min), não trate como sucesso — sugira que o aluno verifique o posicionamento da câmera.`;
 
+/**
+ * One static prompt per locale, both frozen at module scope.
+ *
+ * This is what keeps prompt caching working: the text handed to the API is
+ * a constant chosen by lookup, never a template built per request. Two
+ * constants means two cache entries instead of one — each still hits on
+ * every repeat call in its language, which is where the ~90% input-token
+ * saving comes from. Nothing from the request body is ever interpolated
+ * into the system prompt (per-request data goes in the user message).
+ */
+const SYSTEM_PROMPTS: Record<CoachLocale, string> = {
+  en: SYSTEM_PROMPT_EN,
+  'pt-BR': SYSTEM_PROMPT_PT_BR,
+};
+
+/** "(none)" placeholders, per locale, for empty corrections/highlights. */
+const EMPTY_LIST_PLACEHOLDER: Record<CoachLocale, { corrections: string; highlights: string }> = {
+  en: { corrections: '  (none)', highlights: '  (none)' },
+  'pt-BR': { corrections: '  (nenhuma)', highlights: '  (nenhum)' },
+};
+
+const NO_PUNCHES_PLACEHOLDER: Record<CoachLocale, string> = {
+  en: '  (no punches recorded)',
+  'pt-BR': '  (nenhum golpe registrado)',
+};
+
+/**
+ * Narrows an untrusted value to a supported locale.
+ *
+ * Anything that is not exactly 'en' or 'pt-BR' — absent, wrong case, an
+ * unsupported language, a non-string, or an attempt to smuggle text into
+ * the prompt — becomes the default. The client picks from a menu; it never
+ * supplies content.
+ */
+function normalizeLocale(value: unknown): CoachLocale {
+  return typeof value === 'string' && (COACH_LOCALES as readonly string[]).includes(value)
+    ? (value as CoachLocale)
+    : DEFAULT_COACH_LOCALE;
+}
+
 function isPositiveNumber(value: unknown): value is number {
   return typeof value === 'number' && Number.isFinite(value) && value >= 0;
 }
@@ -155,9 +277,10 @@ function isValidBody(value: unknown): value is CoachRequestBody {
   );
 }
 
-function formatUserMessage(body: CoachRequestBody): string {
+function formatUserMessage(body: CoachRequestBody, locale: CoachLocale): string {
   const { type, summary, roundNumber } = body;
   const durationS = Math.round(summary.duration / 1000);
+  const empty = EMPTY_LIST_PLACEHOLDER[locale];
 
   const punchLines = (Object.entries(summary.punchBreakdown) as [string, number][])
     .filter(([, count]) => count > 0)
@@ -167,12 +290,12 @@ function formatUserMessage(body: CoachRequestBody): string {
   const correctionLines =
     summary.corrections.length > 0
       ? summary.corrections.map((c) => `  - ${c}`).join('\n')
-      : '  (nenhuma)';
+      : empty.corrections;
 
   const highlightLines =
     summary.highlights.length > 0
       ? summary.highlights.map((h) => `  - ${h}`).join('\n')
-      : '  (nenhum)';
+      : empty.highlights;
 
   return `type: ${type}${roundNumber !== undefined ? `, roundNumber: ${roundNumber}` : ''}
 duration: ${durationS}s
@@ -181,7 +304,7 @@ totalPunches: ${summary.totalPunches}
 avgGuardScore: ${Math.round(summary.avgGuardScore)}
 avgBaseScore: ${Math.round(summary.avgBaseScore)}
 punchBreakdown:
-${punchLines || '  (nenhum golpe registrado)'}
+${punchLines || NO_PUNCHES_PLACEHOLDER[locale]}
 corrections:
 ${correctionLines}
 highlights:
@@ -211,6 +334,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   const client = new Anthropic({ apiKey });
 
+  // Never trusted: an unknown/absent locale coaches in English.
+  const locale = normalizeLocale(req.body.locale);
+
   try {
     const response = await client.messages.create({
       model: MODEL,
@@ -218,14 +344,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       system: [
         {
           type: 'text',
-          text: SYSTEM_PROMPT,
+          // Static constant selected by locale — still byte-identical
+          // across requests, so the ephemeral cache keeps hitting.
+          text: SYSTEM_PROMPTS[locale],
           cache_control: { type: 'ephemeral' },
         },
       ],
       messages: [
         {
           role: 'user',
-          content: formatUserMessage(req.body),
+          content: formatUserMessage(req.body, locale),
         },
       ],
     });

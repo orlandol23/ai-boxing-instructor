@@ -1,8 +1,9 @@
 // @vitest-environment jsdom
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { useCoachingFeedback } from '../useCoachingFeedback';
 import type { SessionSummary } from '../../engine/types';
+import i18n, { DEFAULT_LOCALE } from '../../i18n';
 
 function makeSummary(): SessionSummary {
   return {
@@ -19,7 +20,7 @@ function makeSummary(): SessionSummary {
     },
     avgGuardScore: 82,
     avgBaseScore: 79,
-    corrections: [],
+    corrections: [{ key: 'notes.correction.guardHandHeight', params: { count: 4 } }],
     highlights: [],
   };
 }
@@ -31,6 +32,10 @@ function jsonResponse(status: number, body: unknown) {
     json: async () => body,
   };
 }
+
+beforeEach(async () => {
+  await i18n.changeLanguage(DEFAULT_LOCALE);
+});
 
 afterEach(() => {
   vi.unstubAllGlobals();
@@ -60,6 +65,29 @@ describe('useCoachingFeedback', () => {
     const body = JSON.parse(init.body as string);
     expect(body.type).toBe('round');
     expect(body.roundNumber).toBe(1);
+    // O idioma ativo viaja no corpo…
+    expect(body.locale).toBe('en');
+    // …e as notas estruturadas do engine chegam já traduzidas.
+    expect(body.summary.corrections).toEqual([
+      'Hands fell below the ideal height (4x)',
+    ]);
+  });
+
+  it('o coaching segue o idioma da interface (locale + notas traduzidas)', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(jsonResponse(200, { coaching: 'Bom round!' }));
+    vi.stubGlobal('fetch', fetchMock);
+    await i18n.changeLanguage('pt-BR');
+
+    const { result } = renderHook(() => useCoachingFeedback());
+    act(() => {
+      result.current.requestSessionFeedback(makeSummary());
+    });
+    await waitFor(() => expect(result.current.status).toBe('success'));
+
+    const [, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    const body = JSON.parse(init.body as string);
+    expect(body.locale).toBe('pt-BR');
+    expect(body.summary.corrections).toEqual(['Mãos caíram da altura ideal (4x)']);
   });
 
   it('503 (sem API key) vira "unavailable" sem expor erro técnico', async () => {

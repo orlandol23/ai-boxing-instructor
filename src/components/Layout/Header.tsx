@@ -1,8 +1,11 @@
 import { ArrowLeft, Settings } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useProfiles } from '../../contexts/ProfileContext';
+import { LanguageSelector } from './LanguageSelector';
 
 export function Header() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
   const { activeProfile } = useProfiles();
@@ -12,7 +15,7 @@ export function Header() {
     <header className="flex h-14 items-center justify-between border-b border-line bg-surface px-4">
       {isHome ? (
         <span className="font-display text-xl font-bold uppercase tracking-wide text-accent">
-          Boxing AI
+          {t('app.name')}
         </span>
       ) : (
         <button
@@ -21,17 +24,19 @@ export function Header() {
           className="flex items-center gap-1.5 text-[15px] font-medium text-fg-muted transition-colors hover:text-fg"
         >
           <ArrowLeft size={18} aria-hidden="true" />
-          Voltar
+          {t('header.back')}
         </button>
       )}
 
-      <div className="flex items-center gap-1">
+      <div className="flex items-center gap-2">
+        <LanguageSelector />
+
         {/* Avatar do perfil ativo → seletor /profiles (F7) */}
         {activeProfile && (
           <button
             type="button"
             onClick={() => navigate('/profiles')}
-            aria-label={`Trocar de perfil (ativo: ${activeProfile.name})`}
+            aria-label={t('header.switchProfile', { name: activeProfile.name })}
             className="flex items-center justify-center"
           >
             <span
@@ -45,7 +50,7 @@ export function Header() {
         <button
           type="button"
           className="flex items-center justify-center text-fg-dim cursor-default"
-          aria-label="Configurações"
+          aria-label={t('header.settings')}
           disabled
         >
           <Settings size={20} aria-hidden="true" />

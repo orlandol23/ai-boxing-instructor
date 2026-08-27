@@ -60,8 +60,9 @@ on purpose — never "fix" that by duplicating strings.
 
 ## Notes
 
-- Without `ANTHROPIC_API_KEY`, `/api/coach` returns 503 and the app hides only
-  the coaching UI. Everything else keeps working; do not break that path.
+- Without `ANTHROPIC_API_KEY`, `/api/coach` returns 503 and the coach bubble
+  falls back to friendly "coach unavailable" copy. Everything else keeps
+  working; do not break that path.
 - `api/coach.ts` holds one **static** system prompt per locale, selected by a
   validated `locale` field. Keep them module-level constants — building the
   prompt per request would defeat `cache_control: ephemeral` (~90% input-token

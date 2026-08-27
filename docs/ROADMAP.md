@@ -4,10 +4,14 @@ Plano de evolução do AI Boxing Instructor rumo a um produto top de linha,
 organizado em fases priorizadas. Cada item tem **critérios de pronto (DoD)**
 objetivos para fechar a fase com confiança.
 
-> Estado atual: PWA React 19 + Vite 8 + MediaPipe Pose client-side, engine de
-> análise (guarda/base/golpes), coach de voz, sessões com rounds e resumo,
-> endpoint `/api/coach` com Claude já mergeado (Fase 4). Fundação de
-> qualidade (CI, testes do engine, Error Boundary) entregue neste PR.
+> Estado atual (jul/2026): PWA React 19 + Vite 8 + MediaPipe Pose client-side,
+> engine de análise (guarda/base/golpes), coach de voz, sessões com rounds e
+> resumo, endpoint `/api/coach` com Claude (Fase 4), gamificação + histórico
+> (Fase 6), perfis + tema kids (Fase 7) e fundação de qualidade (CI, testes,
+> Error Boundary). **i18n completo entregue em jul/2026** (fora das fases
+> numeradas): app EN por padrão com PT-BR disponível, seletor de idioma no
+> header, engine emitindo chaves i18n estáveis e coach respondendo no idioma
+> do usuário.
 
 > **Design System v2 (fundação) aplicado:** tokens themáveis
 > (`adult`/`kids` via `data-theme`), fontes Saira self-host, e as telas
@@ -26,7 +30,8 @@ O backend do coach já existe; falta o usuário ver o valor.
 - [x] Hook `useCoachingFeedback` que envia o resumo do round/sessão para
   `/api/coach` (timeout 15s, abort ao sair, máx. 1 retry).
 - [x] Coach bubble (DS v2, SPECS §6) ao fim de cada round (descanso) e no
-  resumo da sessão, com insights em PT-BR.
+  resumo da sessão, com insights no idioma do app (EN/PT-BR desde o i18n
+  de jul/2026).
 - [x] Estados de carregamento/erro elegantes; sem chave de API ou offline,
   fallback amigável e o treino local segue 100% funcional.
 - [x] Voz opcional: com o Voice Coach ativado, o feedback do coach é lido
@@ -140,8 +145,9 @@ Modo Técnica/Drill + tela de configurações.
   (ex.: jab-jab-cross), o engine valida cada golpe da sequência e dá feedback
   por repetição.
 - **Tela de configurações:** volume e voz do coach (seleção de voz da Web
-  Speech API), sensibilidade de detecção de golpe, idioma (PT-BR/EN), duração
-  de round/descanso.
+  Speech API), sensibilidade de detecção de golpe, duração de round/descanso.
+  (Idioma EN/PT-BR já foi entregue fora desta fase — seletor no header,
+  jul/2026; a tela pode no máximo reexpor a mesma preferência.)
 
 **DoD:** card de Técnica habilitado com pelo menos 3 drills; configurações
 persistidas (localStorage) e respeitadas pelo coach de voz e pelo engine.

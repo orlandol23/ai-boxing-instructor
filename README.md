@@ -46,7 +46,7 @@ Layered separation — each layer is testable in isolation:
 - **GPU→CPU fallback** on MediaPipe init → works on devices without WebGL.
 - **Resilient, pure AI client** (`coachClient.ts`): typed errors with a discriminated `reason`, retries only on transient failures (network/timeout/5xx), and uses `AbortController` for both timeout and unmount cancellation.
 - **Prompt caching** on the Claude system prompt (`cache_control: ephemeral`) → ~90% fewer input tokens on repeated calls within the same session. Each locale has its own **static** system prompt, chosen by lookup, so caching still hits on every repeat call — request data never gets interpolated into the prompt.
-- **Graceful degradation:** without `ANTHROPIC_API_KEY`, `/api/coach` returns 503 and the app **hides only the coaching UI** — everything else keeps working.
+- **Graceful degradation:** without `ANTHROPIC_API_KEY`, `/api/coach` returns 503 and the coach bubble **falls back to friendly "coach unavailable" copy** — training and everything else keep working.
 - **Versioned local-first storage:** JSON documents in `localStorage` with a `schemaVersion` + defensive migration (corrupt data falls back to an empty document without breaking the app); deleting a profile does not destroy its history.
 
 ## Tests
@@ -56,7 +56,7 @@ A **Vitest** suite with **269 tests across 21 test files** covering what matters
 ```bash
 npm run test       # Vitest
 npm run lint       # ESLint (src/ + api/)
-npm run typecheck  # tsc --noEmit
+npm run typecheck  # tsc -b
 ```
 
 ## Running locally
@@ -74,7 +74,7 @@ npm i -g vercel
 vercel dev
 ```
 
-> Without `ANTHROPIC_API_KEY`, the app still runs — only the AI coaching panel is hidden (graceful degradation).
+> Without `ANTHROPIC_API_KEY`, the app still runs — the AI coach bubble just shows a friendly "unavailable" fallback (graceful degradation).
 
 ## Deploy (Vercel)
 

@@ -26,7 +26,7 @@ peers, drops that package from the tree and rewrites the lockfile, which breaks
 
 ```bash
 npm run dev        # Vite dev server on :5173
-npm run test       # Vitest — 269 tests across 21 files
+npm run test       # Vitest — 285 tests across 22 files
 npm run lint       # ESLint over src/ and api/
 npm run typecheck  # tsc -b
 npm run build      # tsc -b && vite build
@@ -67,6 +67,12 @@ on purpose — never "fix" that by duplicating strings.
   validated `locale` field. Keep them module-level constants — building the
   prompt per request would defeat `cache_control: ephemeral` (~90% input-token
   saving on repeat calls).
+- `/api/coach` is public and unauthenticated, so it validates in a fixed order:
+  method → origin → API key → body. Every caller-controlled field has a hard
+  cap (`MAX_NOTES`, `MAX_NOTE_LENGTH`, `MAX_ROUNDS`, `MAX_PUNCHES`,
+  `MAX_DURATION_MS`, `MAX_SCORE`) and cross-site browser calls get 403
+  `forbidden_origin`. Never log the request body. `api/__tests__` pins all of
+  it; `vitest.config.ts` includes `api/**/*.test.ts`.
 - Locale files must stay key-for-key identical; `src/i18n/__tests__` fails the
   build on drift. Add new copy to both `en.ts` and `pt-BR.ts`.
 - Pose analysis runs entirely client-side. No video should ever leave the

@@ -57,6 +57,29 @@ interface CoachRequestBody {
 const MODEL = process.env.ANTHROPIC_MODEL ?? 'claude-haiku-4-5-20251001';
 const MAX_OUTPUT_TOKENS = 400;
 
+/**
+ * Hard ceilings for everything the caller controls.
+ *
+ * The endpoint is public and unauthenticated: without a ceiling a single
+ * POST can push megabytes of text into the user message and burn the API
+ * budget (input tokens are billed per request, and an oversized body also
+ * blows past the cached prefix). The limits sit far above any
+ * real workout — the client's buildCoachPayload() renders a handful of
+ * short notes per round, three-minute rounds and a few dozen punches — so
+ * a request that trips one of them is abuse, not training.
+ */
+/** corrections/highlights: at most 20 notes, each at most 200 chars. */
+const MAX_NOTES = 20;
+const MAX_NOTE_LENGTH = 200;
+/** roundNumber and rounds: 200 rounds is ~10h of boxing. */
+const MAX_ROUNDS = 200;
+/** totalPunches and every punch type in the breakdown. */
+const MAX_PUNCHES = 10_000;
+/** duration is in ms; 4h is longer than any session the tracker produces. */
+const MAX_DURATION_MS = 4 * 60 * 60 * 1000;
+/** avgGuardScore/avgBaseScore are percentages by definition. */
+const MAX_SCORE = 100;
+
 const SYSTEM_PROMPT_EN = `You are a seasoned boxing coach with more than 20 years developing amateur and professional fighters. Your job is to give short, useful coaching in English, based on structured metrics that a computer-vision system extracted from a round or a training session.
 
 # Style
@@ -237,24 +260,30 @@ function normalizeLocale(value: unknown): CoachLocale {
     : DEFAULT_COACH_LOCALE;
 }
 
-function isPositiveNumber(value: unknown): value is number {
-  return typeof value === 'number' && Number.isFinite(value) && value >= 0;
+/** Finite, >= 0 and no bigger than `max` — out of range is a 400, not a clamp. */
+function isBoundedNumber(value: unknown, max: number): value is number {
+  return typeof value === 'number' && Number.isFinite(value) && value >= 0 && value <= max;
 }
 
-function isStringArray(value: unknown): value is string[] {
-  return Array.isArray(value) && value.every((v) => typeof v === 'string');
+/** Bounded in both dimensions: how many notes, and how long each one is. */
+function isNoteArray(value: unknown): value is string[] {
+  return (
+    Array.isArray(value) &&
+    value.length <= MAX_NOTES &&
+    value.every((v) => typeof v === 'string' && v.length <= MAX_NOTE_LENGTH)
+  );
 }
 
 function isPunchBreakdown(value: unknown): value is PunchBreakdown {
   if (!value || typeof value !== 'object') return false;
   const v = value as Record<string, unknown>;
   return (
-    isPositiveNumber(v.jab) &&
-    isPositiveNumber(v.cross) &&
-    isPositiveNumber(v.lead_hook) &&
-    isPositiveNumber(v.rear_hook) &&
-    isPositiveNumber(v.lead_uppercut) &&
-    isPositiveNumber(v.rear_uppercut)
+    isBoundedNumber(v.jab, MAX_PUNCHES) &&
+    isBoundedNumber(v.cross, MAX_PUNCHES) &&
+    isBoundedNumber(v.lead_hook, MAX_PUNCHES) &&
+    isBoundedNumber(v.rear_hook, MAX_PUNCHES) &&
+    isBoundedNumber(v.lead_uppercut, MAX_PUNCHES) &&
+    isBoundedNumber(v.rear_uppercut, MAX_PUNCHES)
   );
 }
 
@@ -262,19 +291,48 @@ function isValidBody(value: unknown): value is CoachRequestBody {
   if (!value || typeof value !== 'object') return false;
   const v = value as Record<string, unknown>;
   if (v.type !== 'round' && v.type !== 'session') return false;
-  if (v.roundNumber !== undefined && !isPositiveNumber(v.roundNumber)) return false;
+  if (v.roundNumber !== undefined && !isBoundedNumber(v.roundNumber, MAX_ROUNDS)) return false;
   if (!v.summary || typeof v.summary !== 'object') return false;
   const s = v.summary as Record<string, unknown>;
   return (
-    isPositiveNumber(s.duration) &&
-    isPositiveNumber(s.rounds) &&
-    isPositiveNumber(s.totalPunches) &&
+    isBoundedNumber(s.duration, MAX_DURATION_MS) &&
+    isBoundedNumber(s.rounds, MAX_ROUNDS) &&
+    isBoundedNumber(s.totalPunches, MAX_PUNCHES) &&
     isPunchBreakdown(s.punchBreakdown) &&
-    isPositiveNumber(s.avgGuardScore) &&
-    isPositiveNumber(s.avgBaseScore) &&
-    isStringArray(s.corrections) &&
-    isStringArray(s.highlights)
+    isBoundedNumber(s.avgGuardScore, MAX_SCORE) &&
+    isBoundedNumber(s.avgBaseScore, MAX_SCORE) &&
+    isNoteArray(s.corrections) &&
+    isNoteArray(s.highlights)
   );
+}
+
+/** Node lowercases header names but a repeated header arrives as an array. */
+function headerValue(value: string | string[] | undefined): string | undefined {
+  return Array.isArray(value) ? value[0] : value;
+}
+
+/**
+ * True when the request was made by another website's page.
+ *
+ * `Sec-Fetch-Site: cross-site` is set by the browser itself and cannot be
+ * forged from JavaScript; an `Origin` whose host differs from the host the
+ * request was addressed to is the same signal for browsers that predate
+ * Fetch Metadata (an unparseable `Origin`, including the literal `null` a
+ * sandboxed iframe sends, counts as a mismatch). Requests with no `Origin`
+ * at all — curl, and same-origin fetches from older browsers — pass: this
+ * is anti-abuse, not authentication.
+ */
+function isCrossSiteRequest(req: VercelRequest): boolean {
+  if (headerValue(req.headers['sec-fetch-site']) === 'cross-site') return true;
+
+  const origin = headerValue(req.headers.origin);
+  if (!origin) return false;
+
+  try {
+    return new URL(origin).host !== headerValue(req.headers.host);
+  } catch {
+    return true;
+  }
 }
 
 function formatUserMessage(body: CoachRequestBody, locale: CoachLocale): string {
@@ -315,6 +373,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') {
     res.setHeader('Allow', 'POST');
     res.status(405).json({ error: 'method_not_allowed' });
+    return;
+  }
+
+  if (isCrossSiteRequest(req)) {
+    res.status(403).json({ error: 'forbidden_origin' });
     return;
   }
 
@@ -381,7 +444,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   } catch (err) {
     const isAnthropic = err instanceof Anthropic.APIError;
     const status = isAnthropic ? err.status ?? 502 : 502;
-    console.error('[api/coach] upstream error:', err);
+    // Status and message only — the request body (the fighter's session
+    // metrics) never reaches the logs.
+    console.error(
+      `[api/coach] upstream error (${status}):`,
+      err instanceof Error ? err.message : 'unknown'
+    );
     res.status(status >= 500 ? 502 : status).json({
       error: 'coaching_failed',
       message: isAnthropic ? err.message : 'unknown',

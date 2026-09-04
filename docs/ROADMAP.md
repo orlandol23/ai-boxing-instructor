@@ -174,8 +174,12 @@ mesmos resultados; `returnSpeed > 0` em golpes reais.
 
 ## Fase 10 — Performance e offline de verdade
 
-- **Cache offline do modelo MediaPipe** (~10MB) via service worker
-  (`workbox` runtime caching), para o PWA funcionar 100% sem rede.
+- [x] **Cache offline do modelo MediaPipe** (~10MB) via service worker ✅
+  entregue: `runtimeCaching` do workbox em `vite.config.ts` com duas rotas
+  `CacheFirst` (runtime WASM na jsDelivr e o `.task` de pose no
+  storage.googleapis.com), `cacheableResponse` aceitando respostas opacas
+  (status 0) e expiração de 60 dias. Depois da primeira visita, o PWA abre
+  e treina sem rede.
 - **Web Worker para a pose:** mover a inferência do MediaPipe para fora da
   main thread (OffscreenCanvas/`VideoFrame`), liberando a UI e melhorando FPS
   em celulares mais fracos.
@@ -192,7 +196,7 @@ long tasks > 50ms durante análise.
 | --- | --- | --- |
 | Cooldown/debounce por contagem de frames (~30fps) | `PunchClassifier`, voz | 9 |
 | `returnSpeed` sempre `0` | `PunchClassifier` | 9 |
-| Modelo MediaPipe baixado da CDN a cada visita | `useMediaPipe` | 10 |
+| ~~Modelo MediaPipe baixado da CDN a cada visita~~ ✅ entregue (10) | `useMediaPipe` + `runtimeCaching` (`vite.config.ts`) | 10 |
 | Card "Técnica" desabilitado na home | `HomePage` | 8 |
 | Rounds mais curtos por padrão no perfil kids | `useSession` + configurações | 8 |
 | Histórico de perfil deletado fica órfão no localStorage (decisão: nunca apagar) | `profileStore` / futura "limpeza" em configurações | 8+ |

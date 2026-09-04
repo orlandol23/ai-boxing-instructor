@@ -47,11 +47,12 @@ Layered separation — each layer is testable in isolation:
 - **Resilient, pure AI client** (`coachClient.ts`): typed errors with a discriminated `reason`, retries only on transient failures (network/timeout/5xx), and uses `AbortController` for both timeout and unmount cancellation.
 - **Prompt caching** on the Claude system prompt (`cache_control: ephemeral`) → ~90% fewer input tokens on repeated calls within the same session. Each locale has its own **static** system prompt, chosen by lookup, so caching still hits on every repeat call — request data never gets interpolated into the prompt.
 - **Graceful degradation:** without `ANTHROPIC_API_KEY`, `/api/coach` returns 503 and the coach bubble **falls back to friendly "coach unavailable" copy** — training and everything else keep working.
+- **The public endpoint is bounded:** every caller-controlled field has a hard ceiling (note count and length, rounds, punches, duration, scores) and browser calls from other sites are refused with 403 — a stranger cannot turn `/api/coach` into a bill.
 - **Versioned local-first storage:** JSON documents in `localStorage` with a `schemaVersion` + defensive migration (corrupt data falls back to an empty document without breaking the app); deleting a profile does not destroy its history.
 
 ## Tests
 
-A **Vitest** suite with **269 tests across 21 test files** covering what matters: engine heuristics (stance, guard, base, angles, punch classification), the gamification engine (XP, streaks, quests, badges), storage (profiles and history, including schema migration), the AI client (error classification, retry, timeout, payload sanitization, locale), and i18n (locale parity, every engine key present in every locale, theme × language resolution). CI on GitHub Actions runs `lint` + `typecheck` + `test` + `build`.
+A **Vitest** suite with **285 tests across 22 test files** covering what matters: engine heuristics (stance, guard, base, angles, punch classification), the gamification engine (XP, streaks, quests, badges), storage (profiles and history, including schema migration), the AI client (error classification, retry, timeout, payload sanitization, locale), the `/api/coach` function itself (payload caps, cross-site refusal, the no-API-key 503, prompt caching), and i18n (locale parity, every engine key present in every locale, theme × language resolution). CI on GitHub Actions runs `lint` + `typecheck` + `test` + `build`.
 
 ```bash
 npm run test       # Vitest

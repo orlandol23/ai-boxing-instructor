@@ -2,6 +2,7 @@
 
 > A boxing coach that analyzes your form from the webcam **in real time** (MediaPipe, client-side) and returns **AI-generated coaching** (Claude) **in English or Brazilian Portuguese**, with gamification and offline support (PWA).
 
+[![CI](https://github.com/orlandol23/ai-boxing-instructor/actions/workflows/ci.yml/badge.svg)](https://github.com/orlandol23/ai-boxing-instructor/actions/workflows/ci.yml)
 [![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=white)](https://react.dev/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![Vite](https://img.shields.io/badge/Vite-build-646CFF?logo=vite&logoColor=white)](https://vitejs.dev/)

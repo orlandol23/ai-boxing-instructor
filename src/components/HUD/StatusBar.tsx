@@ -12,10 +12,10 @@ interface StatusBarProps {
 }
 
 /**
- * Estados de loading/erro do treino (SPECS §6 — Estados):
- * - erro de câmera/modelo: tela cheia com ícone + CTA (nunca toast)
- * - carregando modelo: overlay total + spinner accent
- * - sem pose detectada: faixa inferior em --overlay, texto warn 16px
+ * Loading/error states for training (SPECS §6, States):
+ * - camera/model error: full screen with an icon + CTA (never a toast)
+ * - model loading: full overlay + accent spinner
+ * - no pose detected: bottom strip in --overlay, 16px warn text
  */
 export function StatusBar({
   isModelLoading,

@@ -6,10 +6,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#0A0A0A" />
     <script>
-      // Tema do último perfil ativo E idioma escolhido, ANTES do primeiro
-      // paint (sem flash). Lê o ProfileStore (boxing-ai:profiles) e a chave
-      // de idioma (boxing-ai:locale) direto do localStorage; qualquer
-      // problema → tema adulto (Fight Night) + inglês.
+      // Theme of the last active profile AND the chosen language, BEFORE
+      // the first paint (no flash). Reads the ProfileStore
+      // (boxing-ai:profiles) and the language key (boxing-ai:locale)
+      // straight from localStorage; on any problem it falls back to the
+      // adult theme (Fight Night) + English.
       (function () {
         var theme = 'adult';
         try {
@@ -18,7 +19,7 @@
             document.documentElement.lang = locale;
           }
         } catch (e) {
-          /* localStorage indisponível → idioma padrão do <html> */
+          /* localStorage unavailable: the <html> default language wins */
         }
         try {
           var doc = JSON.parse(localStorage.getItem('boxing-ai:profiles') || 'null');
@@ -29,7 +30,7 @@
             }
           }
         } catch (e) {
-          /* localStorage indisponível/corrompido → tema padrão */
+          /* localStorage unavailable/corrupted: the default theme wins */
         }
         document.documentElement.dataset.theme = theme;
       })();

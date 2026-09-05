@@ -2,9 +2,10 @@ import type { PunchType } from '../types';
 import type { LifetimeTotals, SessionRecord } from './types';
 
 /**
- * Badges (SPECS §5): conquistas permanentes — uma vez desbloqueadas,
- * nunca saem do perfil. Avaliadas ao fim de cada sessão com o estado
- * já atualizado (lifetime/streak incluindo a sessão recém-terminada).
+ * Badges (SPECS §5): permanent achievements. Once unlocked, they never
+ * leave the profile. Evaluated at the end of every session against the
+ * already updated state (lifetime/streak including the session that has
+ * just finished).
  */
 
 export type BadgeId =
@@ -17,7 +18,7 @@ export type BadgeId =
   | 'streak_30'
   | 'full_arsenal';
 
-/** Ícones lucide usados pelo componente medal. */
+/** The lucide icons the medal component uses. */
 export type BadgeIcon =
   | 'medal'
   | 'zap'
@@ -28,11 +29,11 @@ export type BadgeIcon =
   | 'swords';
 
 export interface BadgeContext {
-  /** Sessão recém-concluída. */
+  /** The session that has just finished. */
   session: SessionRecord;
-  /** Totais do perfil JÁ incluindo a sessão. */
+  /** The profile's totals, ALREADY including the session. */
   lifetime: LifetimeTotals;
-  /** Streak (dias consecutivos) JÁ incluindo a sessão. */
+  /** Streak (consecutive days), ALREADY including the session. */
   streakCount: number;
 }
 
@@ -61,7 +62,7 @@ const ALL_PUNCH_TYPES: PunchType[] = [
 ];
 
 /**
- * Catálogo fixo — a ordem define o grid da tela de progresso.
+ * Fixed catalogue: the order defines the grid on the progress screen.
  * Copy lives in `src/i18n/locales/*` under `badges.<id>.*`; the engine
  * only owns the ids, the criteria and the icon.
  */
@@ -132,8 +133,9 @@ export function badgeById(id: string): BadgeDefinition | undefined {
 }
 
 /**
- * Badges recém-desbloqueadas nesta sessão (exclui as já conquistadas —
- * permanência: nada é "des-desbloqueado" mesmo que o critério falhe hoje).
+ * Badges newly unlocked in this session (the ones already earned are
+ * excluded; permanence means nothing is "un-unlocked" even if the
+ * criterion fails today).
  */
 export function evaluateBadges(
   ctx: BadgeContext,

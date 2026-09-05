@@ -146,8 +146,8 @@ afterEach(() => {
   else process.env.ANTHROPIC_API_KEY = ORIGINAL_API_KEY;
 });
 
-describe('POST /api/coach — método', () => {
-  it('responde 405 com Allow: POST para GET', async () => {
+describe('POST /api/coach: method', () => {
+  it('answers 405 with Allow: POST for a GET', async () => {
     const { res, state } = makeRes();
     await handler(makeReq({ method: 'GET' }), res);
 
@@ -158,8 +158,8 @@ describe('POST /api/coach — método', () => {
   });
 });
 
-describe('POST /api/coach — origem', () => {
-  it('recusa chamada marcada como cross-site pelo browser', async () => {
+describe('POST /api/coach: origin', () => {
+  it('refuses a call the browser marked as cross-site', async () => {
     const { res, state } = makeRes();
     await handler(
       makeReq({ headers: { 'sec-fetch-site': 'cross-site' }, body: makeBody() }),
@@ -171,7 +171,7 @@ describe('POST /api/coach — origem', () => {
     expect(createMock).not.toHaveBeenCalled();
   });
 
-  it('recusa Origin de outro host', async () => {
+  it('refuses an Origin from another host', async () => {
     const { res, state } = makeRes();
     await handler(
       makeReq({ headers: { origin: 'https://evil.example' }, body: makeBody() }),
@@ -183,7 +183,7 @@ describe('POST /api/coach — origem', () => {
     expect(createMock).not.toHaveBeenCalled();
   });
 
-  it('a checagem de origem vem antes da checagem de chave', async () => {
+  it('checks the origin before it checks the API key', async () => {
     delete process.env.ANTHROPIC_API_KEY;
     const { res, state } = makeRes();
     await handler(
@@ -194,8 +194,8 @@ describe('POST /api/coach — origem', () => {
     expect(state.statusCode).toBe(403);
   });
 
-  it('aceita Origin do mesmo host (same-origin fetch)', async () => {
-    mockCoaching('Guarda alta, bom round.');
+  it('accepts an Origin from the same host (same-origin fetch)', async () => {
+    mockCoaching('Hands high, good round.');
     const { res, state } = makeRes();
     await handler(
       makeReq({
@@ -208,8 +208,8 @@ describe('POST /api/coach — origem', () => {
     expect(state.statusCode).toBe(200);
   });
 
-  it('aceita requisição sem Origin (curl, browsers antigos)', async () => {
-    mockCoaching('Bom trabalho.');
+  it('accepts a request with no Origin (curl, older browsers)', async () => {
+    mockCoaching('Good work.');
     const { res, state } = makeRes();
     await handler(makeReq({ body: makeBody() }), res);
 
@@ -217,8 +217,8 @@ describe('POST /api/coach — origem', () => {
   });
 });
 
-describe('POST /api/coach — sem ANTHROPIC_API_KEY', () => {
-  it('responde 503 e não chama a API', async () => {
+describe('POST /api/coach: no ANTHROPIC_API_KEY', () => {
+  it('answers 503 and never calls the API', async () => {
     delete process.env.ANTHROPIC_API_KEY;
     const { res, state } = makeRes();
     await handler(makeReq({ body: makeBody() }), res);
@@ -229,7 +229,7 @@ describe('POST /api/coach — sem ANTHROPIC_API_KEY', () => {
   });
 });
 
-describe('POST /api/coach — validação do corpo', () => {
+describe('POST /api/coach: body validation', () => {
   async function expectInvalid(body: unknown): Promise<void> {
     const { res, state } = makeRes();
     await handler(makeReq({ body }), res);
@@ -239,30 +239,30 @@ describe('POST /api/coach — validação do corpo', () => {
     expect(createMock).not.toHaveBeenCalled();
   }
 
-  it('recusa mais de 20 correções', async () => {
-    await expectInvalid(makeBody({ corrections: Array<string>(21).fill('guarda baixa') }));
+  it('refuses more than 20 corrections', async () => {
+    await expectInvalid(makeBody({ corrections: Array<string>(21).fill('low guard') }));
   });
 
-  it('recusa uma nota acima de 200 caracteres', async () => {
+  it('refuses a note longer than 200 characters', async () => {
     await expectInvalid(makeBody({ highlights: ['x'.repeat(201)] }));
   });
 
-  it('recusa score acima de 100', async () => {
+  it('refuses a score above 100', async () => {
     await expectInvalid(makeBody({ avgGuardScore: 101 }));
   });
 
-  it('recusa duração acima de 4h', async () => {
+  it('refuses a duration above 4h', async () => {
     await expectInvalid(makeBody({ duration: 4 * 60 * 60 * 1000 + 1 }));
   });
 
-  it('recusa contagem de golpes fora de escala', async () => {
+  it('refuses an out-of-scale punch count', async () => {
     await expectInvalid(
       makeBody({ punchBreakdown: { ...makeSummary().punchBreakdown, jab: 10_001 } })
     );
   });
 
-  it('aceita o limite exato (20 notas de 200 caracteres)', async () => {
-    mockCoaching('Round sólido.');
+  it('accepts the exact limit (20 notes of 200 characters)', async () => {
+    mockCoaching('Solid round.');
     const { res, state } = makeRes();
     await handler(
       makeReq({ body: makeBody({ corrections: Array<string>(20).fill('n'.repeat(200)) }) }),
@@ -273,18 +273,18 @@ describe('POST /api/coach — validação do corpo', () => {
   });
 });
 
-describe('POST /api/coach — caminho feliz', () => {
-  it('responde 200 com o texto do coach', async () => {
-    mockCoaching('Round consistente, base firme.');
+describe('POST /api/coach: happy path', () => {
+  it('answers 200 with the coaching text', async () => {
+    mockCoaching('Consistent round, solid base.');
     const { res, state } = makeRes();
     await handler(makeReq({ body: makeBody() }), res);
 
     expect(state.statusCode).toBe(200);
-    expect(state.body).toMatchObject({ coaching: 'Round consistente, base firme.' });
+    expect(state.body).toMatchObject({ coaching: 'Consistent round, solid base.' });
   });
 
-  it('marca o system prompt com cache_control ephemeral', async () => {
-    mockCoaching('Bom round.');
+  it('marks the system prompt with cache_control ephemeral', async () => {
+    mockCoaching('Good round.');
     const { res } = makeRes();
     await handler(makeReq({ body: makeBody() }), res);
 
@@ -293,8 +293,8 @@ describe('POST /api/coach — caminho feliz', () => {
     expect(params.system[0].type).toBe('text');
   });
 
-  it('manda as correções no user message, não no system prompt', async () => {
-    mockCoaching('Bom round.');
+  it('sends the corrections in the user message, not in the system prompt', async () => {
+    mockCoaching('Good round.');
     const { res } = makeRes();
     await handler(makeReq({ body: makeBody() }), res);
 

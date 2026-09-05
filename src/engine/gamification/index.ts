@@ -1,7 +1,7 @@
 /**
- * Motor de gamificação (F6) — regras de XP/nível/rank, streak, badges e
- * missões diárias (SPECS §5), todas funções/dados puros. Persistência é
- * responsabilidade do HistoryStore (src/services/historyStore.ts).
+ * Gamification engine (F6): XP/level/rank rules, streak, badges and daily
+ * quests (SPECS §5), all pure functions and data. Persistence is the
+ * HistoryStore's job (src/services/historyStore.ts).
  */
 export * from './types';
 export * from './xp';

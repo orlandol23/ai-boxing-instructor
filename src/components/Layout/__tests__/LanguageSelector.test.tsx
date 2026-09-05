@@ -29,13 +29,13 @@ afterEach(async () => {
 });
 
 describe('LanguageSelector', () => {
-  it('mostra uma opção por locale suportado', () => {
+  it('shows one option per supported locale', () => {
     render(<LanguageSelector />);
     expect(screen.getByRole('button', { name: /English/i })).toBeDefined();
     expect(screen.getByRole('button', { name: /Portuguese/i })).toBeDefined();
   });
 
-  it('marca o idioma ativo com aria-pressed', () => {
+  it('marks the active language with aria-pressed', () => {
     render(<LanguageSelector />);
     expect(screen.getByRole('button', { name: /English/i }).getAttribute('aria-pressed')).toBe(
       'true'
@@ -45,7 +45,7 @@ describe('LanguageSelector', () => {
     );
   });
 
-  it('clicar em PT troca o idioma do app e o estado do controle', async () => {
+  it('clicking PT switches the app language and the control state', async () => {
     render(<LanguageSelector />);
 
     await act(async () => {
@@ -54,13 +54,13 @@ describe('LanguageSelector', () => {
 
     expect(i18n.resolvedLanguage).toBe('pt-BR');
     expect(document.documentElement.lang).toBe('pt-BR');
-    // O próprio seletor é re-renderizado no novo idioma.
+    // The selector itself is re-rendered in the new language.
     expect(screen.getByRole('button', { name: /Inglês/i }).getAttribute('aria-pressed')).toBe(
       'false'
     );
   });
 
-  it('persiste a escolha em localStorage (sobrevive ao reload)', async () => {
+  it('persists the choice in localStorage (it survives a reload)', async () => {
     render(<LanguageSelector />);
     await act(async () => {
       screen.getByRole('button', { name: /Portuguese/i }).click();
@@ -68,7 +68,7 @@ describe('LanguageSelector', () => {
     expect(window.localStorage.getItem(LOCALE_STORAGE_KEY)).toBe('pt-BR');
   });
 
-  it('o grupo é rotulado p/ leitores de tela', () => {
+  it('the group is labelled for screen readers', () => {
     render(<LanguageSelector />);
     expect(screen.getByRole('group', { name: 'Language' })).toBeDefined();
   });

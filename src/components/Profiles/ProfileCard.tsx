@@ -5,7 +5,7 @@ import { LevelChip } from '../Progress/LevelChip';
 
 interface ProfileCardProps {
   profile: Profile;
-  /** Nível atual do perfil (snapshot de gamificação do histórico dele). */
+  /** The profile's current level (from its own history's gamification snapshot). */
   level: number;
   selected: boolean;
   onSelect: () => void;
@@ -13,9 +13,9 @@ interface ProfileCardProps {
 }
 
 /**
- * Profile card (SPECS §6): radius 20, avatar 64–72 com borda `--accent`,
- * nome display uppercase, LVL chip; selecionado = borda `--accent` +
- * glow (no adulto o token de glow vale `none`).
+ * Profile card (SPECS §6): radius 20, avatar 64–72 with an `--accent`
+ * border, display uppercase name, LVL chip; selected = `--accent` border +
+ * glow (in the adult theme the glow token is `none`).
  */
 export function ProfileCard({ profile, level, selected, onSelect, onEdit }: ProfileCardProps) {
   const { t } = useTranslation();

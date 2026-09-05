@@ -1,18 +1,18 @@
 /* ============================================================
-   BOXING AI — Design Tokens v2.0
-   Tailwind CSS 4 · tema base "Fight Night" (adulto)
-   + variante "Arcade Royale" (kids) via [data-theme="kids"]
-   Troca de tema em runtime: <html data-theme="adult|kids">
-   Fontes (Saira / Saira Condensed) são self-hosted via
-   @fontsource (importadas em src/main.tsx) — PWA offline.
+   BOXING AI · Design Tokens v2.0
+   Tailwind CSS 4 · base theme "Fight Night" (adult)
+   + "Arcade Royale" variant (kids) via [data-theme="kids"]
+   Runtime theme swap: <html data-theme="adult|kids">
+   Fonts (Saira / Saira Condensed) are self-hosted through
+   @fontsource (imported in src/main.tsx), for the offline PWA.
    ============================================================ */
 
 @import 'tailwindcss';
 
-/* ---------- Variáveis semânticas (themáveis em runtime) ---------- */
+/* ---------- Semantic variables (themable at runtime) ---------- */
 :root,
 [data-theme='adult'] {
-  /* superfícies */
+  /* surfaces */
   --bg: #0a0a0a;
   --surface: #1a1a1a;
   --surface-2: #242424;
@@ -20,32 +20,32 @@
   --border-strong: #3f3f3f;
   --overlay: rgba(0, 0, 0, 0.65);
 
-  /* texto */
+  /* text */
   --text: #f5f5f5;
   --text-muted: #a3a3a3;
   --text-dim: #737373;
 
-  /* ação primária (vermelho de combate) */
+  /* primary action (fight red) */
   --primary: #dc2626;
   --primary-hover: #ef4444;
   --primary-pressed: #b91c1c;
   --on-primary: #ffffff;
 
-  /* acento (dourado do campeão) */
+  /* accent (champion gold) */
   --accent: #d4a843;
   --accent-light: #f5d98c;
   --accent-deep: #8f6e24;
 
-  /* progressão / XP */
+  /* progression / XP */
   --xp: #d4a843;
   --xp-track: #2e291c;
 
-  /* escala semântica de score — IDÊNTICA nos dois temas */
+  /* semantic score scale, IDENTICAL in both themes */
   --score-good: #22c55e; /* ≥ 90 */
   --score-warn: #eab308; /* 70–89 */
   --score-bad: #ef4444;  /* < 70  */
 
-  /* efeitos */
+  /* effects */
   --glow-primary: none;
   --glow-accent: none;
   --ring: #d4a843;
@@ -63,18 +63,18 @@
   --text-muted: #c9b8e4;
   --text-dim: #937fb5;
 
-  /* rosa neon */
+  /* neon pink */
   --primary: #ff3d9a;
   --primary-hover: #ff66b2;
   --primary-pressed: #d62681;
-  --on-primary: #2a0518; /* texto escuro p/ AA sobre rosa */
+  --on-primary: #2a0518; /* dark text for AA on pink */
 
-  /* lilás arcade */
+  /* arcade lilac */
   --accent: #c084fc;
   --accent-light: #e2ccfe;
   --accent-deep: #7c3aed;
 
-  /* XP = ouro-estrela */
+  /* XP = star gold */
   --xp: #ffc83d;
   --xp-track: #3a2a55;
 
@@ -87,7 +87,7 @@
   --ring: #c084fc;
 }
 
-/* ---------- Mapeamento p/ utilities Tailwind 4 ---------- */
+/* ---------- Mapping to Tailwind 4 utilities ---------- */
 @theme inline {
   --color-bg: var(--bg);
   --color-surface: var(--surface);
@@ -114,7 +114,7 @@
   --color-score-warn: var(--score-warn);
   --color-score-bad: var(--score-bad);
 
-  /* ---- aliases legados (migração DS v1 → v2; remover ao fim) ---- */
+  /* ---- legacy aliases (DS v1 → v2 migration; remove at the end) ---- */
   --color-boxing-dark: var(--bg);
   --color-boxing-card: var(--surface);
   --color-boxing-border: var(--border);
@@ -123,22 +123,22 @@
   --color-boxing-gold: var(--accent);
   --color-boxing-gold-light: var(--accent-light);
 
-  /* tipografia */
+  /* typography */
   --font-display: 'Saira Condensed', ui-sans-serif, system-ui, sans-serif;
   --font-sans: 'Saira', ui-sans-serif, system-ui, sans-serif;
   --font-body: 'Saira', ui-sans-serif, system-ui, sans-serif;
 
-  /* escala p/ leitura à distância (treino a 2–3 m) */
-  --text-hud-timer: 6rem;       /* 96px — timer do round */
+  /* scale for reading at a distance (training at 2–3 m) */
+  --text-hud-timer: 6rem;       /* 96px, round timer */
   --text-hud-timer--line-height: 1;
-  --text-hud-value: 3.5rem;     /* 56px — score grande */
+  --text-hud-value: 3.5rem;     /* 56px, large score */
   --text-hud-value--line-height: 1;
-  --text-display: 3rem;         /* 48px — hero/títulos de tela */
+  --text-display: 3rem;         /* 48px, hero and screen titles */
   --text-display--line-height: 1.05;
   --text-title: 1.75rem;        /* 28px */
   --text-title--line-height: 1.2;
 
-  /* raio */
+  /* radius */
   --radius-sm: 6px;
   --radius-md: 10px;
   --radius-lg: 14px;
@@ -146,7 +146,7 @@
   --radius-2xl: 28px;
 }
 
-/* ---------- Regras globais ---------- */
+/* ---------- Global rules ---------- */
 html, body, #root {
   height: 100%;
   margin: 0;
@@ -156,9 +156,9 @@ html, body, #root {
   font-family: var(--font-sans);
 }
 
-/* Medal/badge (SPECS §6) — skin 100% por tokens, sem cor hard-coded.
-   Adulto: círculo metálico dourado. Kids: sticker (radius 24, radial
-   lilás→rosa, glow, rotate −3°). */
+/* Medal/badge (SPECS §6): skin 100% through tokens, no hard-coded colour.
+   Adult: gold metallic circle. Kids: sticker (radius 24, lilac→pink
+   radial, glow, rotate −3°). */
 .medal-coin {
   border: 2px solid var(--accent-deep);
   border-radius: 9999px;
@@ -181,23 +181,23 @@ html, body, #root {
   transform: rotate(-3deg);
 }
 
-/* números do HUD: sempre tabulares */
+/* HUD numbers: always tabular */
 .num {
   font-family: var(--font-display);
   font-variant-numeric: tabular-nums lining-nums;
 }
 
-/* alvos de toque: 48px mínimo, 64px em controles usados durante o treino */
+/* touch targets: 48px minimum, 64px on controls used during training */
 :where(button, a, [role='button']) { min-height: 48px; min-width: 48px; }
 .tap-training { min-height: 64px; min-width: 64px; }
 
-/* foco visível (WCAG 2.4.7) */
+/* visible focus (WCAG 2.4.7) */
 :where(button, a, input, select, [tabindex]):focus-visible {
   outline: 2px solid var(--ring);
   outline-offset: 2px;
 }
 
-/* movimento reduzido: desliga transições/animações decorativas */
+/* reduced motion: turns off decorative transitions and animations */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.01ms !important;

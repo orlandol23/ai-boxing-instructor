@@ -54,15 +54,15 @@ function lookup(bundle: unknown, dottedKey: string): string | undefined {
   return withoutContext === dottedKey ? undefined : walk(bundle, withoutContext);
 }
 
-describe('themedCopy — o eixo do tema', () => {
-  it('adiciona o sufixo de contexto do tema à chave pedida', () => {
+describe('themedCopy: the theme axis', () => {
+  it('adds the theme context suffix to the requested key', () => {
     const { t, calls } = spy();
     themedCopy(t, 'home.tagline', 'adult');
     themedCopy(t, 'home.tagline', 'kids');
     expect(calls).toEqual(['home.tagline_adult', 'home.tagline_kids']);
   });
 
-  it('repassa os dados de interpolação junto do contexto', () => {
+  it('passes the interpolation data along with the context', () => {
     const seen: Record<string, unknown>[] = [];
     const t: Translate = (key, options) => {
       seen.push({ key, ...options });
@@ -73,37 +73,37 @@ describe('themedCopy — o eixo do tema', () => {
   });
 });
 
-describe('copy por tema — missões diárias', () => {
-  it('pede a chave do motor, com o sufixo do tema', () => {
+describe('copy per theme: daily quests', () => {
+  it('asks for the engine key, with the theme suffix', () => {
     const { t } = spy();
     const guard = QUEST_POOL.find((q) => q.id === 'guard_80_round')!;
     expect(questDescription(t, guard, 'adult')).toBe('quests.guard_80_round.description_adult');
     expect(questDescription(t, guard, 'kids')).toBe('quests.guard_80_round.description_kids');
   });
 
-  it('TODA missão do pool tem skin kids nos dois idiomas', () => {
+  it('EVERY quest in the pool has a kids skin in both languages', () => {
     for (const quest of QUEST_POOL) {
       const kidsKey = `${quest.descriptionKey}_kids`;
       for (const [name, bundle] of [
         ['en', en],
         ['pt-BR', ptBR],
       ] as const) {
-        expect(walk(bundle, kidsKey), `skin kids faltando p/ ${quest.id} em ${name}`).toBeTruthy();
+        expect(walk(bundle, kidsKey), `kids skin missing for ${quest.id} in ${name}`).toBeTruthy();
         expect(walk(bundle, kidsKey)).not.toBe(walk(bundle, quest.descriptionKey));
       }
     }
   });
 
-  it('missão futura sem skin cai na copy adulta (nunca quebra)', () => {
-    // Missão nova sem entrada `_kids`: o fallback de contexto do i18next
-    // devolve a copy adulta em vez de string vazia.
+  it('a future quest with no skin falls back to the adult copy (it never breaks)', () => {
+    // A new quest with no `_kids` entry: i18next's context fallback
+    // returns the adult copy instead of an empty string.
     const bundleWithNewQuest = { quests: { dodges_10: { description: '10 slips' } } };
     expect(walk(bundleWithNewQuest, 'quests.dodges_10.description_kids')).toBeUndefined();
     expect(lookup(bundleWithNewQuest, 'quests.dodges_10.description_kids')).toBe('10 slips');
   });
 
-  it('a skin muda só a narrativa: alvo e métrica seguem no texto', () => {
-    // precisão > tema: o número do objetivo aparece nas duas versões
+  it('the skin changes only the narration: target and metric stay in the text', () => {
+    // precision > theme: the goal's number shows up in both versions
     const punches = QUEST_POOL.find((q) => q.id === 'punches_100')!;
     for (const bundle of [en, ptBR]) {
       expect(walk(bundle, punches.descriptionKey)).toContain('100');
@@ -112,8 +112,8 @@ describe('copy por tema — missões diárias', () => {
   });
 });
 
-describe('copy por tema — ranks (motor → UI)', () => {
-  it('o motor devolve a chave do rank; a UI resolve tema + idioma', () => {
+describe('copy per theme: ranks (engine to UI)', () => {
+  it('the engine returns the rank key; the UI resolves theme + language', () => {
     expect(rankLabelKey(1)).toBe('ranks.bronze');
     expect(rankLabelKey(35)).toBe('ranks.champion');
 
@@ -123,7 +123,7 @@ describe('copy por tema — ranks (motor → UI)', () => {
     expect(rankLabel(t, 35, 'kids')).toBe('ranks.champion_kids');
   });
 
-  it('Cinturões no adulto, Coroas no kids, nos dois idiomas (SPECS §1)', () => {
+  it('Belts in the adult theme, Crowns in the kids theme, in both languages (SPECS §1)', () => {
     for (const bundle of [en, ptBR]) {
       for (const key of Object.values(RANK_LABEL_KEYS)) {
         const adult = lookup(bundle, `${key}_adult`);
@@ -136,8 +136,8 @@ describe('copy por tema — ranks (motor → UI)', () => {
   });
 });
 
-describe('copy por tema — badges e UI', () => {
-  it('badge com metáfora RPG pede a chave `_kids`; o critério nunca é temático', () => {
+describe('copy per theme: badges and UI', () => {
+  it('a badge with an RPG metaphor asks for the `_kids` key; the criterion is never themed', () => {
     const { t } = spy();
     const ironGuard = BADGES.find((b) => b.id === 'iron_guard')!;
     expect(badgeName(t, ironGuard, 'adult')).toBe('badges.iron_guard.name_adult');
@@ -145,39 +145,39 @@ describe('copy por tema — badges e UI', () => {
     expect(badgeDescription(t, ironGuard)).toBe('badges.iron_guard.description');
   });
 
-  it('contagem neutra não ganha skin kids; a metáfora RPG ganha', () => {
+  it('a neutral counter gets no kids skin; the RPG metaphor does', () => {
     for (const bundle of [en, ptBR]) {
-      // "100 Golpes" é um contador — mesma copy nos dois temas.
+      // "100 Punches" is a counter, so the copy is the same in both themes.
       expect(walk(bundle, 'badges.punches_100.name_kids')).toBeUndefined();
       expect(lookup(bundle, 'badges.punches_100.name_kids')).toBe(
         walk(bundle, 'badges.punches_100.name')
       );
-      // "Guarda de Ferro" vira "Escudo do Castelo".
+      // "Iron Guard" becomes "Castle Shield".
       expect(walk(bundle, 'badges.iron_guard.name_kids')).toBeTruthy();
     }
   });
 
-  it('toda badge do catálogo tem nome e descrição nos dois idiomas', () => {
+  it('every badge in the catalogue has a name and a description in both languages', () => {
     for (const badge of BADGES) {
       for (const bundle of [en, ptBR]) {
-        expect(walk(bundle, badge.nameKey), `nome faltando: ${badge.id}`).toBeTruthy();
-        expect(walk(bundle, badge.descriptionKey), `desc faltando: ${badge.id}`).toBeTruthy();
+        expect(walk(bundle, badge.nameKey), `name missing: ${badge.id}`).toBeTruthy();
+        expect(walk(bundle, badge.descriptionKey), `description missing: ${badge.id}`).toBeTruthy();
       }
     }
   });
 
-  it('todo bloco de badge nos locales aponta p/ um id real do catálogo', () => {
+  it('every badge block in the locales points at a real catalogue id', () => {
     const ids = new Set<string>(BADGES.map((b) => b.id));
     for (const bundle of [en, ptBR]) {
       const badges = (bundle as unknown as { badges: Record<string, unknown> }).badges;
       for (const [id, value] of Object.entries(badges)) {
         if (typeof value !== 'object' || value === null) continue; // `badges.locked`
-        expect(ids.has(id), `id órfão: ${id}`).toBe(true);
+        expect(ids.has(id), `orphan id: ${id}`).toBe(true);
       }
     }
   });
 
-  it('saudação da Home e textos de UI resolvem por tema', () => {
+  it('the Home greeting and UI texts resolve per theme', () => {
     const { t } = spy();
     expect(homeGreeting(t, 'Orlando', 'adult')).toBe('home.greeting_adult');
     expect(uiCopy(t, 'home.tagline', 'kids')).toBe('home.tagline_kids');

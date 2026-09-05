@@ -81,7 +81,7 @@ export function useSession({ frame }: UseSessionOptions): UseSessionReturn {
     roundStartRef.current = null;
     setPhase(tracker.getPhase());
     setRoundElapsedMs(0);
-    // Snapshot pós-round para consumidores (ex.: coach IA do round).
+    // Post-round snapshot for consumers (e.g. the round's AI coach).
     return tracker.getSummary();
   }, [tracker]);
 

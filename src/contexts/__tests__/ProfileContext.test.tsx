@@ -18,12 +18,14 @@ import { BADGES } from '../../engine/gamification/badges';
 import { QUEST_POOL } from '../../engine/gamification/quests';
 
 /**
- * Integração F7: ProfileProvider + tema no <html> + partição do
- * histórico/gamificação por perfil ativo (localStorage real do jsdom).
+ * F7 integration: ProfileProvider + the theme on <html> + the
+ * history/gamification partition per active profile (jsdom's real
+ * localStorage).
  *
- * Também fixa a separação dos dois eixos de copy: o PERFIL escolhe o tema
- * (adult/kids), o IDIOMA é escolhido pelo usuário e persistido à parte —
- * trocar de perfil nunca mexe no idioma, e vice-versa.
+ * It also pins the separation of the two copy axes: the PROFILE picks the
+ * theme (adult/kids), the LANGUAGE is picked by the user and persisted
+ * separately, so switching profile never touches the language, and the
+ * other way round.
  */
 
 function wrapper({ children }: { children: ReactNode }) {
@@ -40,15 +42,15 @@ beforeEach(async () => {
   await i18n.changeLanguage(DEFAULT_LOCALE);
 });
 
-describe('ProfileProvider — tema segue o perfil ativo', () => {
-  it('primeiro uso: sem perfil ativo, tema adulto', () => {
+describe('ProfileProvider: the theme follows the active profile', () => {
+  it('first use: no active profile, adult theme', () => {
     const { result } = renderHook(useHarness, { wrapper });
     expect(result.current.profiles.activeProfile).toBeNull();
     expect(result.current.theme).toBe('adult');
     expect(document.documentElement.dataset.theme).toBe('adult');
   });
 
-  it('criar/trocar perfil aplica o tema no <html> (kids ↔ adult)', () => {
+  it('creating/switching a profile applies the theme on <html> (kids ↔ adult)', () => {
     const { result } = renderHook(useHarness, { wrapper });
 
     act(() => {
@@ -78,7 +80,7 @@ describe('ProfileProvider — tema segue o perfil ativo', () => {
     expect(document.documentElement.dataset.theme).toBe('kids');
   });
 
-  it('alternar o modo kids do perfil ativo retemiza na hora', () => {
+  it('toggling kids mode on the active profile re-themes immediately', () => {
     const { result } = renderHook(useHarness, { wrapper });
     act(() => {
       result.current.profiles.createProfile({ name: 'Orlando' });
@@ -89,7 +91,7 @@ describe('ProfileProvider — tema segue o perfil ativo', () => {
     expect(document.documentElement.dataset.theme).toBe('kids');
   });
 
-  it('boot: monta já com o tema do último perfil ativo persistido', () => {
+  it('boot: mounts already carrying the persisted last active profile theme', () => {
     const { doc } = createProfile(emptyProfilesDocument(), { name: 'Alice', isKid: true });
     window.localStorage.setItem(PROFILES_STORAGE_KEY, JSON.stringify(doc));
 
@@ -99,8 +101,8 @@ describe('ProfileProvider — tema segue o perfil ativo', () => {
   });
 });
 
-describe('ProfileProvider + useGamification — partição por perfil', () => {
-  it('trocar de perfil troca a partição de XP/histórico (e volta intacta)', () => {
+describe('ProfileProvider + useGamification: partition per profile', () => {
+  it('switching profile switches the XP/history partition (and it comes back intact)', () => {
     const { result } = renderHook(useHarness, { wrapper });
 
     act(() => {
@@ -112,7 +114,7 @@ describe('ProfileProvider + useGamification — partição por perfil', () => {
     const adultXp = result.current.gamification.history.totalXp;
     expect(adultXp).toBeGreaterThan(0);
 
-    // Perfil kids novo começa do zero, gravando em outra chave…
+    // A new kids profile starts from zero, writing under another key…
     let kidId = '';
     act(() => {
       kidId = result.current.profiles.createProfile({ name: 'Alice', isKid: true }).id;
@@ -126,7 +128,7 @@ describe('ProfileProvider + useGamification — partição por perfil', () => {
     expect(window.localStorage.getItem(historyStorageKey(kidId))).not.toBeNull();
     expect(window.localStorage.getItem(historyStorageKey(DEFAULT_PROFILE_ID))).not.toBeNull();
 
-    // …e voltar ao perfil adulto recupera o XP dele, sem mistura.
+    // …and going back to the adult profile recovers its XP, with no mixing.
     act(() => {
       result.current.profiles.selectProfile(DEFAULT_PROFILE_ID);
     });
@@ -134,7 +136,7 @@ describe('ProfileProvider + useGamification — partição por perfil', () => {
     expect(result.current.gamification.history.totalXp).toBe(adultXp);
   });
 
-  it('deletar perfil esconde mas preserva a partição de histórico', () => {
+  it('deleting a profile hides but preserves the history partition', () => {
     const { result } = renderHook(useHarness, { wrapper });
     let kidId = '';
     act(() => {
@@ -152,13 +154,13 @@ describe('ProfileProvider + useGamification — partição por perfil', () => {
     });
     expect(result.current.profiles.profiles.map((p) => p.name)).toEqual(['Orlando']);
     expect(result.current.profiles.activeProfile).toBeNull();
-    // histórico do perfil deletado continua no storage (decisão do F7)
+    // the deleted profile's history stays in the storage (the F7 decision)
     expect(window.localStorage.getItem(historyStorageKey(kidId))).not.toBeNull();
   });
 });
 
-describe('ProfileProvider — tema e idioma são eixos independentes', () => {
-  it('trocar de perfil muda o tema e NÃO mexe no idioma', async () => {
+describe('ProfileProvider: theme and language are independent axes', () => {
+  it('switching profile changes the theme and does NOT touch the language', async () => {
     await i18n.changeLanguage('pt-BR');
     const { result } = renderHook(useHarness, { wrapper });
 
@@ -175,7 +177,7 @@ describe('ProfileProvider — tema e idioma são eixos independentes', () => {
     expect(i18n.resolvedLanguage).toBe('pt-BR');
   });
 
-  it('trocar de idioma muda a copy e NÃO mexe no tema do perfil ativo', async () => {
+  it('switching language changes the copy and does NOT touch the active profile theme', async () => {
     const { result } = renderHook(useHarness, { wrapper });
     act(() => {
       result.current.profiles.createProfile({ name: 'Alice', isKid: true });
@@ -189,7 +191,7 @@ describe('ProfileProvider — tema e idioma são eixos independentes', () => {
     expect(document.documentElement.dataset.theme).toBe('kids');
   });
 
-  it('a copy resolve os dois eixos ao mesmo tempo (idioma × tema)', async () => {
+  it('the copy resolves both axes at once (language × theme)', async () => {
     const ironGuard = BADGES.find((b) => b.id === 'iron_guard')!;
     const hooks = QUEST_POOL.find((q) => q.id === 'hooks_20')!;
     const t = i18n.t.bind(i18n);
@@ -203,7 +205,7 @@ describe('ProfileProvider — tema e idioma são eixos independentes', () => {
     expect(questDescription(t, hooks, 'kids')).toContain('Giro real');
   });
 
-  it('o idioma é persistido na sua própria chave, separado dos perfis', async () => {
+  it('the language is persisted under its own key, separate from the profiles', async () => {
     const { result } = renderHook(useHarness, { wrapper });
     act(() => {
       result.current.profiles.createProfile({ name: 'Orlando' });

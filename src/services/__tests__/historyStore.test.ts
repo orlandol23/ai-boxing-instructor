@@ -28,13 +28,13 @@ class MemoryStorage implements StorageLike {
 
 class BrokenStorage implements StorageLike {
   getItem(): string | null {
-    throw new Error('storage indisponível');
+    throw new Error('storage unavailable');
   }
   setItem(): void {
-    throw new Error('quota cheia');
+    throw new Error('quota full');
   }
   removeItem(): void {
-    throw new Error('storage indisponível');
+    throw new Error('storage unavailable');
   }
 }
 
@@ -43,23 +43,23 @@ function newStore() {
 }
 
 describe('LocalStorageHistoryStore', () => {
-  it('roundtrip: salva e recarrega um histórico real sem perdas', () => {
+  it('roundtrip: saves and reloads a real history with no losses', () => {
     const store = newStore();
     const { history } = applySession(emptyHistory(), summary(), {
       now: new Date(2026, 5, 11, 10, 0).getTime(),
-      coachFeedback: 'Ótimo ritmo.',
+      coachFeedback: 'Great rhythm.',
     });
     store.save(history);
     expect(store.load()).toEqual(history);
   });
 
-  it('sem documento salvo retorna histórico vazio do perfil', () => {
+  it('returns the profile\'s empty history when no document is saved', () => {
     const loaded = newStore().load();
     expect(loaded).toEqual(emptyHistory(DEFAULT_PROFILE_ID));
     expect(loaded.schemaVersion).toBe(HISTORY_SCHEMA_VERSION);
   });
 
-  it('particiona por profileId (F7 não exigirá migração)', () => {
+  it('partitions by profileId (F7 will not need a migration)', () => {
     const storage = new MemoryStorage();
     const store = new LocalStorageHistoryStore(storage);
     const adult = { ...emptyHistory('default'), totalXp: 100 };
@@ -72,21 +72,21 @@ describe('LocalStorageHistoryStore', () => {
     expect(historyStorageKey('kid-1')).not.toBe(historyStorageKey('default'));
   });
 
-  it('JSON corrompido cai em histórico vazio (treino nunca quebra)', () => {
+  it('corrupted JSON falls back to an empty history (training never breaks)', () => {
     const storage = new MemoryStorage();
     storage.setItem(historyStorageKey(DEFAULT_PROFILE_ID), '{nope');
     const store = new LocalStorageHistoryStore(storage);
     expect(store.load()).toEqual(emptyHistory(DEFAULT_PROFILE_ID));
   });
 
-  it('storage lançando erros não propaga (load/save/clear são best-effort)', () => {
+  it('a throwing storage does not propagate (load/save/clear are best-effort)', () => {
     const store = new LocalStorageHistoryStore(new BrokenStorage());
     expect(() => store.save(emptyHistory())).not.toThrow();
     expect(() => store.clear()).not.toThrow();
     expect(store.load()).toEqual(emptyHistory(DEFAULT_PROFILE_ID));
   });
 
-  it('clear remove apenas o perfil indicado', () => {
+  it('clear removes only the given profile', () => {
     const store = newStore();
     store.save({ ...emptyHistory('default'), totalXp: 100 });
     store.save({ ...emptyHistory('kid-1'), totalXp: 50 });
@@ -96,17 +96,17 @@ describe('LocalStorageHistoryStore', () => {
   });
 });
 
-describe('migrateHistory (schema versionado)', () => {
-  it('documento sem schemaVersion → vazio', () => {
+describe('migrateHistory (versioned schema)', () => {
+  it('a document with no schemaVersion becomes empty', () => {
     expect(migrateHistory({ totalXp: 500 }, 'default')).toEqual(emptyHistory('default'));
   });
 
-  it('versão futura desconhecida → vazio (não tenta adivinhar)', () => {
+  it('an unknown future version becomes empty (it never guesses)', () => {
     const doc = { ...emptyHistory('default'), schemaVersion: HISTORY_SCHEMA_VERSION + 1 };
     expect(migrateHistory(doc, 'default')).toEqual(emptyHistory('default'));
   });
 
-  it('documento v1 parcial ganha defaults nos campos ausentes', () => {
+  it('a partial v1 document gets defaults for the missing fields', () => {
     const migrated = migrateHistory({ schemaVersion: 1, totalXp: 320 }, 'default');
     expect(migrated.totalXp).toBe(320);
     expect(migrated.sessions).toEqual([]);
@@ -114,7 +114,7 @@ describe('migrateHistory (schema versionado)', () => {
     expect(migrated.lifetime).toEqual({ sessions: 0, rounds: 0, punches: 0, goodPunches: 0 });
   });
 
-  it('valores inválidos são saneados (totalXp negativo → 0)', () => {
+  it('invalid values are sanitised (negative totalXp becomes 0)', () => {
     expect(migrateHistory({ schemaVersion: 1, totalXp: -10 }, 'default').totalXp).toBe(0);
     expect(migrateHistory(null, 'default')).toEqual(emptyHistory('default'));
     expect(migrateHistory([1, 2], 'default')).toEqual(emptyHistory('default'));

@@ -13,37 +13,37 @@ export type CoachFeedbackStatus = 'idle' | 'loading' | 'success' | 'unavailable'
 
 interface UseCoachingFeedbackOptions {
   /**
-   * Chamado quando um feedback chega com sucesso — usado p/ ler em voz
-   * alta via Voice Coach quando o toggle de voz estiver ativo.
+   * Called whenever feedback arrives successfully. Used to read it out
+   * loud through the Voice Coach when the voice toggle is on.
    */
   onFeedback?: (text: string) => void;
-  /** Timeout por tentativa (default 15s). Exposto p/ testes. */
+  /** Timeout per attempt (default 15s). Exposed for tests. */
   timeoutMs?: number;
 }
 
 interface UseCoachingFeedbackReturn {
   status: CoachFeedbackStatus;
-  /** Texto de coaching no idioma ativo (apenas quando status === 'success'). */
+  /** Coaching text in the active language (only when status === 'success'). */
   feedback: string | null;
   requestRoundFeedback: (summary: SessionSummary, roundNumber: number) => void;
   requestSessionFeedback: (summary: SessionSummary) => void;
-  /** Aborta qualquer requisição em voo e volta para 'idle'. */
+  /** Aborts any in-flight request and goes back to 'idle'. */
   clear: () => void;
 }
 
 /**
- * Hook que pede coaching da IA (POST /api/coach) ao fim de cada round
- * e/ou da sessão, a partir das métricas do SessionTracker.
+ * Hook that asks the AI for coaching (POST /api/coach) at the end of every
+ * round and/or session, from the SessionTracker's metrics.
  *
- * Resiliência por design: nenhuma falha do endpoint escapa deste hook —
- * qualquer erro (503 sem API key, 404 em dev local, timeout, offline)
- * vira apenas status 'unavailable', e o fluxo de treino segue intacto.
- * Requisições em voo são abortadas ao desmontar, ao limpar ou quando uma
- * nova requisição chega (a mais recente sempre vence).
+ * Resilient by design: no endpoint failure escapes this hook. Any error
+ * (503 with no API key, 404 in local dev, timeout, offline) becomes the
+ * 'unavailable' status and nothing else, and the training flow carries on
+ * intact. In-flight requests are aborted on unmount, on clear, or when a
+ * new request arrives (the most recent one always wins).
  *
- * O idioma ativo viaja no payload (`locale`), e as notas estruturadas do
- * engine são traduzidas aqui antes de irem para a IA — o coach responde
- * na mesma língua da interface.
+ * The active language travels in the payload (`locale`), and the engine's
+ * structured notes are translated here before they reach the AI, so the
+ * coach answers in the same language as the interface.
  */
 export function useCoachingFeedback(
   options: UseCoachingFeedbackOptions = {}
@@ -95,7 +95,7 @@ export function useCoachingFeedback(
         .catch((err: unknown) => {
           if (requestId !== requestIdRef.current) return;
           if (err instanceof CoachRequestError && err.reason === 'aborted') return;
-          // Falha silenciosa para o treino: vira só fallback amigável no painel.
+          // Silent failure for the workout: it only becomes a friendly panel fallback.
           setStatus('unavailable');
           setFeedback(null);
         });
@@ -121,7 +121,7 @@ export function useCoachingFeedback(
     setFeedback(null);
   }, []);
 
-  // Aborta requisição em voo se o usuário sair da tela.
+  // Abort an in-flight request if the user leaves the screen.
   useEffect(() => {
     return () => {
       abortRef.current?.abort();

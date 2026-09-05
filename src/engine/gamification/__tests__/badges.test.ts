@@ -10,14 +10,14 @@ function unlockedIds(context: BadgeContext): string[] {
   return evaluateBadges(context, new Set()).map((b) => b.id);
 }
 
-describe('catálogo', () => {
-  it('tem 8 badges com ids únicos', () => {
+describe('catalogue', () => {
+  it('has 8 badges with unique ids', () => {
     expect(BADGES).toHaveLength(8);
     expect(new Set(BADGES.map((b) => b.id)).size).toBe(8);
   });
 
-  it('expõe chaves de i18n derivadas do id — nunca copy literal', () => {
-    // O motor é language-free: só nomeia a frase, não a escreve.
+  it('exposes i18n keys derived from the id, never literal copy', () => {
+    // The engine is language-free: it names the phrase, it never writes it.
     for (const badge of BADGES) {
       expect(badge.nameKey).toBe(`badges.${badge.id}.name`);
       expect(badge.descriptionKey).toBe(`badges.${badge.id}.description`);
@@ -25,12 +25,12 @@ describe('catálogo', () => {
   });
 });
 
-describe('critérios individuais', () => {
-  it('Primeira Sessão: 1ª sessão do perfil', () => {
+describe('individual criteria', () => {
+  it('First Session: the profile\'s 1st session', () => {
     expect(unlockedIds(ctx({ lifetime: lifetime({ sessions: 1 }) }))).toContain('first_session');
   });
 
-  it('100/1000 Golpes: fronteira exata nos totais acumulados', () => {
+  it('100/1000 Punches: exact boundary on the accumulated totals', () => {
     expect(unlockedIds(ctx({ lifetime: lifetime({ punches: 99 }) }))).not.toContain('punches_100');
     expect(unlockedIds(ctx({ lifetime: lifetime({ punches: 100 }) }))).toContain('punches_100');
     expect(unlockedIds(ctx({ lifetime: lifetime({ punches: 999 }) }))).not.toContain(
@@ -39,7 +39,7 @@ describe('critérios individuais', () => {
     expect(unlockedIds(ctx({ lifetime: lifetime({ punches: 1000 }) }))).toContain('punches_1000');
   });
 
-  it('Guarda de Ferro: guarda média ≥ 90 na sessão (com round)', () => {
+  it('Iron Guard: average guard >= 90 in the session (with a round)', () => {
     expect(unlockedIds(ctx({ session: record({ avgGuardScore: 90 }) }))).toContain('iron_guard');
     expect(unlockedIds(ctx({ session: record({ avgGuardScore: 89.9 }) }))).not.toContain(
       'iron_guard'
@@ -49,7 +49,7 @@ describe('critérios individuais', () => {
     ).not.toContain('iron_guard');
   });
 
-  it('Sessão Perfeita: um round com guarda E base ≥ 90 e ao menos 1 golpe', () => {
+  it('Perfect Session: a round with guard AND base >= 90 and at least 1 punch', () => {
     const perfect = round({ avgGuardScore: 90, avgBaseScore: 90, punchCount: 5 });
     expect(unlockedIds(ctx({ session: record({ roundDetails: [perfect] }) }))).toContain(
       'perfect_session'
@@ -64,7 +64,7 @@ describe('critérios individuais', () => {
     ).not.toContain('perfect_session');
   });
 
-  it('7/30 Dias Seguidos: fronteira exata da streak', () => {
+  it('7/30 Days in a Row: exact streak boundary', () => {
     expect(unlockedIds(ctx({ streakCount: 6 }))).not.toContain('streak_7');
     expect(unlockedIds(ctx({ streakCount: 7 }))).toContain('streak_7');
     expect(unlockedIds(ctx({ streakCount: 30 }))).toEqual(
@@ -72,7 +72,7 @@ describe('critérios individuais', () => {
     );
   });
 
-  it('Arsenal Completo: os 6 tipos de golpe na mesma sessão', () => {
+  it('Full Arsenal: all 6 punch types in the same session', () => {
     const all = breakdown({
       jab: 1,
       cross: 1,
@@ -91,22 +91,22 @@ describe('critérios individuais', () => {
 });
 
 describe('evaluateBadges', () => {
-  it('é permanente: badge já desbloqueada nunca volta', () => {
+  it('is permanent: an already unlocked badge never comes back', () => {
     const context = ctx();
     expect(evaluateBadges(context, new Set(['first_session'])).map((b) => b.id)).not.toContain(
       'first_session'
     );
   });
 
-  it('pode desbloquear várias badges na mesma sessão', () => {
+  it('can unlock several badges in the same session', () => {
     const ids = unlockedIds(
       ctx({ lifetime: lifetime({ sessions: 10, punches: 150 }), streakCount: 7 })
     );
     expect(ids).toEqual(expect.arrayContaining(['punches_100', 'streak_7']));
   });
 
-  it('badgeById resolve ids persistidos', () => {
+  it('badgeById resolves persisted ids', () => {
     expect(badgeById('iron_guard')?.nameKey).toBe('badges.iron_guard.name');
-    expect(badgeById('inexistente')).toBeUndefined();
+    expect(badgeById('nonexistent')).toBeUndefined();
   });
 });

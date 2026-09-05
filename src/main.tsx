@@ -8,8 +8,8 @@ import { setTheme } from './theme/theme';
 // bundled (not fetched) so the PWA renders text offline.
 import './i18n';
 
-// Fontes self-hosted (@fontsource) — empacotadas pelo Vite e pré-cacheadas
-// pelo service worker do PWA, funcionam offline (SPECS §8.5).
+// Self-hosted fonts (@fontsource), bundled by Vite and pre-cached by the
+// PWA service worker, so they work offline (SPECS §8.5).
 import '@fontsource/saira/400.css';
 import '@fontsource/saira/500.css';
 import '@fontsource/saira/600.css';
@@ -18,9 +18,10 @@ import '@fontsource/saira-condensed/800.css';
 
 import './styles/globals.css';
 
-// Tema do último perfil ativo (F7). O script inline no index.html já
-// aplicou antes do primeiro paint; reaplicar aqui mantém index.html e
-// app consistentes mesmo se o inline for removido/falhar.
+// Theme of the last active profile (F7). The inline script in index.html
+// already applied it before the first paint; re-applying here keeps
+// index.html and the app consistent even if the inline script is
+// removed or fails.
 const bootProfile = activeProfileOf(createProfileStore().load());
 setTheme(bootProfile?.isKid ? 'kids' : 'adult');
 

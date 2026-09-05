@@ -16,16 +16,16 @@ const ICONS: Record<BadgeIcon, ComponentType<{ size?: number | string; className
 interface MedalBadgeProps {
   badge: BadgeDefinition;
   unlocked: boolean;
-  /** Compacta (resumo de sessão) ou cheia, com descrição (/progress). */
+  /** Compact (session summary) or full, with a description (/progress). */
   size?: 'sm' | 'md';
 }
 
 /**
- * Medal/badge (SPECS §6): nome sempre visível (nunca só cor); locked =
- * grayscale + opacity .35. A skin vem da classe `.medal-coin`
- * (globals.css), 100% por tokens: círculo metálico dourado no adulto;
- * sticker (radius 24, glow, rotate −3°) no kids. O nome usa o
- * dicionário de copy por tema.
+ * Medal/badge (SPECS §6): the name is always visible (never colour
+ * alone); locked = grayscale + opacity .35. The skin comes from the
+ * `.medal-coin` class (globals.css), 100% through tokens: a gold metallic
+ * circle in the adult theme; a sticker (radius 24, glow, rotate −3°) in
+ * the kids theme. The name comes from the per-theme copy dictionary.
  */
 export function MedalBadge({ badge, unlocked, size = 'md' }: MedalBadgeProps) {
   const { t, theme } = useCopy();

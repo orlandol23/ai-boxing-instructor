@@ -20,9 +20,10 @@ type FormState =
   | { mode: 'edit'; profile: Profile };
 
 /**
- * Tela /profiles (SPECS §7): seletor de perfis que define o tema do app.
- * Mostrada no primeiro uso (sem perfil ativo) e acessível pelo avatar no
- * Header. Selecionar um perfil troca tema + partição de histórico/XP.
+ * The /profiles screen (SPECS §7): the profile selector that sets the app
+ * theme. Shown on first use (no active profile) and reachable from the
+ * avatar in the Header. Selecting a profile switches the theme and the
+ * history/XP partition together.
  */
 export function ProfilesPage() {
   const { t } = useTranslation();
@@ -33,8 +34,8 @@ export function ProfilesPage() {
     profiles.length === 0 ? { mode: 'create' } : { mode: 'closed' }
   );
 
-  // LVL chip de cada card vem do snapshot de gamificação do próprio
-  // perfil (histórico particionado por profileId no HistoryStore).
+  // Each card's LVL chip comes from that profile's own gamification
+  // snapshot (history partitioned by profileId in the HistoryStore).
   const historyStore = useMemo(() => createHistoryStore(), []);
   const levels = useMemo(() => {
     const map = new Map<string, number>();
@@ -113,9 +114,9 @@ export function ProfilesPage() {
 }
 
 interface ProfileFormProps {
-  /** null = criação; preenchido = edição. */
+  /** null means creation; a value means editing. */
   profile: Profile | null;
-  /** Primeiro uso (nenhum perfil) não deixa fechar o formulário. */
+  /** On first use (no profiles) the form cannot be dismissed. */
   canDismiss: boolean;
   onCancel: () => void;
   onCreate: (draft: { name: string; avatar: string; isKid: boolean }) => void;
@@ -128,8 +129,8 @@ function ProfileForm({ profile, canDismiss, onCancel, onCreate, onSave, onDelete
   const [name, setName] = useState(profile?.name ?? '');
   const [avatar, setAvatar] = useState(profile?.avatar ?? DEFAULT_AVATAR);
   const [isKid, setIsKid] = useState(profile?.isKid ?? false);
-  // Exclusão exige confirmação dupla: 1º toque arma, 2º toque confirma
-  // (desarma sozinho depois de alguns segundos).
+  // Deletion needs a double confirmation: the 1st tap arms it, the 2nd
+  // confirms (it disarms on its own after a few seconds).
   const [confirmingDelete, setConfirmingDelete] = useState(false);
   const confirmTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -209,7 +210,7 @@ function ProfileForm({ profile, canDismiss, onCancel, onCreate, onSave, onDelete
         </div>
       </fieldset>
 
-      {/* Setting row (SPECS §6): switch 48×28, ligado = --primary */}
+      {/* Setting row (SPECS §6): 48×28 switch, on = --primary */}
       <button
         type="button"
         role="switch"

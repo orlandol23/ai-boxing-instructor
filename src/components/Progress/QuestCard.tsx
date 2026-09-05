@@ -3,10 +3,11 @@ import type { QuestStatus } from '../../engine/gamification/quests';
 import { questDescription, useCopy } from '../../theme/copy';
 
 /**
- * Quest card (SPECS §6): borda dashed `--border-strong`, radius 14;
- * concluída = borda sólida `--accent` + check com fundo `--xp`.
- * Progresso sempre com número (x/alvo), nunca só cor. A descrição vem
- * do dicionário de copy por tema (skin RPG no kids — SPECS §8.3).
+ * Quest card (SPECS §6): dashed `--border-strong` border, radius 14;
+ * done = solid `--accent` border + a check on an `--xp` background.
+ * Progress always carries a number (x/target), never colour alone. The
+ * description comes from the per-theme copy dictionary (RPG skin in the
+ * kids theme, SPECS §8.3).
  */
 export function QuestCard({ status }: { status: QuestStatus }) {
   const { t, theme } = useCopy();

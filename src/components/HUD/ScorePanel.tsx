@@ -17,7 +17,7 @@ export function ScorePanel({ frame, punchCount, recentPunches }: ScorePanelProps
 
   return (
     <>
-      {/* Contador de golpes + postura — canto sup. esquerdo */}
+      {/* Punch counter + stance, top-left corner */}
       <div className="absolute left-3 top-20 z-10 rounded-md bg-overlay px-3.5 py-2 text-center backdrop-blur-xs">
         <div className="num text-4xl font-bold leading-none text-white">{punchCount}</div>
         <div className="mt-0.5 text-xs uppercase tracking-widest text-white/70">
@@ -28,7 +28,7 @@ export function ScorePanel({ frame, punchCount, recentPunches }: ScorePanelProps
         </div>
       </div>
 
-      {/* Punch feed — lado direito; novo golpe maior, decai escala/opacidade */}
+      {/* Punch feed, right-hand side; a new punch is bigger, then scale/opacity decay */}
       {recentPunches.length > 0 && (
         <div className="absolute right-3 top-20 z-10 flex flex-col items-end gap-1.5">
           {recentPunches
@@ -40,7 +40,7 @@ export function ScorePanel({ frame, punchCount, recentPunches }: ScorePanelProps
         </div>
       )}
 
-      {/* ScoreBars — acima dos controles de round */}
+      {/* ScoreBars, above the round controls */}
       <div className="absolute inset-x-3 bottom-28 z-10 flex flex-col gap-2">
         <ScoreBar label={t('training.guard')} score={guard.overall} />
         <ScoreBar label={t('training.base')} score={base.overall} />
@@ -55,7 +55,7 @@ function getScoreClasses(score: number): { barClass: string; textClass: string }
   return { barClass: 'bg-score-bad', textClass: 'text-score-bad' };
 }
 
-/** ScoreBar v2 (SPECS §6): pill overlay+blur, label 14px, track 8px, valor .num 22px. */
+/** ScoreBar v2 (SPECS §6): overlay+blur pill, 14px label, 8px track, 22px .num value. */
 function ScoreBar({ label, score }: { label: string; score: number }) {
   const { barClass, textClass } = getScoreClasses(score);
 
@@ -83,7 +83,7 @@ const QUALITY_CLASSES = {
   poor: 'text-score-bad',
 } as const;
 
-/* decaimento do feed: mais novo em destaque (SPECS §6 — punch feed) */
+/* feed decay: the newest one stands out (SPECS §6, punch feed) */
 const RANK_STYLES = [
   'px-3 py-1.5 text-lg opacity-100',
   'px-2.5 py-1 text-base opacity-70',
@@ -102,7 +102,7 @@ function PunchBadge({ punch, rank }: { punch: PunchEvent; rank: number }) {
       <span className={`num font-bold leading-none ${QUALITY_CLASSES[punch.quality]}`}>
         {t(`quality.${punch.quality}`)}
       </span>
-      {/* +XP do golpe (SPECS §6 — punch feed) */}
+      {/* the punch's +XP (SPECS §6, punch feed) */}
       <span className="num font-bold leading-none text-xp">+{xpForPunch(punch.quality)}</span>
     </div>
   );

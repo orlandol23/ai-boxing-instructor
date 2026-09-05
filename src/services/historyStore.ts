@@ -7,13 +7,13 @@ import {
 } from '../engine/gamification/types';
 
 /**
- * Persistência do histórico/progresso (F6) — local-first.
+ * History/progress persistence (F6), local-first.
  *
- * A interface HistoryStore isola a UI do meio de armazenamento: hoje a
- * implementação é localStorage (documento JSON versionado por perfil);
- * o sync com Neon (F6b) entra como outra implementação sem tocar na UI.
- * O storage já é particionado por profileId p/ o F7 (perfis) não exigir
- * migração de dados.
+ * The HistoryStore interface isolates the UI from the storage medium: the
+ * implementation today is localStorage (a JSON document versioned per
+ * profile); the Neon sync (F6b) arrives as another implementation without
+ * touching the UI. Storage is already partitioned by profileId so F7
+ * (profiles) will not require a data migration.
  */
 export interface HistoryStore {
   load(profileId?: string): ProfileHistory;
@@ -32,9 +32,9 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 }
 
 /**
- * Valida/migra um documento bruto para o schema atual. Documento
- * inválido, corrompido ou de versão futura desconhecida → histórico
- * vazio (best-effort: o treino nunca quebra por causa do histórico).
+ * Validates/migrates a raw document into the current schema. An invalid,
+ * corrupted or unknown future version becomes an empty history
+ * (best-effort: training never breaks because of the history).
  */
 export function migrateHistory(raw: unknown, profileId: string): ProfileHistory {
   if (!isRecord(raw) || typeof raw.schemaVersion !== 'number') {
@@ -44,8 +44,8 @@ export function migrateHistory(raw: unknown, profileId: string): ProfileHistory 
     return emptyHistory(profileId);
   }
 
-  // v1 (atual): aceita o documento preenchendo campos ausentes com
-  // defaults — versões futuras adicionam passos de migração aqui.
+  // v1 (current): accepts the document, filling missing fields with
+  // defaults. Future versions add migration steps here.
   const base = emptyHistory(profileId);
   const streak = isRecord(raw.streak) ? raw.streak : {};
   const lifetime = isRecord(raw.lifetime) ? raw.lifetime : {};
@@ -69,7 +69,7 @@ export function migrateHistory(raw: unknown, profileId: string): ProfileHistory 
   };
 }
 
-/** Subconjunto de Storage usado — facilita fakes em teste (node). */
+/** The subset of Storage that is used, which makes test fakes (node) easy. */
 export type StorageLike = Pick<Storage, 'getItem' | 'setItem' | 'removeItem'>;
 
 export class LocalStorageHistoryStore implements HistoryStore {
@@ -85,7 +85,7 @@ export class LocalStorageHistoryStore implements HistoryStore {
       if (!raw) return emptyHistory(profileId);
       return migrateHistory(JSON.parse(raw), profileId);
     } catch {
-      // JSON corrompido ou storage indisponível (modo privado etc.).
+      // Corrupted JSON or unavailable storage (private mode etc.).
       return emptyHistory(profileId);
     }
   }
@@ -94,7 +94,7 @@ export class LocalStorageHistoryStore implements HistoryStore {
     try {
       this.storage.setItem(historyStorageKey(history.profileId), JSON.stringify(history));
     } catch {
-      // Quota cheia/indisponível: histórico é best-effort, treino segue.
+      // Quota full/unavailable: the history is best-effort, training goes on.
     }
   }
 
@@ -102,13 +102,13 @@ export class LocalStorageHistoryStore implements HistoryStore {
     try {
       this.storage.removeItem(historyStorageKey(profileId));
     } catch {
-      // idem: nunca propaga erro de storage para a UI.
+      // Same here: a storage error never propagates to the UI.
     }
   }
 }
 
-/** Store padrão do app (browser). Criado sob demanda p/ não tocar em
- *  `localStorage` em ambientes sem DOM (testes do engine rodam em node). */
+/** The app's default store (browser). Created on demand so `localStorage`
+ *  is never touched in DOM-less environments (engine tests run on node). */
 export function createHistoryStore(): HistoryStore {
   return new LocalStorageHistoryStore(window.localStorage);
 }

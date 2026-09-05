@@ -450,9 +450,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       `[api/coach] upstream error (${status}):`,
       err instanceof Error ? err.message : 'unknown'
     );
-    res.status(status >= 500 ? 502 : status).json({
-      error: 'coaching_failed',
-      message: isAnthropic ? err.message : 'unknown',
-    });
+    // The stable code only. The upstream message carries the provider's own
+    // error body, which tells an anonymous caller whether the key is invalid,
+    // the model is wrong, or the account is rate limited: free reconnaissance
+    // on a public endpoint. It stays in the log line above, where the operator
+    // reads it. `coachClient` classifies by status and never showed this field
+    // to a user.
+    res.status(status >= 500 ? 502 : status).json({ error: 'coaching_failed' });
   }
 }

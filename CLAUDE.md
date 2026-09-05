@@ -44,7 +44,7 @@ peers, drops that package from the tree and rewrites the lockfile, which breaks
 
 ```bash
 npm run dev        # Vite dev server on :5173
-npm run test       # Vitest — 285 tests across 22 files
+npm run test       # Vitest — 292 tests across 22 files
 npm run lint       # ESLint over src/ and api/
 npm run typecheck  # tsc -b
 npm run build      # tsc -b && vite build

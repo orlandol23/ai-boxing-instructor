@@ -120,3 +120,96 @@ describe('migrateHistory (versioned schema)', () => {
     expect(migrateHistory([1, 2], 'default')).toEqual(emptyHistory('default'));
   });
 });
+
+/**
+ * A corrupted document must not be able to crash the app.
+ *
+ * `Array.isArray` and `isRecord` only cleared the containers, so a malformed
+ * element survived migration and threw on the first render of the home
+ * screen, which is where the app starts: the user was locked out until
+ * localStorage was cleared by hand. Each case below is a real crash that the
+ * element-level validation now absorbs, and each asserts that the rest of the
+ * document survives rather than being thrown away wholesale.
+ */
+describe('migrateHistory (corrupted elements)', () => {
+  const doc = (over: Record<string, unknown>) => ({
+    schemaVersion: HISTORY_SCHEMA_VERSION,
+    totalXp: 500,
+    ...over,
+  });
+
+  it('drops a null badge and keeps the valid ones', () => {
+    const migrated = migrateHistory(
+      doc({ unlockedBadges: [null, { id: 'first-session', unlockedAt: 1 }, 'nope'] }),
+      'default'
+    );
+
+    expect(migrated.unlockedBadges).toEqual([{ id: 'first-session', unlockedAt: 1 }]);
+    expect(migrated.totalXp).toBe(500);
+  });
+
+  it('drops a badge with no id', () => {
+    const migrated = migrateHistory(doc({ unlockedBadges: [{ unlockedAt: 1 }] }), 'default');
+
+    expect(migrated.unlockedBadges).toEqual([]);
+  });
+
+  it('drops a day whose completed quests are not a list', () => {
+    const migrated = migrateHistory(
+      doc({ completedQuests: { '2026-09-05': 7, '2026-09-04': ['quest-a', 3] } }),
+      'default'
+    );
+
+    expect(migrated.completedQuests['2026-09-05']).toBeUndefined();
+    expect(migrated.completedQuests['2026-09-04']).toEqual(['quest-a']);
+  });
+
+  it('drops a daily aggregate that is not an object', () => {
+    const migrated = migrateHistory(doc({ dailyAggregates: { '2026-09-05': 5 } }), 'default');
+
+    expect(migrated.dailyAggregates).toEqual({});
+  });
+
+  it('drops a daily aggregate missing the nested quality map', () => {
+    const migrated = migrateHistory(
+      doc({ dailyAggregates: { '2026-09-05': { sessions: 1, rounds: 2 } } }),
+      'default'
+    );
+
+    expect(migrated.dailyAggregates).toEqual({});
+  });
+
+  it('drops a session with no id and keeps a well-formed one', () => {
+    const wellFormed = {
+      id: 's-1',
+      profileId: 'default',
+      startedAt: 1,
+      endedAt: 2,
+      dateKey: '2026-09-05',
+      durationMs: 1000,
+      rounds: 1,
+      totalPunches: 10,
+      punchBreakdown: {},
+      punchQuality: {},
+      punchQualityByType: {},
+      avgGuardScore: 80,
+      avgBaseScore: 70,
+      roundDetails: [],
+      xpGained: 100,
+      coachFeedback: null,
+    };
+    const migrated = migrateHistory(doc({ sessions: [null, { rounds: 3 }, wellFormed] }), 'default');
+
+    expect(migrated.sessions).toHaveLength(1);
+    expect(migrated.sessions[0]?.id).toBe('s-1');
+  });
+
+  it('coerces a non-numeric count instead of carrying it through', () => {
+    const migrated = migrateHistory(
+      doc({ dailyAggregates: { '2026-09-05': { sessions: 'many', punchQualityByType: {} } } }),
+      'default'
+    );
+
+    expect(migrated.dailyAggregates['2026-09-05']?.sessions).toBe(0);
+  });
+});

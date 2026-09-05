@@ -53,7 +53,7 @@ Layered separation — each layer is testable in isolation:
 
 ## Tests
 
-A **Vitest** suite with **285 tests across 22 test files** covering what matters: engine heuristics (stance, guard, base, angles, punch classification), the gamification engine (XP, streaks, quests, badges), storage (profiles and history, including schema migration), the AI client (error classification, retry, timeout, payload sanitization, locale), the `/api/coach` function itself (payload caps, cross-site refusal, the no-API-key 503, prompt caching), and i18n (locale parity, every engine key present in every locale, theme × language resolution). CI on GitHub Actions runs `lint` + `typecheck` + `test` + `build`.
+A **Vitest** suite with **292 tests across 22 test files** covering what matters: engine heuristics (stance, guard, base, angles, punch classification), the gamification engine (XP, streaks, quests, badges), storage (profiles and history, including schema migration), the AI client (error classification, retry, timeout, payload sanitization, locale), the `/api/coach` function itself (payload caps, cross-site refusal, the no-API-key 503, prompt caching), and i18n (locale parity, every engine key present in every locale, theme × language resolution). CI on GitHub Actions runs `lint` + `typecheck` + `test` + `build`.
 
 ```bash
 npm run test       # Vitest

@@ -8,9 +8,10 @@ function barColorClass(score: number): string {
 }
 
 /**
- * Chart semanal (SPECS §6): 7 barras (radius 6) com a média de score do
- * dia — cor pela faixa de score, sempre com o número junto; dia sem
- * treino fica apagado (`--surface-2` a 8%). Média da semana em destaque.
+ * Weekly chart (SPECS §6): 7 bars (radius 6) with the day's average
+ * score, coloured by score band and always with the number next to it; a
+ * day with no training is dimmed (`--surface-2` at 8%). The week's
+ * average is highlighted.
  */
 export function WeeklyChart({ days }: { days: WeeklyDay[] }) {
   const { t } = useTranslation();
@@ -56,7 +57,7 @@ function DayBar({ day }: { day: WeeklyDay }) {
             style={{ height: `${Math.max(6, score)}%` }}
           />
         ) : (
-          // dia vazio: barra apagada (--surface-2 a 8%)
+          // empty day: dimmed bar (--surface-2 at 8%)
           <div
             className="h-full w-full rounded-md"
             style={{ backgroundColor: 'color-mix(in srgb, var(--surface-2) 8%, transparent)' }}

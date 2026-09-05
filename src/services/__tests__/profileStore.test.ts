@@ -38,13 +38,13 @@ class MemoryStorage implements StorageLike {
 
 class BrokenStorage implements StorageLike {
   getItem(): string | null {
-    throw new Error('storage indisponível');
+    throw new Error('storage unavailable');
   }
   setItem(): void {
-    throw new Error('quota cheia');
+    throw new Error('quota full');
   }
   removeItem(): void {
-    throw new Error('storage indisponível');
+    throw new Error('storage unavailable');
   }
 }
 
@@ -59,7 +59,7 @@ function docWith(...names: string[]): ProfilesDocument {
 }
 
 describe('createProfile', () => {
-  it('primeiro perfil adota o id default p/ herdar o histórico pré-F7', () => {
+  it('the first profile takes the default id so it inherits the pre-F7 history', () => {
     const { doc, profile } = createProfile(emptyProfilesDocument(), { name: 'Orlando' }, NOW);
     expect(profile.id).toBe(DEFAULT_PROFILE_ID);
     expect(doc.activeProfileId).toBe(DEFAULT_PROFILE_ID);
@@ -68,7 +68,7 @@ describe('createProfile', () => {
     expect(profile.createdAt).toBe(NOW);
   });
 
-  it('demais perfis ganham id único e viram o perfil ativo', () => {
+  it('further profiles get a unique id and become the active profile', () => {
     const first = createProfile(emptyProfilesDocument(), { name: 'Orlando' }, NOW);
     const second = createProfile(
       first.doc,
@@ -82,12 +82,12 @@ describe('createProfile', () => {
     expect(second.doc.activeProfileId).toBe(second.profile.id);
   });
 
-  it('valida nome (obrigatório, trim, limite) e avatar fora do set curado', () => {
+  it('validates the name (required, trimmed, capped) and an avatar outside the curated set', () => {
     expect(() => createProfile(emptyProfilesDocument(), { name: '   ' }, NOW)).toThrow();
     const long = 'x'.repeat(MAX_PROFILE_NAME_LENGTH + 10);
     const { profile } = createProfile(
       emptyProfilesDocument(),
-      { name: `  ${long}  `, avatar: 'texto-livre' },
+      { name: `  ${long}  `, avatar: 'free-text' },
       NOW
     );
     expect(profile.name).toHaveLength(MAX_PROFILE_NAME_LENGTH);
@@ -95,7 +95,7 @@ describe('createProfile', () => {
     expect(AVATARS).toContain(profile.avatar);
   });
 
-  it('respeita o limite de perfis', () => {
+  it('respects the profile limit', () => {
     const doc = docWith(...Array.from({ length: MAX_PROFILES }, (_, i) => `P${i}`));
     expect(doc.profiles).toHaveLength(MAX_PROFILES);
     expect(() => createProfile(doc, { name: 'Extra' }, NOW)).toThrow();
@@ -103,7 +103,7 @@ describe('createProfile', () => {
 });
 
 describe('updateProfile / selectProfile / deleteProfile', () => {
-  it('renomeia, troca avatar e alterna o modo kids', () => {
+  it('renames, changes the avatar and toggles kids mode', () => {
     const doc = docWith('Orlando');
     const updated = updateProfile(doc, DEFAULT_PROFILE_ID, {
       name: ' Lando ',
@@ -116,28 +116,28 @@ describe('updateProfile / selectProfile / deleteProfile', () => {
     expect(profile.isKid).toBe(true);
   });
 
-  it('patch inválido não corrompe o perfil (nome vazio/avatar fora do set)', () => {
+  it('an invalid patch does not corrupt the profile (empty name/avatar outside the set)', () => {
     const doc = docWith('Orlando');
     const updated = updateProfile(doc, DEFAULT_PROFILE_ID, { name: '  ', avatar: 'nope' });
     expect(updated.profiles[0].name).toBe('Orlando');
     expect(updated.profiles[0].avatar).toBe(DEFAULT_AVATAR);
   });
 
-  it('id desconhecido é no-op em update/select', () => {
+  it('an unknown id is a no-op for update/select', () => {
     const doc = docWith('Orlando');
     expect(updateProfile(doc, 'ghost', { name: 'X' })).toBe(doc);
     expect(selectProfile(doc, 'ghost')).toBe(doc);
   });
 
-  it('selectProfile troca o perfil ativo', () => {
+  it('selectProfile switches the active profile', () => {
     const doc = docWith('Orlando', 'Alice');
     const alice = doc.profiles[1];
-    expect(doc.activeProfileId).toBe(alice.id); // criação ativa o novo
+    expect(doc.activeProfileId).toBe(alice.id); // creating one activates it
     const back = selectProfile(doc, DEFAULT_PROFILE_ID);
     expect(activeProfileOf(back)?.name).toBe('Orlando');
   });
 
-  it('deletar o perfil ativo volta o app ao seletor (ativo = null)', () => {
+  it('deleting the active profile sends the app back to the selector (active = null)', () => {
     const doc = docWith('Orlando', 'Alice');
     const aliceId = doc.profiles[1].id;
     const after = deleteProfile(doc, aliceId);
@@ -146,7 +146,7 @@ describe('updateProfile / selectProfile / deleteProfile', () => {
     expect(activeProfileOf(after)).toBeNull();
   });
 
-  it('deletar perfil NÃO apaga o histórico dele no HistoryStore (só esconde)', () => {
+  it('deleting a profile does NOT erase its history in the HistoryStore (it only hides it)', () => {
     const storage = new MemoryStorage();
     const profileStore = new LocalStorageProfileStore(storage);
     const historyStore = new LocalStorageHistoryStore(storage);
@@ -158,43 +158,43 @@ describe('updateProfile / selectProfile / deleteProfile', () => {
     doc = deleteProfile(doc, aliceId);
     profileStore.save(doc);
 
-    // O documento de perfis não lista mais a Alice…
+    // The profiles document no longer lists Alice…
     expect(profileStore.load().profiles.map((p) => p.name)).toEqual(['Orlando']);
-    // …mas a partição de histórico dela continua intacta no storage.
+    // …but her history partition is still intact in the storage.
     expect(storage.getItem(historyStorageKey(aliceId))).not.toBeNull();
     expect(historyStore.load(aliceId).totalXp).toBe(1234);
   });
 });
 
 describe('LocalStorageProfileStore', () => {
-  it('roundtrip: salva e recarrega o documento sem perdas', () => {
+  it('roundtrip: saves and reloads the document with no losses', () => {
     const store = new LocalStorageProfileStore(new MemoryStorage());
     const doc = docWith('Orlando', 'Alice');
     store.save(doc);
     expect(store.load()).toEqual(doc);
   });
 
-  it('sem documento salvo retorna documento vazio na versão atual', () => {
+  it('returns an empty document at the current version when none is saved', () => {
     const loaded = new LocalStorageProfileStore(new MemoryStorage()).load();
     expect(loaded).toEqual(emptyProfilesDocument());
     expect(loaded.schemaVersion).toBe(PROFILES_SCHEMA_VERSION);
   });
 
-  it('JSON corrompido cai em documento vazio (primeiro uso)', () => {
+  it('corrupted JSON falls back to an empty document (first use)', () => {
     const storage = new MemoryStorage();
     storage.setItem(PROFILES_STORAGE_KEY, '{nope');
     expect(new LocalStorageProfileStore(storage).load()).toEqual(emptyProfilesDocument());
   });
 
-  it('storage lançando erros não propaga (best-effort)', () => {
+  it('a throwing storage does not propagate (best-effort)', () => {
     const store = new LocalStorageProfileStore(new BrokenStorage());
     expect(() => store.save(docWith('Orlando'))).not.toThrow();
     expect(store.load()).toEqual(emptyProfilesDocument());
   });
 });
 
-describe('migrateProfiles (schema versionado)', () => {
-  it('documento sem schemaVersion ou de versão futura → vazio', () => {
+describe('migrateProfiles (versioned schema)', () => {
+  it('a document with no schemaVersion or from a future version becomes empty', () => {
     expect(migrateProfiles({ profiles: [] })).toEqual(emptyProfilesDocument());
     expect(
       migrateProfiles({ ...docWith('Orlando'), schemaVersion: PROFILES_SCHEMA_VERSION + 1 })
@@ -202,14 +202,14 @@ describe('migrateProfiles (schema versionado)', () => {
     expect(migrateProfiles(null)).toEqual(emptyProfilesDocument());
   });
 
-  it('perfis inválidos são filtrados e campos ausentes ganham defaults', () => {
+  it('invalid profiles are filtered out and missing fields get defaults', () => {
     const migrated = migrateProfiles({
       schemaVersion: 1,
       profiles: [
-        { id: 'default', name: 'Orlando' }, // sem avatar/isKid/createdAt
-        { id: '', name: 'sem id' },
-        { name: 'sem id também' },
-        'lixo',
+        { id: 'default', name: 'Orlando' }, // no avatar/isKid/createdAt
+        { id: '', name: 'no id' },
+        { name: 'no id either' },
+        'junk',
       ],
       activeProfileId: 'default',
     });
@@ -224,11 +224,11 @@ describe('migrateProfiles (schema versionado)', () => {
     expect(migrated.activeProfileId).toBe('default');
   });
 
-  it('activeProfileId apontando p/ perfil inexistente vira null', () => {
+  it('an activeProfileId pointing at a missing profile becomes null', () => {
     const migrated = migrateProfiles({
       schemaVersion: 1,
       profiles: [{ id: 'default', name: 'Orlando', avatar: '🥊', isKid: false, createdAt: 1 }],
-      activeProfileId: 'deletado',
+      activeProfileId: 'deleted',
     });
     expect(migrated.activeProfileId).toBeNull();
   });

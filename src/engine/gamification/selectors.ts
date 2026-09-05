@@ -4,16 +4,17 @@ import { levelFromTotalXp, rankForLevel, type LevelProgress, type RankId } from 
 import type { ProfileHistory } from './types';
 
 /**
- * Seletores de leitura para a UI (Home, /progress, resumo) — derivam
- * tudo do ProfileHistory persistido, sem estado próprio.
+ * Read selectors for the UI (Home, /progress, summary). They derive
+ * everything from the persisted ProfileHistory and hold no state of
+ * their own.
  */
 
 export interface ProgressSnapshot {
   level: LevelProgress;
   rank: RankId;
-  /** Streak vigente hoje (0 se expirou à meia-noite local). */
+  /** The streak in force today (0 if it expired at local midnight). */
   streak: number;
-  /** Missões de hoje com progresso. */
+  /** Today's quests with their progress. */
   quests: QuestStatus[];
   questsDone: number;
 }
@@ -45,7 +46,7 @@ export interface WeeklyDay {
   isToday: boolean;
   sessions: number;
   totalPunches: number;
-  /** Score médio do dia ((guarda+base)/2 por sessão) ou null sem treino. */
+  /** The day's average score ((guard+base)/2 per session), or null with no training. */
   avgScore: number | null;
 }
 
@@ -60,7 +61,7 @@ export const WEEKDAY_LABEL_KEYS = [
   'weekday.sat',
 ];
 
-/** Os últimos 7 dias locais (hoje incluso, à direita) p/ o gráfico semanal. */
+/** The last 7 local days (today included, on the right) for the weekly chart. */
 export function weeklyChartData(
   history: ProfileHistory,
   now: number = Date.now()

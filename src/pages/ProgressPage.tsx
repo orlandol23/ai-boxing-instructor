@@ -12,8 +12,8 @@ import { QuestCard } from '../components/Progress/QuestCard';
 import { WeeklyChart } from '../components/Progress/WeeklyChart';
 
 /**
- * Tela /progress (SPECS §7): nível/rank + XP bar, gráfico semanal,
- * grid de badges (locked em grayscale) e a próxima missão do dia.
+ * The /progress screen (SPECS §7): level/rank + XP bar, weekly chart,
+ * badge grid (locked ones in grayscale) and the day's next quest.
  */
 export function ProgressPage() {
   const { t, theme } = useCopy();
@@ -28,7 +28,7 @@ export function ProgressPage() {
   return (
     <main className="min-h-0 flex-1 overflow-y-auto px-4 py-5">
       <div className="mx-auto flex w-full max-w-md flex-col gap-5">
-        {/* Nível, rank e XP */}
+        {/* Level, rank and XP */}
         <section className="rounded-xl border border-line bg-surface p-4">
           <div className="flex items-center justify-between gap-2">
             <LevelChip level={progress.level.level} />
@@ -62,10 +62,10 @@ export function ProgressPage() {
           </div>
         </section>
 
-        {/* Gráfico semanal */}
+        {/* Weekly chart */}
         <WeeklyChart days={week} />
 
-        {/* Próxima missão do dia */}
+        {/* The day's next quest */}
         <section>
           <h3 className="mb-2 flex items-baseline justify-between text-xs uppercase tracking-widest text-fg-dim">
             {t('progress.nextQuest')}

@@ -2,42 +2,42 @@ import { DEFAULT_PROFILE_ID } from '../engine/gamification/types';
 import type { StorageLike } from './historyStore';
 
 /**
- * Perfis múltiplos (F7) — local-first, mesmo padrão do HistoryStore:
- * documento JSON versionado em localStorage + funções puras de mutação.
+ * Multiple profiles (F7), local-first, same pattern as the HistoryStore:
+ * a versioned JSON document in localStorage + pure mutation functions.
  *
- * Importante: deletar um perfil NÃO apaga o histórico dele no
- * HistoryStore (chave `boxing-ai:history:<profileId>`) — o documento de
- * perfis só deixa de listar o id, então o histórico fica "escondido".
- * Decisão deliberada: exclusão acidental não destrói meses de treino, e
- * o F6b (sync Neon) ainda pode reconciliar esses dados.
+ * Important: deleting a profile does NOT erase its history in the
+ * HistoryStore (key `boxing-ai:history:<profileId>`). The profiles
+ * document simply stops listing the id, so the history is "hidden".
+ * A deliberate decision: an accidental deletion does not destroy months
+ * of training, and F6b (Neon sync) can still reconcile that data.
  */
 
 export interface Profile {
   id: string;
   name: string;
-  /** Emoji do set curado AVATARS. */
+  /** Emoji from the curated AVATARS set. */
   avatar: string;
-  /** true → tema 'kids' (Arcade Royale) + copy RPG. */
+  /** true means the 'kids' theme (Arcade Royale) + RPG copy. */
   isKid: boolean;
-  /** Epoch ms da criação. */
+  /** Creation epoch, in ms. */
   createdAt: number;
 }
 
 export interface ProfilesDocument {
   schemaVersion: number;
   profiles: Profile[];
-  /** Perfil ativo (null = primeiro uso → tela /profiles). */
+  /** Active profile (null = first use, which lands on the /profiles screen). */
   activeProfileId: string | null;
 }
 
-/** Dados do fluxo de criação (nome, avatar, modo kids). */
+/** Data from the creation flow (name, avatar, kids mode). */
 export interface ProfileDraft {
   name: string;
   avatar?: string;
   isKid?: boolean;
 }
 
-/** Campos editáveis de um perfil existente. */
+/** Editable fields of an existing profile. */
 export type ProfileUpdate = Partial<Pick<Profile, 'name' | 'avatar' | 'isKid'>>;
 
 export const PROFILES_SCHEMA_VERSION = 1;
@@ -45,7 +45,7 @@ export const PROFILES_STORAGE_KEY = 'boxing-ai:profiles';
 export const MAX_PROFILES = 8;
 export const MAX_PROFILE_NAME_LENGTH = 20;
 
-/** Set curado de avatares (emoji) — o seletor não aceita texto livre. */
+/** Curated set of avatars (emoji). The picker takes no free text. */
 export const AVATARS: readonly string[] = [
   '🥊',
   '🦁',
@@ -89,9 +89,9 @@ function sanitizeProfile(raw: unknown): Profile | null {
 }
 
 /**
- * Valida/migra um documento bruto para o schema atual. Documento
- * inválido, corrompido ou de versão futura → documento vazio (o app cai
- * no fluxo de primeiro uso; o histórico por perfil fica intacto).
+ * Validates/migrates a raw document into the current schema. An invalid,
+ * corrupted or future-version document becomes an empty document (the app
+ * falls into the first-use flow; the per-profile history stays intact).
  */
 export function migrateProfiles(raw: unknown): ProfilesDocument {
   if (!isRecord(raw) || typeof raw.schemaVersion !== 'number') {
@@ -115,16 +115,16 @@ export function migrateProfiles(raw: unknown): ProfilesDocument {
   return { schemaVersion: PROFILES_SCHEMA_VERSION, profiles, activeProfileId };
 }
 
-/* ---------------------------------------------------- mutações (puras) */
+/* ------------------------------------------------------ mutations (pure) */
 
 function newProfileId(now: number): string {
   return `p-${now.toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
 /**
- * Cria um perfil e o torna ativo. O PRIMEIRO perfil do app adota
- * DEFAULT_PROFILE_ID ('default') para herdar o histórico/XP acumulado
- * antes do F7 (o HistoryStore do F6 gravava nesse id implícito).
+ * Creates a profile and makes it active. The FIRST profile in the app
+ * takes DEFAULT_PROFILE_ID ('default') so it inherits the history/XP
+ * accumulated before F7 (the F6 HistoryStore wrote under that implicit id).
  */
 export function createProfile(
   doc: ProfilesDocument,
@@ -133,10 +133,10 @@ export function createProfile(
 ): { doc: ProfilesDocument; profile: Profile } {
   const name = draft.name.trim().slice(0, MAX_PROFILE_NAME_LENGTH);
   if (name.length === 0) {
-    throw new Error('Nome do perfil é obrigatório');
+    throw new Error('Profile name is required');
   }
   if (doc.profiles.length >= MAX_PROFILES) {
-    throw new Error(`Máximo de ${MAX_PROFILES} perfis`);
+    throw new Error(`At most ${MAX_PROFILES} profiles`);
   }
 
   const profile: Profile = {
@@ -157,7 +157,7 @@ export function createProfile(
   };
 }
 
-/** Renomear / trocar avatar / alternar modo kids. Id desconhecido = no-op. */
+/** Rename / change avatar / toggle kids mode. An unknown id is a no-op. */
 export function updateProfile(
   doc: ProfilesDocument,
   id: string,
@@ -183,9 +183,9 @@ export function updateProfile(
 }
 
 /**
- * Remove o perfil da lista (se era o ativo, o app volta ao seletor).
- * O histórico no HistoryStore NÃO é apagado — apenas fica oculto (ver
- * nota no topo do arquivo).
+ * Removes the profile from the list (if it was the active one, the app
+ * goes back to the selector). The history in the HistoryStore is NOT
+ * erased, only hidden (see the note at the top of the file).
  */
 export function deleteProfile(doc: ProfilesDocument, id: string): ProfilesDocument {
   const profiles = doc.profiles.filter((p) => p.id !== id);
@@ -197,19 +197,19 @@ export function deleteProfile(doc: ProfilesDocument, id: string): ProfilesDocume
   };
 }
 
-/** Torna `id` o perfil ativo. Id desconhecido = no-op. */
+/** Makes `id` the active profile. An unknown id is a no-op. */
 export function selectProfile(doc: ProfilesDocument, id: string): ProfilesDocument {
   if (!doc.profiles.some((p) => p.id === id)) return doc;
   if (doc.activeProfileId === id) return doc;
   return { ...doc, activeProfileId: id };
 }
 
-/** Perfil ativo do documento (null = primeiro uso / perfil deletado). */
+/** The document's active profile (null = first use / deleted profile). */
 export function activeProfileOf(doc: ProfilesDocument): Profile | null {
   return doc.profiles.find((p) => p.id === doc.activeProfileId) ?? null;
 }
 
-/* ------------------------------------------------------- persistência */
+/* ------------------------------------------------------- persistence */
 
 export interface ProfileStore {
   load(): ProfilesDocument;
@@ -229,7 +229,7 @@ export class LocalStorageProfileStore implements ProfileStore {
       if (!raw) return emptyProfilesDocument();
       return migrateProfiles(JSON.parse(raw));
     } catch {
-      // JSON corrompido ou storage indisponível (modo privado etc.).
+      // Corrupted JSON or unavailable storage (private mode etc.).
       return emptyProfilesDocument();
     }
   }
@@ -238,13 +238,13 @@ export class LocalStorageProfileStore implements ProfileStore {
     try {
       this.storage.setItem(PROFILES_STORAGE_KEY, JSON.stringify(doc));
     } catch {
-      // Quota cheia/indisponível: perfis são best-effort, treino segue.
+      // Quota full/unavailable: profiles are best-effort, training goes on.
     }
   }
 }
 
-/** Store padrão do app (browser). Criado sob demanda p/ não tocar em
- *  `localStorage` em ambientes sem DOM. */
+/** The app's default store (browser). Created on demand so `localStorage`
+ *  is never touched in DOM-less environments. */
 export function createProfileStore(): ProfileStore {
   return new LocalStorageProfileStore(window.localStorage);
 }

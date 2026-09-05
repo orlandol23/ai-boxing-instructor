@@ -12,9 +12,9 @@ import { QuestCard } from '../Progress/QuestCard';
 
 interface SessionSummaryProps {
   summary: SessionSummaryData;
-  /** Ganhos de gamificação da sessão (null p/ sessão sem rounds). */
+  /** The session's gamification gains (null for a session with no rounds). */
   gains?: SessionGains | null;
-  /** Estado do coach IA ('idle' oculta a seção — ex.: sessão sem rounds). */
+  /** AI coach state ('idle' hides the section, e.g. a session with no rounds). */
   coachStatus?: CoachFeedbackStatus;
   coachFeedback?: string | null;
   onRestart: () => void;
@@ -64,7 +64,7 @@ export function SessionSummary({
           </p>
         </header>
 
-        {/* XP da sessão + nível (F6) */}
+        {/* The session's XP + level (F6) */}
         {gains && (
           <section className="rounded-xl border border-line bg-surface-2 p-4">
             <div className="text-center">
@@ -103,7 +103,7 @@ export function SessionSummary({
           </section>
         )}
 
-        {/* médias e volume — número sempre junto da cor (SPECS §2) */}
+        {/* averages and volume: the number always sits next to the colour (SPECS §2) */}
         <section className="grid grid-cols-3 gap-2.5">
           <Stat
             label={t('summary.guard')}

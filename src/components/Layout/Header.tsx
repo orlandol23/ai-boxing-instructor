@@ -31,7 +31,7 @@ export function Header() {
       <div className="flex items-center gap-2">
         <LanguageSelector />
 
-        {/* Avatar do perfil ativo → seletor /profiles (F7) */}
+        {/* The active profile's avatar, which opens the /profiles selector (F7) */}
         {activeProfile && (
           <button
             type="button"

@@ -6,19 +6,19 @@ import { createHistoryStore } from '../services/historyStore';
 import { useProfiles } from '../contexts/ProfileContext';
 
 interface UseGamificationReturn {
-  /** Histórico do perfil ativo (partição por profileId — F7). */
+  /** The active profile's history (partitioned by profileId, F7). */
   history: ProfileHistory;
-  /** Aplica uma sessão concluída ao histórico e persiste; retorna os ganhos. */
+  /** Applies a finished session to the history and persists it; returns the gains. */
   recordSession: (summary: SessionSummary) => SessionGains;
-  /** Anexa o feedback do coach IA (chega async) à sessão já registrada. */
+  /** Attaches the AI coach feedback (which arrives async) to the recorded session. */
   attachCoachFeedback: (sessionId: string, feedback: string) => void;
 }
 
 /**
- * Ponte React ↔ motor de gamificação + HistoryStore. O estado local
- * espelha o documento persistido; todas as regras vivem no engine puro.
- * Lê/escreve sempre na partição do perfil ativo (ProfileContext): trocar
- * de perfil troca XP, badges, missões e histórico junto.
+ * React ↔ gamification engine + HistoryStore bridge. Local state mirrors
+ * the persisted document; every rule lives in the pure engine. It always
+ * reads and writes in the active profile's partition (ProfileContext):
+ * switching profile switches XP, badges, quests and history together.
  */
 export function useGamification(): UseGamificationReturn {
   const { activeProfile } = useProfiles();
@@ -26,14 +26,14 @@ export function useGamification(): UseGamificationReturn {
   const store = useMemo(() => createHistoryStore(), []);
   const [history, setHistory] = useState<ProfileHistory>(() => store.load(profileId));
 
-  // Troca de perfil em runtime → recarrega a partição do novo perfil.
+  // A profile switch at runtime reloads the new profile's partition.
   useEffect(() => {
     setHistory(store.load(profileId));
   }, [store, profileId]);
 
   const recordSession = useCallback(
     (summary: SessionSummary): SessionGains => {
-      // Recarrega antes de aplicar p/ não sobrescrever escritas de outra aba.
+      // Reload before applying so writes from another tab are not overwritten.
       const { history: next, gains } = applySession(store.load(profileId), summary, {
         now: Date.now(),
       });

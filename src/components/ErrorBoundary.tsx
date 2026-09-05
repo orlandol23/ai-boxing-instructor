@@ -12,9 +12,9 @@ interface ErrorBoundaryState {
 }
 
 /**
- * Error Boundary para a área de treino: captura erros de renderização
- * (câmera, MediaPipe, canvas) e mostra uma tela amigável em vez de
- * derrubar o app inteiro.
+ * Error Boundary for the training area: it catches rendering errors
+ * (camera, MediaPipe, canvas) and shows a friendly screen instead of
+ * taking the whole app down.
  *
  * Class component, so it gets `t` via the `withTranslation` HOC rather
  * than a hook (exported as `ErrorBoundary` at the bottom of the file).
@@ -27,7 +27,7 @@ class ErrorBoundaryBase extends Component<ErrorBoundaryProps, ErrorBoundaryState
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo): void {
-    console.error('Erro capturado pelo ErrorBoundary:', error, errorInfo);
+    console.error('Error caught by the ErrorBoundary:', error, errorInfo);
   }
 
   handleReload = (): void => {

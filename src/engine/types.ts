@@ -114,7 +114,7 @@ export interface SummaryNote {
   params?: Record<string, string | number>;
 }
 
-/** Resumo de um round individual (consumido pelo motor de gamificação). */
+/** Summary of a single round (consumed by the gamification engine). */
 export interface RoundSummary {
   number: number;
   durationMs: number;
@@ -136,8 +136,8 @@ export interface SessionSummary {
   /** Good moments, as i18n keys + params (never formatted text). */
   highlights: SummaryNote[];
   /**
-   * Campos detalhados para o motor de gamificação (F6). Opcionais por
-   * compatibilidade de tipo, mas o SessionTracker sempre os preenche.
+   * Detailed fields for the gamification engine (F6). Optional for type
+   * compatibility, but the SessionTracker always fills them in.
    */
   roundDetails?: RoundSummary[];
   punchQuality?: Record<PunchQuality, number>;

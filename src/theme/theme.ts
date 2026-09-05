@@ -1,22 +1,22 @@
 /**
- * Tema runtime do Design System v2.
+ * Runtime theme of Design System v2.
  *
- * Os tokens em src/styles/globals.css definem dois temas sobre o mesmo
- * sistema de componentes, selecionados via atributo `data-theme` no <html>:
- * - 'adult' — Fight Night (default)
- * - 'kids'  — Arcade Royale (ativado pelo perfil com `isKid` no seletor
- *   /profiles — ProfileContext, F7)
+ * The tokens in src/styles/globals.css define two themes over the same
+ * component system, selected through the `data-theme` attribute on <html>:
+ * - 'adult': Fight Night (default)
+ * - 'kids':  Arcade Royale (switched on by the profile with `isKid` in the
+ *   /profiles selector, ProfileContext, F7)
  */
 export type Theme = 'adult' | 'kids';
 
 export const DEFAULT_THEME: Theme = 'adult';
 
-/** Aplica o tema no <html data-theme="...">. */
+/** Applies the theme to <html data-theme="...">. */
 export function setTheme(theme: Theme): void {
   document.documentElement.dataset.theme = theme;
 }
 
-/** Lê o tema atual do <html> (fallback: default). */
+/** Reads the current theme from <html> (falls back to the default). */
 export function getTheme(): Theme {
   return document.documentElement.dataset.theme === 'kids' ? 'kids' : DEFAULT_THEME;
 }

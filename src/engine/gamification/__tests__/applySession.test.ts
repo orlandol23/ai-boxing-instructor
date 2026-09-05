@@ -4,13 +4,13 @@ import { localDateKey } from '../streak';
 import { MAX_STORED_SESSIONS, emptyHistory } from '../types';
 import { breakdown, quality, qualityByType, round, summary } from './fixtures';
 
-/** 10h local de 2026-06-11 — determinístico em qualquer fuso. */
+/** 10:00 local on 2026-06-11, deterministic in any time zone. */
 const NOW = new Date(2026, 5, 11, 10, 0, 0).getTime();
 const TODAY = localDateKey(NOW);
 const TOMORROW_NOW = new Date(2026, 5, 12, 10, 0, 0).getTime();
 
 describe('applySession', () => {
-  it('credita XP de golpes + bônus de round e registra a sessão', () => {
+  it('credits punch XP + round bonus and records the session', () => {
     const s = summary({
       punchQuality: quality(5, 2, 1), // 50 + 10 + 2 = 62
       roundDetails: [round({ avgGuardScore: 85, avgBaseScore: 85 })], // +50
@@ -27,14 +27,14 @@ describe('applySession', () => {
     expect(history.lifetime).toEqual({ sessions: 1, rounds: 1, punches: 10, goodPunches: 5 });
   });
 
-  it('não muta o histórico de entrada', () => {
+  it('does not mutate the input history', () => {
     const before = emptyHistory();
     const snapshot = JSON.parse(JSON.stringify(before));
     applySession(before, summary(), { now: NOW });
     expect(before).toEqual(snapshot);
   });
 
-  it('acumula o agregado diário entre sessões do mesmo dia', () => {
+  it('accumulates the daily aggregate across sessions on the same day', () => {
     const s = summary({ totalPunches: 10, punchQuality: quality(10) });
     const first = applySession(emptyHistory(), s, { now: NOW });
     const second = applySession(first.history, s, { now: NOW + 60_000 });
@@ -47,7 +47,7 @@ describe('applySession', () => {
     expect(day.xpGained).toBe(second.history.totalXp);
   });
 
-  it('avança a streak em dias consecutivos e reinicia após lacuna', () => {
+  it('advances the streak on consecutive days and restarts after a gap', () => {
     const a = applySession(emptyHistory(), summary(), { now: NOW });
     expect(a.gains.streakCount).toBe(1);
     const b = applySession(a.history, summary(), { now: TOMORROW_NOW });
@@ -58,7 +58,7 @@ describe('applySession', () => {
     expect(c.gains.streakCount).toBe(1);
   });
 
-  it('desbloqueia badges uma única vez (Primeira Sessão)', () => {
+  it('unlocks a badge only once (First Session)', () => {
     const first = applySession(emptyHistory(), summary(), { now: NOW });
     expect(first.gains.newBadges.map((b) => b.id)).toContain('first_session');
     const second = applySession(first.history, summary(), { now: NOW + 60_000 });
@@ -68,8 +68,8 @@ describe('applySession', () => {
     ).toHaveLength(1);
   });
 
-  it('não paga XP de missão duas vezes no mesmo dia', () => {
-    // Sessão "monstro" que completa qualquer missão do pool de uma vez.
+  it('never pays quest XP twice on the same day', () => {
+    // A "monster" session that completes any quest in the pool at once.
     const monster = summary({
       rounds: 5,
       totalPunches: 600,
@@ -110,8 +110,8 @@ describe('applySession', () => {
     expect(second.history.completedQuests[TODAY]).toHaveLength(3);
   });
 
-  it('detecta level-up com fronteira exata de XP', () => {
-    // 25 golpes good = 250 XP ≥ custo do nível 1, sem bônus de round.
+  it('detects a level-up on the exact XP boundary', () => {
+    // 25 good punches = 250 XP >= the cost of level 1, with no round bonus.
     const s = summary({
       totalPunches: 25,
       punchQuality: quality(25),
@@ -123,23 +123,23 @@ describe('applySession', () => {
     });
     const { gains } = applySession(emptyHistory(), s, { now: NOW });
     expect(gains.xp.total).toBe(250);
-    // totalSessionXp = 250 + XP de missões (≥ 0) → sempre cruza o nível 1.
+    // totalSessionXp = 250 + quest XP (>= 0), so it always crosses level 1.
     expect(gains.leveledUp).toBe(true);
     expect(gains.levelBefore.level).toBe(1);
     expect(gains.levelAfter.level).toBeGreaterThanOrEqual(2);
   });
 
-  it('anexa coachFeedback e respeita sessionId explícito', () => {
+  it('attaches coachFeedback and honours an explicit sessionId', () => {
     const { history } = applySession(emptyHistory(), summary(), {
       now: NOW,
-      sessionId: 'sessao-1',
-      coachFeedback: 'Bom jab, mantenha a guarda.',
+      sessionId: 'session-1',
+      coachFeedback: 'Good jab, keep your guard up.',
     });
-    expect(history.sessions[0].id).toBe('sessao-1');
-    expect(history.sessions[0].coachFeedback).toBe('Bom jab, mantenha a guarda.');
+    expect(history.sessions[0].id).toBe('session-1');
+    expect(history.sessions[0].coachFeedback).toBe('Good jab, keep your guard up.');
   });
 
-  it('limita o número de sessões detalhadas armazenadas', () => {
+  it('caps the number of detailed sessions kept', () => {
     let history = emptyHistory();
     for (let i = 0; i < MAX_STORED_SESSIONS + 5; i++) {
       history = applySession(history, summary(), { now: NOW + i * 1000 }).history;

@@ -2,14 +2,14 @@ import type { PunchQuality, PunchType } from '../types';
 import type { DailyAggregate } from './types';
 
 /**
- * Missões diárias (SPECS §5): 3 por dia, sorteadas deterministicamente
- * de um pool fixo com seed derivada da data local (YYYY-MM-DD) — o mesmo
- * dia sempre gera as mesmas missões, sem precisar persistir o sorteio.
+ * Daily quests (SPECS §5): 3 per day, drawn deterministically from a fixed
+ * pool with a seed derived from the local date (YYYY-MM-DD), so the same
+ * day always produces the same quests and the draw never has to be
+ * persisted.
  *
- * O progresso é medido contra o agregado do dia (várias sessões no mesmo
- * dia acumulam), e a conclusão é registrada em
- * `ProfileHistory.completedQuests[dateKey]` para o XP não ser pago duas
- * vezes.
+ * Progress is measured against the day's aggregate (several sessions on
+ * the same day accumulate), and completion is recorded in
+ * `ProfileHistory.completedQuests[dateKey]` so the XP is never paid twice.
  */
 
 export interface QuestDefinition {
@@ -20,9 +20,9 @@ export interface QuestDefinition {
    * same metric, different narration. Resolved in `src/theme/copy.ts`.
    */
   descriptionKey: string;
-  /** Recompensa em XP ao completar. */
+  /** XP reward on completion. */
   xp: number;
-  /** Valor-alvo de `progress` para concluir. */
+  /** Target value of `progress` for completion. */
   target: number;
   progress(day: DailyAggregate): number;
 }
@@ -34,7 +34,7 @@ function countOf(day: DailyAggregate, type: PunchType, quality?: PunchQuality): 
 }
 
 /**
- * Pool fixo — ids estáveis (são persistidos em completedQuests).
+ * Fixed pool with stable ids (they are persisted in completedQuests).
  * Copy lives in `src/i18n/locales/*` under `quests.<id>.description`.
  */
 export const QUEST_POOL: readonly QuestDefinition[] = [
@@ -98,7 +98,7 @@ export const QUEST_POOL: readonly QuestDefinition[] = [
 
 export const QUESTS_PER_DAY = 3;
 
-/** Hash FNV-1a de 32 bits da chave de data → seed do PRNG. */
+/** 32-bit FNV-1a hash of the date key, used as the PRNG seed. */
 function hashSeed(input: string): number {
   let h = 0x811c9dc5;
   for (let i = 0; i < input.length; i++) {
@@ -108,7 +108,7 @@ function hashSeed(input: string): number {
   return h >>> 0;
 }
 
-/** PRNG determinístico mulberry32 — suficiente p/ sorteio de missões. */
+/** Deterministic mulberry32 PRNG, enough for drawing quests. */
 function mulberry32(seed: number): () => number {
   let a = seed;
   return () => {
@@ -120,7 +120,7 @@ function mulberry32(seed: number): () => number {
   };
 }
 
-/** As 3 missões do dia `dateKey` (determinístico, sem repetição). */
+/** The 3 quests for the day `dateKey` (deterministic, no repeats). */
 export function dailyQuests(dateKey: string): QuestDefinition[] {
   const rand = mulberry32(hashSeed(dateKey));
   const pool = [...QUEST_POOL];
@@ -135,12 +135,12 @@ export function dailyQuests(dateKey: string): QuestDefinition[] {
 
 export interface QuestStatus {
   quest: QuestDefinition;
-  /** Progresso atual, limitado ao alvo. */
+  /** Current progress, capped at the target. */
   progress: number;
   done: boolean;
 }
 
-/** Status das missões do dia contra o agregado (ausente = dia sem treino). */
+/** Status of the day's quests against the aggregate (absent = a day with no training). */
 export function questStatuses(
   dateKey: string,
   day: DailyAggregate | undefined,
@@ -149,7 +149,7 @@ export function questStatuses(
   return dailyQuests(dateKey).map((quest) => {
     const raw = day ? quest.progress(day) : 0;
     const progress = Math.min(quest.target, Math.max(0, raw));
-    // Conclusão registrada é permanente no dia, mesmo que a métrica oscile.
+    // A recorded completion is permanent for the day, even if the metric swings.
     const done = completedIds.includes(quest.id) || progress >= quest.target;
     return { quest, progress: done ? quest.target : progress, done };
   });

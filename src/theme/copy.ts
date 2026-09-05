@@ -36,7 +36,7 @@ export function themedCopy(
   return t(key, { context: theme, ...options });
 }
 
-/* ------------------------------------------------------------ UI geral */
+/* --------------------------------------------------------- general UI */
 
 /** UI strings whose *skin* changes with the theme (not their meaning). */
 export const THEMED_UI_KEYS = ['home.tagline', 'home.questsAllDone'] as const;
@@ -47,12 +47,12 @@ export function uiCopy(t: Translate, key: UiCopyKey, theme: Theme): string {
   return themedCopy(t, key, theme);
 }
 
-/** Saudação da Home com o nome do perfil ativo. */
+/** The Home greeting, with the active profile's name. */
 export function homeGreeting(t: Translate, name: string, theme: Theme): string {
   return themedCopy(t, 'home.greeting', theme, { name });
 }
 
-/* ----------------------------------------------------- missões diárias */
+/* -------------------------------------------------------- daily quests */
 
 export function questDescription(
   t: Translate,
@@ -72,7 +72,7 @@ export function badgeName(
   return themedCopy(t, badge.nameKey, theme);
 }
 
-/** O critério técnico nunca muda com o tema. */
+/** The technical criterion never changes with the theme. */
 export function badgeDescription(
   t: Translate,
   badge: Pick<BadgeDefinition, 'descriptionKey'>
@@ -82,7 +82,7 @@ export function badgeDescription(
 
 /* ---------------------------------------------------------------- ranks */
 
-/** Cinturões no adulto, coroas no kids (SPECS §1). */
+/** Belts in the adult theme, crowns in the kids theme (SPECS §1). */
 export function rankLabel(t: Translate, level: number, theme: Theme): string {
   return themedCopy(t, rankLabelKey(level), theme);
 }

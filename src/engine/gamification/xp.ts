@@ -1,37 +1,37 @@
 import type { PunchQuality, RoundSummary } from '../types';
 
 /**
- * Regras de XP, níveis e ranks (SPECS §5).
- * Funções puras — nenhuma dependência de DOM/storage.
+ * XP, level and rank rules (SPECS §5).
+ * Pure functions, with no DOM or storage dependency.
  */
 
-/** XP por golpe, pela qualidade classificada pelo engine. */
+/** XP per punch, by the quality the engine classified it with. */
 export const XP_PER_PUNCH: Record<PunchQuality, number> = {
   good: 10,
   fair: 5,
   poor: 2,
 };
 
-/** Bônus por round: guarda média >= 80 → +30; base média >= 80 → +20. */
+/** Round bonus: average guard >= 80 gives +30; average base >= 80 gives +20. */
 export const ROUND_BONUS_THRESHOLD = 80;
 export const GUARD_ROUND_BONUS_XP = 30;
 export const BASE_ROUND_BONUS_XP = 20;
 
-/** Custo p/ sair do nível N rumo ao N+1 = 250 × N XP (LVL 12→13 = 3.000). */
+/** Cost of leaving level N for N+1 = 250 × N XP (LVL 12→13 = 3,000). */
 export const LEVEL_COST_FACTOR = 250;
 
 export function xpForPunch(quality: PunchQuality): number {
   return XP_PER_PUNCH[quality];
 }
 
-/** XP necessário p/ avançar do nível `level` para `level + 1`. */
+/** XP needed to move from `level` to `level + 1`. */
 export function levelUpCost(level: number): number {
   return LEVEL_COST_FACTOR * Math.max(1, Math.floor(level));
 }
 
 /**
- * XP acumulado necessário p/ alcançar o nível `level` partindo do 1.
- * Soma de 250×n para n=1..level-1 = 125 × level × (level - 1).
+ * Accumulated XP needed to reach `level` starting from 1.
+ * Sum of 250×n for n=1..level-1 = 125 × level × (level - 1).
  */
 export function totalXpForLevel(level: number): number {
   const l = Math.max(1, Math.floor(level));
@@ -40,14 +40,14 @@ export function totalXpForLevel(level: number): number {
 
 export interface LevelProgress {
   level: number;
-  /** XP já acumulado dentro do nível atual. */
+  /** XP already accumulated inside the current level. */
   xpIntoLevel: number;
-  /** XP total do nível atual (custo p/ subir). */
+  /** Total XP of the current level (the cost of moving up). */
   xpForNextLevel: number;
   totalXp: number;
 }
 
-/** Resolve nível e progresso a partir do XP total acumulado. */
+/** Resolves level and progress from the total accumulated XP. */
 export function levelFromTotalXp(totalXp: number): LevelProgress {
   const xp = Math.max(0, Math.floor(totalXp));
   let level = 1;
@@ -64,7 +64,7 @@ export function levelFromTotalXp(totalXp: number): LevelProgress {
 
 export type RankId = 'bronze' | 'silver' | 'gold' | 'champion';
 
-/** Nível mínimo de cada rank (SPECS §5): 1 / 10 / 20 / 35. */
+/** Minimum level of each rank (SPECS §5): 1 / 10 / 20 / 35. */
 export const RANK_MIN_LEVEL: Record<RankId, number> = {
   bronze: 1,
   silver: 10,
@@ -98,7 +98,7 @@ export function rankLabelKey(level: number): string {
   return RANK_LABEL_KEYS[rankForLevel(level)];
 }
 
-/* ------------------------------------------------------------ sessão/XP */
+/* ----------------------------------------------------------- session/XP */
 
 export interface RoundBonus {
   round: number;
@@ -110,7 +110,7 @@ export interface SessionXpBreakdown {
   punchXp: number;
   roundBonusXp: number;
   bonuses: RoundBonus[];
-  /** punchXp + roundBonusXp (missões são somadas à parte). */
+  /** punchXp + roundBonusXp (quest XP is added separately). */
   total: number;
 }
 
@@ -126,7 +126,7 @@ export function computeRoundBonuses(rounds: readonly RoundSummary[]): RoundBonus
   return bonuses;
 }
 
-/** XP de uma sessão a partir das qualidades de golpe e dos rounds. */
+/** A session's XP, from the punch qualities and the rounds. */
 export function computeSessionXp(
   punchQuality: Record<PunchQuality, number>,
   rounds: readonly RoundSummary[]

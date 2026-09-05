@@ -2,11 +2,11 @@ import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
   test: {
-    // 'node' por padrão (engine puro); testes de hooks React usam o
-    // pragma `// @vitest-environment jsdom` por arquivo.
+    // 'node' by default (the pure engine); React hook tests opt in with
+    // the per-file `// @vitest-environment jsdom` pragma.
     environment: 'node',
-    // `api/` são Vercel Functions (Node puro), testadas com um
-    // VercelRequest/VercelResponse mínimo — sem servidor no meio.
+    // `api/` holds Vercel Functions (plain Node), tested against a minimal
+    // VercelRequest/VercelResponse, with no server in between.
     include: ['src/**/*.test.{ts,tsx}', 'api/**/*.test.ts'],
   },
 });

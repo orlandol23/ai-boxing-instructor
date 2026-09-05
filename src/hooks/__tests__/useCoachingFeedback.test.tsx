@@ -43,8 +43,8 @@ afterEach(() => {
 });
 
 describe('useCoachingFeedback', () => {
-  it('sucesso: loading -> success com o texto do coach e callback de voz', async () => {
-    const fetchMock = vi.fn().mockResolvedValue(jsonResponse(200, { coaching: 'Round forte!' }));
+  it('success: loading -> success with the coaching text and the voice callback', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(jsonResponse(200, { coaching: 'Strong round!' }));
     vi.stubGlobal('fetch', fetchMock);
     const onFeedback = vi.fn();
 
@@ -57,23 +57,23 @@ describe('useCoachingFeedback', () => {
     expect(result.current.status).toBe('loading');
 
     await waitFor(() => expect(result.current.status).toBe('success'));
-    expect(result.current.feedback).toBe('Round forte!');
-    expect(onFeedback).toHaveBeenCalledWith('Round forte!');
+    expect(result.current.feedback).toBe('Strong round!');
+    expect(onFeedback).toHaveBeenCalledWith('Strong round!');
 
     const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
     expect(url).toBe('/api/coach');
     const body = JSON.parse(init.body as string);
     expect(body.type).toBe('round');
     expect(body.roundNumber).toBe(1);
-    // O idioma ativo viaja no corpo…
+    // The active language travels in the body…
     expect(body.locale).toBe('en');
-    // …e as notas estruturadas do engine chegam já traduzidas.
+    // …and the engine's structured notes arrive already translated.
     expect(body.summary.corrections).toEqual([
       'Hands fell below the ideal height (4x)',
     ]);
   });
 
-  it('o coaching segue o idioma da interface (locale + notas traduzidas)', async () => {
+  it('the coaching follows the interface language (locale + translated notes)', async () => {
     const fetchMock = vi.fn().mockResolvedValue(jsonResponse(200, { coaching: 'Bom round!' }));
     vi.stubGlobal('fetch', fetchMock);
     await i18n.changeLanguage('pt-BR');
@@ -90,7 +90,7 @@ describe('useCoachingFeedback', () => {
     expect(body.summary.corrections).toEqual(['Mãos caíram da altura ideal (4x)']);
   });
 
-  it('503 (sem API key) vira "unavailable" sem expor erro técnico', async () => {
+  it('503 (no API key) becomes "unavailable" without exposing a technical error', async () => {
     const fetchMock = vi
       .fn()
       .mockResolvedValue(jsonResponse(503, { error: 'coaching_unavailable' }));
@@ -105,10 +105,10 @@ describe('useCoachingFeedback', () => {
     await waitFor(() => expect(result.current.status).toBe('unavailable'));
     expect(result.current.feedback).toBeNull();
     expect(onFeedback).not.toHaveBeenCalled();
-    expect(fetchMock).toHaveBeenCalledTimes(1); // 503 não tem retry
+    expect(fetchMock).toHaveBeenCalledTimes(1); // a 503 gets no retry
   });
 
-  it('timeout vira "unavailable" (com no máximo 1 retry)', async () => {
+  it('a timeout becomes "unavailable" (with at most 1 retry)', async () => {
     const fetchMock = vi.fn(
       (_url: string, init: RequestInit) =>
         new Promise<never>((_, reject) => {
@@ -126,10 +126,10 @@ describe('useCoachingFeedback', () => {
     expect(result.current.status).toBe('loading');
 
     await waitFor(() => expect(result.current.status).toBe('unavailable'), { timeout: 2000 });
-    expect(fetchMock).toHaveBeenCalledTimes(2); // tentativa + 1 retry
+    expect(fetchMock).toHaveBeenCalledTimes(2); // the attempt + 1 retry
   });
 
-  it('erro de rede (dev local sem backend) degrada para "unavailable"', async () => {
+  it('a network error (local dev with no backend) degrades to "unavailable"', async () => {
     const fetchMock = vi.fn().mockRejectedValue(new TypeError('Failed to fetch'));
     vi.stubGlobal('fetch', fetchMock);
 
@@ -142,7 +142,7 @@ describe('useCoachingFeedback', () => {
     expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 
-  it('aborta a requisição em voo quando o componente desmonta', async () => {
+  it('aborts the in-flight request when the component unmounts', async () => {
     let capturedSignal: AbortSignal | undefined;
     const fetchMock = vi.fn(
       (_url: string, init: RequestInit) =>
@@ -165,7 +165,7 @@ describe('useCoachingFeedback', () => {
     expect(capturedSignal?.aborted).toBe(true);
   });
 
-  it('clear() aborta e volta para "idle"', async () => {
+  it('clear() aborts and goes back to "idle"', async () => {
     const fetchMock = vi.fn(
       (_url: string, init: RequestInit) =>
         new Promise<never>((_, reject) => {
@@ -188,7 +188,7 @@ describe('useCoachingFeedback', () => {
     expect(result.current.status).toBe('idle');
     expect(result.current.feedback).toBeNull();
 
-    // estado permanece idle (o catch da requisição abortada não vaza)
+    // the state stays idle (the aborted request's catch never leaks)
     await act(async () => {
       await new Promise((r) => setTimeout(r, 30));
     });

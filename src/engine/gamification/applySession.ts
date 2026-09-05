@@ -19,19 +19,19 @@ import {
 } from './types';
 
 /**
- * Núcleo do motor de gamificação: aplica uma sessão concluída a um
- * ProfileHistory, produzindo o novo histórico e os ganhos da sessão
- * (XP, nível, badges novas, missões). Função pura — persistência fica
- * no HistoryStore; relógio entra por parâmetro.
+ * Core of the gamification engine: applies a finished session to a
+ * ProfileHistory, producing the new history and the session's gains (XP,
+ * level, new badges, quests). A pure function: persistence belongs to the
+ * HistoryStore and the clock comes in as a parameter.
  */
 
 export interface SessionGains {
   record: SessionRecord;
-  /** XP de golpes + bônus de round. */
+  /** Punch XP + round bonus. */
   xp: SessionXpBreakdown;
-  /** XP de missões completadas nesta sessão. */
+  /** XP from quests completed in this session. */
   questXp: number;
-  /** XP total creditado pela sessão (xp.total + questXp). */
+  /** Total XP credited by the session (xp.total + questXp). */
   totalSessionXp: number;
   levelBefore: LevelProgress;
   levelAfter: LevelProgress;
@@ -39,16 +39,16 @@ export interface SessionGains {
   rankBefore: RankId;
   rankAfter: RankId;
   newBadges: BadgeDefinition[];
-  /** Missões do dia com progresso pós-sessão (sempre as 3). */
+  /** The day's quests with post-session progress (always all 3). */
   quests: QuestStatus[];
-  /** Subconjunto de `quests` completado por ESTA sessão. */
+  /** The subset of `quests` completed by THIS session. */
   completedQuests: QuestStatus[];
-  /** Streak (dias consecutivos) após a sessão. */
+  /** Streak (consecutive days) after the session. */
   streakCount: number;
 }
 
 export interface ApplySessionOptions {
-  /** Epoch ms do fim da sessão (relógio de parede). Default: Date.now(). */
+  /** Epoch ms of the end of the session (wall clock). Defaults to Date.now(). */
   now?: number;
   sessionId?: string;
   coachFeedback?: string | null;
@@ -89,8 +89,8 @@ function newSessionId(now: number): string {
 }
 
 /**
- * Aplica uma sessão concluída ao histórico. Retorna o novo histórico
- * (objeto novo; o de entrada não é mutado) e os ganhos para a UI.
+ * Applies a finished session to the history. Returns the new history (a
+ * new object; the input is never mutated) and the gains for the UI.
  */
 export function applySession(
   history: ProfileHistory,
@@ -104,10 +104,10 @@ export function applySession(
   const punchQuality = summary.punchQuality ?? emptyQuality();
   const punchQualityByType = summary.punchQualityByType ?? emptyQualityByType();
 
-  // 1) XP da sessão (golpes + bônus de round) — SPECS §5.
+  // 1) The session's XP (punches + round bonus), SPECS §5.
   const xp = computeSessionXp(punchQuality, roundDetails);
 
-  // 2) Agregado do dia (alimenta missões e o gráfico semanal).
+  // 2) The day's aggregate (feeds the quests and the weekly chart).
   const previousDay = history.dailyAggregates[dateKey] ?? emptyDaily(dateKey);
   const day: DailyAggregate = {
     ...previousDay,
@@ -134,7 +134,7 @@ export function applySession(
     }
   }
 
-  // 3) Missões do dia: completa as que cruzaram o alvo nesta sessão.
+  // 3) The day's quests: complete the ones that crossed the target in this session.
   const alreadyCompleted = history.completedQuests[dateKey] ?? [];
   const quests = questStatuses(dateKey, day, alreadyCompleted);
   const completedQuests = quests.filter(
@@ -142,7 +142,7 @@ export function applySession(
   );
   const questXp = completedQuests.reduce((s, q) => s + q.quest.xp, 0);
 
-  // 4) XP total creditado; registro da sessão.
+  // 4) Total XP credited; the session record.
   const totalSessionXp = xp.total + questXp;
   day.xpGained += totalSessionXp;
 
@@ -165,7 +165,7 @@ export function applySession(
     coachFeedback: options.coachFeedback ?? null,
   };
 
-  // 5) Totais, streak e nível.
+  // 5) Totals, streak and level.
   const lifetime = {
     sessions: history.lifetime.sessions + 1,
     rounds: history.lifetime.rounds + summary.rounds,
@@ -178,7 +178,7 @@ export function applySession(
   const totalXp = history.totalXp + totalSessionXp;
   const levelAfter = levelFromTotalXp(totalXp);
 
-  // 6) Badges permanentes (avaliadas com o estado já atualizado).
+  // 6) Permanent badges (evaluated against the already updated state).
   const unlockedIds = new Set(history.unlockedBadges.map((b) => b.id));
   const newBadges = evaluateBadges(
     { session: record, lifetime, streakCount: streak.count },

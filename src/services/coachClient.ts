@@ -1,10 +1,10 @@
 import type { PunchType, SessionSummary, SummaryNote } from '../engine/types';
 
 /**
- * Cliente do endpoint POST /api/coach (Vercel Function, Fase 4).
+ * Client for the POST /api/coach endpoint (Vercel Function, Phase 4).
  *
- * Mantido como módulo puro (sem React) para ser trivialmente testável:
- * o hook useCoachingFeedback é só um wrapper de estado em cima disto.
+ * Kept as a pure module (no React) so it is trivially testable: the
+ * useCoachingFeedback hook is just a state wrapper on top of this.
  */
 
 export type CoachRequestType = 'round' | 'session';
@@ -42,15 +42,15 @@ export interface CoachPayload {
 }
 
 export type CoachErrorReason =
-  /** Endpoint respondeu mas o coach não está disponível (503 sem API key, 404/405 em dev local sem backend). */
+  /** The endpoint answered but the coach is unavailable (503 with no API key, 404/405 in local dev with no backend). */
   | 'unavailable'
-  /** A requisição estourou o timeout local. */
+  /** The request blew the local timeout. */
   | 'timeout'
-  /** Falha de rede (offline, DNS, conexão recusada). */
+  /** Network failure (offline, DNS, connection refused). */
   | 'network'
-  /** Resposta HTTP inesperada ou corpo inválido. */
+  /** Unexpected HTTP response or invalid body. */
   | 'http'
-  /** Abortada pelo chamador (unmount, nova requisição, clear). */
+  /** Aborted by the caller (unmount, new request, clear). */
   | 'aborted';
 
 export class CoachRequestError extends Error {
@@ -67,7 +67,7 @@ export class CoachRequestError extends Error {
 
 export const COACH_ENDPOINT = '/api/coach';
 export const COACH_TIMEOUT_MS = 15_000;
-/** Máximo de 1 retry (total de 2 tentativas) — nada de retry agressivo. */
+/** At most 1 retry (2 attempts in total). No aggressive retrying. */
 export const COACH_MAX_RETRIES = 1;
 
 const PUNCH_TYPES: PunchType[] = [
@@ -103,9 +103,9 @@ export interface BuildCoachPayloadOptions {
 }
 
 /**
- * Monta o corpo da requisição a partir do SessionSummary do SessionTracker,
- * saneando os números para o shape que a validação do api/coach.ts exige
- * (todos finitos e >= 0; roundNumber só em coaching de round).
+ * Builds the request body from the SessionTracker's SessionSummary,
+ * sanitising the numbers into the shape api/coach.ts validation demands
+ * (all finite and >= 0; roundNumber only for round coaching).
  */
 export function buildCoachPayload(
   type: CoachRequestType,
@@ -144,11 +144,11 @@ export function buildCoachPayload(
 }
 
 export interface RequestCoachingOptions {
-  /** Sinal externo para abortar (unmount / nova requisição). */
+  /** External abort signal (unmount / new request). */
   signal?: AbortSignal;
   timeoutMs?: number;
   retries?: number;
-  /** Injetável para testes. */
+  /** Injectable for tests. */
   fetchFn?: typeof fetch;
   endpoint?: string;
 }
@@ -160,11 +160,11 @@ function isRetryable(error: CoachRequestError): boolean {
 }
 
 /**
- * Envia o payload para /api/coach e devolve o texto de coaching.
+ * Sends the payload to /api/coach and returns the coaching text.
  *
- * Nunca lança nada além de CoachRequestError. Faz no máximo `retries`
- * novas tentativas (default 1), e só para falhas transitórias —
- * 503/404 (coach indisponível) e aborts falham imediatamente.
+ * Never throws anything other than a CoachRequestError. It makes at most
+ * `retries` further attempts (default 1), and only for transient failures:
+ * 503/404 (coach unavailable) and aborts fail immediately.
  */
 export async function requestCoaching(
   payload: CoachPayload,
@@ -244,8 +244,8 @@ async function attemptRequest(
     }
 
     if (!response.ok) {
-      // 503 = ANTHROPIC_API_KEY ausente no servidor (degradação prevista);
-      // 404/405 = dev local sem as Vercel Functions (ex.: `vite dev` puro).
+      // 503 = ANTHROPIC_API_KEY missing on the server (planned degradation);
+      // 404/405 = local dev with no Vercel Functions (e.g. plain `vite dev`).
       if (response.status === 503 || response.status === 404 || response.status === 405) {
         throw new CoachRequestError(
           `coach unavailable (HTTP ${response.status})`,

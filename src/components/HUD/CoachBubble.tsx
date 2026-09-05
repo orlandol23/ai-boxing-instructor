@@ -5,7 +5,7 @@ import type { CoachFeedbackStatus } from '../../hooks/useCoachingFeedback';
 interface CoachBubbleProps {
   status: CoachFeedbackStatus;
   feedback: string | null;
-  /** Ajusta o copy de loading/fallback (fim de round vs. fim de sessão). */
+  /** Tunes the loading/fallback copy (end of round vs. end of session). */
   context: 'round' | 'session';
 }
 
@@ -14,16 +14,16 @@ const LOADING_KEYS: Record<CoachBubbleProps['context'], string> = {
   session: 'coach.loadingSession',
 };
 
-// Fallback amigável — nunca erro técnico cru (resiliência da Fase 5).
+// Friendly fallback, never a raw technical error (Phase 5 resilience).
 const UNAVAILABLE_KEYS: Record<CoachBubbleProps['context'], string> = {
   round: 'coach.unavailableRound',
   session: 'coach.unavailableSession',
 };
 
 /**
- * Coach bubble do Design System v2 (SPECS §6): borda `--accent`,
- * radius 16 com canto superior esquerdo 4, bg `--surface-2` e avatar
- * `volume-2` ao lado. Texto >= 16px (text-base), no idioma ativo.
+ * Design System v2 coach bubble (SPECS §6): `--accent` border, radius 16
+ * with a top-left corner of 4, `--surface-2` background and a `volume-2`
+ * avatar alongside. Text >= 16px (text-base), in the active language.
  */
 export function CoachBubble({ status, feedback, context }: CoachBubbleProps) {
   const { t } = useTranslation();

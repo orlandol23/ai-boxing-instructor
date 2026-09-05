@@ -1,16 +1,16 @@
 import type { PunchQuality, PunchType, RoundSummary } from '../types';
 
-/** Perfil implícito desta fase — o F7 (perfis múltiplos) reusa o campo. */
+/** This phase's implicit profile. F7 (multiple profiles) reuses the field. */
 export const DEFAULT_PROFILE_ID = 'default';
 
-/** Registro persistido de uma sessão concluída. */
+/** Persisted record of a finished session. */
 export interface SessionRecord {
   id: string;
   profileId: string;
-  /** Epoch ms (relógio de parede) — usado p/ badges de horário. */
+  /** Epoch ms (wall clock), used by time-of-day badges. */
   startedAt: number;
   endedAt: number;
-  /** Dia local da sessão no formato YYYY-MM-DD. */
+  /** The session's local day, as YYYY-MM-DD. */
   dateKey: string;
   durationMs: number;
   rounds: number;
@@ -21,13 +21,13 @@ export interface SessionRecord {
   avgGuardScore: number;
   avgBaseScore: number;
   roundDetails: RoundSummary[];
-  /** XP total ganho na sessão (golpes + bônus de round + missões). */
+  /** Total XP earned in the session (punches + round bonus + quests). */
   xpGained: number;
-  /** Feedback do coach IA da sessão, quando houver. */
+  /** The session's AI coach feedback, when there is one. */
   coachFeedback: string | null;
 }
 
-/** Agregado de um dia local — alimenta o gráfico semanal e as missões. */
+/** Aggregate of one local day. Feeds the weekly chart and the quests. */
 export interface DailyAggregate {
   dateKey: string;
   sessions: number;
@@ -35,7 +35,7 @@ export interface DailyAggregate {
   totalPunches: number;
   goodPunches: number;
   punchQualityByType: Record<PunchType, Record<PunchQuality, number>>;
-  /** Soma do score composto ((guarda+base)/2) por sessão; média = /sessions. */
+  /** Sum of the composite score ((guard+base)/2) per session; average = /sessions. */
   scoreSum: number;
   bestRoundGuard: number;
   bestRoundBase: number;
@@ -43,9 +43,9 @@ export interface DailyAggregate {
 }
 
 export interface StreakState {
-  /** Dias consecutivos com >= 1 sessão (contando o último dia treinado). */
+  /** Consecutive days with >= 1 session (counting the last day trained). */
   count: number;
-  /** Último dia local com sessão (YYYY-MM-DD) ou null. */
+  /** Last local day with a session (YYYY-MM-DD), or null. */
   lastDate: string | null;
 }
 
@@ -64,8 +64,8 @@ export interface LifetimeTotals {
 export const HISTORY_SCHEMA_VERSION = 1;
 
 /**
- * Documento de histórico/progresso de um perfil — a unidade que o
- * HistoryStore persiste. Versionado p/ migração de schema (F6b: Neon).
+ * A profile's history/progress document, the unit the HistoryStore
+ * persists. Versioned for schema migration (F6b: Neon).
  */
 export interface ProfileHistory {
   schemaVersion: number;
@@ -74,14 +74,14 @@ export interface ProfileHistory {
   lifetime: LifetimeTotals;
   streak: StreakState;
   unlockedBadges: UnlockedBadge[];
-  /** Sessões mais recentes por último; limitado a MAX_STORED_SESSIONS. */
+  /** Most recent sessions last; capped at MAX_STORED_SESSIONS. */
   sessions: SessionRecord[];
   dailyAggregates: Record<string, DailyAggregate>;
-  /** dateKey -> ids de missões já completadas naquele dia. */
+  /** dateKey -> ids of the quests already completed on that day. */
   completedQuests: Record<string, string[]>;
 }
 
-/** Limite de sessões detalhadas guardadas (agregados diários não expiram). */
+/** Cap on stored detailed sessions (daily aggregates never expire). */
 export const MAX_STORED_SESSIONS = 200;
 
 export function emptyLifetime(): LifetimeTotals {

@@ -68,7 +68,7 @@ afterEach(() => {
 });
 
 describe('buildCoachPayload', () => {
-  it('monta payload de sessão sem roundNumber', () => {
+  it('builds a session payload with no roundNumber', () => {
     const payload = buildCoachPayload('session', makeSummary(), {
       translate: fakeTranslate,
     });
@@ -86,13 +86,13 @@ describe('buildCoachPayload', () => {
     ]);
   });
 
-  it('monta payload de round com roundNumber', () => {
+  it('builds a round payload with a roundNumber', () => {
     const payload = buildCoachPayload('round', makeSummary(), { roundNumber: 2 });
     expect(payload.type).toBe('round');
     expect(payload.roundNumber).toBe(2);
   });
 
-  it('traduz as notas do engine no limite da rede (a IA nunca vê chaves)', () => {
+  it('translates the engine notes at the network boundary (the AI never sees keys)', () => {
     const payload = buildCoachPayload('session', makeSummary(), {
       translate: (key) => (key.includes('guardHandHeight') ? 'Hands dropped' : 'Nice streak'),
     });
@@ -100,7 +100,7 @@ describe('buildCoachPayload', () => {
     expect(payload.summary.highlights).toEqual(['Nice streak']);
   });
 
-  it('saneia valores negativos/não-finitos para 0 (validação do api/coach)', () => {
+  it('sanitises negative/non-finite values to 0 (api/coach validation)', () => {
     const payload = buildCoachPayload(
       'session',
       makeSummary({
@@ -124,7 +124,7 @@ describe('buildCoachPayload', () => {
     expect(payload.summary.punchBreakdown.lead_hook).toBe(3);
   });
 
-  it('copia arrays do summary (mutações posteriores não vazam pro payload)', () => {
+  it('copies the summary arrays (later mutations never leak into the payload)', () => {
     const summary = makeSummary();
     const payload = buildCoachPayload('session', summary, { translate: fakeTranslate });
     summary.corrections.push({ key: 'notes.correction.generic', params: { count: 1 } });
@@ -132,14 +132,14 @@ describe('buildCoachPayload', () => {
   });
 
   describe('locale', () => {
-    it('vai no corpo da requisição, saneado', () => {
+    it('travels in the request body, sanitised', () => {
       expect(buildCoachPayload('session', makeSummary(), { locale: 'pt-BR' }).locale).toBe(
         'pt-BR'
       );
       expect(buildCoachPayload('session', makeSummary(), { locale: 'en' }).locale).toBe('en');
     });
 
-    it('idioma ausente ou desconhecido cai no default (nunca vaza pro prompt)', () => {
+    it('a missing or unknown language falls back to the default (it never leaks into the prompt)', () => {
       expect(buildCoachPayload('session', makeSummary()).locale).toBe(DEFAULT_COACH_LOCALE);
       expect(
         buildCoachPayload('session', makeSummary(), { locale: 'pt' }).locale
@@ -149,7 +149,7 @@ describe('buildCoachPayload', () => {
       ).toBe(DEFAULT_COACH_LOCALE);
     });
 
-    it('normalizeCoachLocale aceita só a allow-list', () => {
+    it('normalizeCoachLocale accepts only the allow-list', () => {
       expect(normalizeCoachLocale('en')).toBe('en');
       expect(normalizeCoachLocale('pt-BR')).toBe('pt-BR');
       expect(normalizeCoachLocale('PT-br')).toBe('en');
@@ -159,7 +159,7 @@ describe('buildCoachPayload', () => {
     });
   });
 
-  it('formata as métricas acumuladas por um SessionTracker real', () => {
+  it('formats the metrics accumulated by a real SessionTracker', () => {
     const tracker = new SessionTracker();
     tracker.startSession(0);
     tracker.startRound(0);
@@ -201,7 +201,7 @@ describe('buildCoachPayload', () => {
     expect(payload.summary.avgGuardScore).toBe(85);
     expect(payload.summary.avgBaseScore).toBe(80);
 
-    // Tudo que o api/coach valida como número precisa ser finito e >= 0.
+    // Everything api/coach validates as a number must be finite and >= 0.
     const numeric = [
       payload.summary.duration,
       payload.summary.rounds,
@@ -223,12 +223,12 @@ describe('requestCoaching', () => {
     translate: fakeTranslate,
   });
 
-  it('devolve o texto de coaching no sucesso (uma única chamada)', async () => {
-    const fetchFn = vi.fn().mockResolvedValue(jsonResponse(200, { coaching: ' Round bom! ' }));
+  it('returns the coaching text on success (a single call)', async () => {
+    const fetchFn = vi.fn().mockResolvedValue(jsonResponse(200, { coaching: ' Good round! ' }));
 
     const result = await requestCoaching(payload, { fetchFn: asFetch(fetchFn) });
 
-    expect(result).toBe('Round bom!');
+    expect(result).toBe('Good round!');
     expect(fetchFn).toHaveBeenCalledTimes(1);
     const [url, init] = fetchFn.mock.calls[0] as [string, RequestInit];
     expect(url).toBe(COACH_ENDPOINT);
@@ -236,7 +236,7 @@ describe('requestCoaching', () => {
     expect(JSON.parse(init.body as string)).toEqual(payload);
   });
 
-  it('503 (sem ANTHROPIC_API_KEY) vira "unavailable" sem retry', async () => {
+  it('503 (no ANTHROPIC_API_KEY) becomes "unavailable" with no retry', async () => {
     const fetchFn = vi
       .fn()
       .mockResolvedValue(jsonResponse(503, { error: 'coaching_unavailable' }));
@@ -249,7 +249,7 @@ describe('requestCoaching', () => {
     expect(fetchFn).toHaveBeenCalledTimes(1);
   });
 
-  it('404 (dev local sem backend) vira "unavailable" sem retry', async () => {
+  it('404 (local dev with no backend) becomes "unavailable" with no retry', async () => {
     const fetchFn = vi.fn().mockResolvedValue(jsonResponse(404, {}));
 
     await expect(requestCoaching(payload, { fetchFn: asFetch(fetchFn) })).rejects.toMatchObject({
@@ -259,7 +259,7 @@ describe('requestCoaching', () => {
     expect(fetchFn).toHaveBeenCalledTimes(1);
   });
 
-  it('erro de rede tem no máximo 1 retry e depois falha como "network"', async () => {
+  it('a network error gets at most 1 retry and then fails as "network"', async () => {
     const fetchFn = vi.fn().mockRejectedValue(new TypeError('Failed to fetch'));
 
     await expect(requestCoaching(payload, { fetchFn: asFetch(fetchFn) })).rejects.toMatchObject({
@@ -268,17 +268,17 @@ describe('requestCoaching', () => {
     expect(fetchFn).toHaveBeenCalledTimes(2);
   });
 
-  it('recupera no retry após uma falha de rede transitória', async () => {
+  it('recovers on the retry after a transient network failure', async () => {
     const fetchFn = vi
       .fn()
       .mockRejectedValueOnce(new TypeError('Failed to fetch'))
-      .mockResolvedValueOnce(jsonResponse(200, { coaching: 'Boa!' }));
+      .mockResolvedValueOnce(jsonResponse(200, { coaching: 'Nice!' }));
 
-    await expect(requestCoaching(payload, { fetchFn: asFetch(fetchFn) })).resolves.toBe('Boa!');
+    await expect(requestCoaching(payload, { fetchFn: asFetch(fetchFn) })).resolves.toBe('Nice!');
     expect(fetchFn).toHaveBeenCalledTimes(2);
   });
 
-  it('aborta por timeout local e classifica como "timeout"', async () => {
+  it('aborts on the local timeout and classifies it as "timeout"', async () => {
     vi.useFakeTimers();
     const fetchFn = vi.fn(
       (_url: string, init: RequestInit) =>
@@ -300,7 +300,7 @@ describe('requestCoaching', () => {
     expect(fetchFn).toHaveBeenCalledTimes(1);
   });
 
-  it('abort externo (usuário saiu) vira "aborted" sem retry', async () => {
+  it('an external abort (the user left) becomes "aborted" with no retry', async () => {
     const controller = new AbortController();
     const fetchFn = vi.fn(
       (_url: string, init: RequestInit) =>
@@ -321,7 +321,7 @@ describe('requestCoaching', () => {
     expect(fetchFn).toHaveBeenCalledTimes(1);
   });
 
-  it('resposta sem campo coaching vira erro "http"', async () => {
+  it('a response with no coaching field becomes an "http" error', async () => {
     const fetchFn = vi.fn().mockResolvedValue(jsonResponse(200, { coaching: '' }));
 
     await expect(

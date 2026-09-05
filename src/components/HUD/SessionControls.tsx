@@ -40,7 +40,7 @@ export function SessionControls({
 
   return (
     <>
-      {/* Timer HUD — topo-centro, .num ≥56px, legível a 2–3m (SPECS §6) */}
+      {/* Timer HUD, top-centre, .num ≥56px, legible at 2–3m (SPECS §6) */}
       {phase === 'in_round' && (
         <div className="absolute left-1/2 top-3 z-10 -translate-x-1/2 rounded-md bg-overlay px-5 py-2 text-center backdrop-blur-xs">
           <div className="num text-hud-value font-bold text-white md:text-hud-timer">
@@ -52,7 +52,7 @@ export function SessionControls({
         </div>
       )}
 
-      {/* Controles de round — rodapé-centro, touch targets ≥64px e gap ≥20px */}
+      {/* Round controls, footer-centre, touch targets ≥64px and a gap ≥20px */}
       <div className="absolute inset-x-0 bottom-4 z-10 flex items-center justify-center gap-5">
         {phase === 'idle' && (
           <PrimaryAction onClick={onStartSession} icon={<Play size={22} aria-hidden="true" />}>
@@ -116,7 +116,7 @@ function PrimaryAction({
   );
 }
 
-/** Botão de voz do coach — icon button 64px no cluster de controles. */
+/** The coach's voice button: a 64px icon button in the controls cluster. */
 function VoiceButton({
   enabled,
   isSpeaking,

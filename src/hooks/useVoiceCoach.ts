@@ -188,8 +188,8 @@ export function useVoiceCoach({ frame, enabled, onSpoken }: UseVoiceCoachOptions
     }
   }, []);
 
-  // `speak` é exposto para mensagens fora do fluxo frame-a-frame
-  // (ex.: ler o feedback do coach IA ao fim do round). Não bloqueia a
-  // UI: speechSynthesis é assíncrono por natureza.
+  // `speak` is exposed for messages outside the frame-by-frame flow
+  // (e.g. reading the AI coach feedback at the end of a round). It does
+  // not block the UI: speechSynthesis is asynchronous by nature.
   return { isSpeaking, speak, cancel };
 }

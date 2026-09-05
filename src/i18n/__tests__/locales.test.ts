@@ -49,43 +49,43 @@ function get(bundle: unknown, dottedKey: string): string | undefined {
 const flatEn = flatten(en);
 const flatPt = flatten(ptBR);
 
-describe('paridade entre locales', () => {
-  it('toda chave do en existe no pt-BR', () => {
+describe('parity between locales', () => {
+  it('every en key exists in pt-BR', () => {
     const missing = [...flatEn.keys()].filter((k) => !flatPt.has(k));
-    expect(missing, `faltando no pt-BR: ${missing.join(', ')}`).toEqual([]);
+    expect(missing, `missing in pt-BR: ${missing.join(', ')}`).toEqual([]);
   });
 
-  it('toda chave do pt-BR existe no en', () => {
+  it('every pt-BR key exists in en', () => {
     const missing = [...flatPt.keys()].filter((k) => !flatEn.has(k));
-    expect(missing, `faltando no en: ${missing.join(', ')}`).toEqual([]);
+    expect(missing, `missing in en: ${missing.join(', ')}`).toEqual([]);
   });
 
-  it('os dois bundles têm exatamente o mesmo número de chaves', () => {
+  it('both bundles hold exactly the same number of keys', () => {
     expect(flatPt.size).toBe(flatEn.size);
     expect(flatEn.size).toBeGreaterThan(100);
   });
 
-  it('nenhuma tradução é vazia ou só espaço', () => {
+  it('no translation is empty or whitespace only', () => {
     for (const [locale, flat] of [
       ['en', flatEn],
       ['pt-BR', flatPt],
     ] as const) {
       for (const [key, value] of flat) {
-        expect(value.trim(), `${locale}:${key} vazia`).not.toBe('');
+        expect(value.trim(), `${locale}:${key} is empty`).not.toBe('');
       }
     }
   });
 
-  it('os placeholders {{…}} batem chave a chave', () => {
+  it('the {{…}} placeholders match key by key', () => {
     for (const [key, value] of flatEn) {
       const translated = flatPt.get(key) ?? '';
-      expect(placeholders(translated), `placeholders divergentes em ${key}`).toEqual(
+      expect(placeholders(translated), `placeholders diverge on ${key}`).toEqual(
         placeholders(value)
       );
     }
   });
 
-  it('o registro de resources expõe os dois locales sob o namespace common', () => {
+  it('the resources registry exposes both locales under the common namespace', () => {
     expect(Object.keys(resources).sort()).toEqual([...SUPPORTED_LOCALES].sort());
     for (const locale of SUPPORTED_LOCALES) {
       expect(resources[locale].common).toBeTypeOf('object');
@@ -93,7 +93,7 @@ describe('paridade entre locales', () => {
   });
 });
 
-describe('toda chave prometida pelo engine existe nos dois locales', () => {
+describe('every key the engine promises exists in both locales', () => {
   const bundles = [
     ['en', en],
     ['pt-BR', ptBR],
@@ -103,16 +103,16 @@ describe('toda chave prometida pelo engine existe nos dois locales', () => {
     expect(keys.length).toBeGreaterThan(0);
     for (const key of keys) {
       for (const [locale, bundle] of bundles) {
-        expect(get(bundle, key), `${label} ${key} faltando em ${locale}`).toBeTruthy();
+        expect(get(bundle, key), `${label} ${key} missing in ${locale}`).toBeTruthy();
       }
     }
   }
 
-  it('frases do coach de voz (CoachingRules)', () => {
-    expectKeys(Object.values(COACHING_PHRASE_KEYS).flat(), 'frase');
+  it('voice coach phrases (CoachingRules)', () => {
+    expectKeys(Object.values(COACHING_PHRASE_KEYS).flat(), 'phrase');
   });
 
-  it('notas de correção e destaque (SessionTracker)', () => {
+  it('correction and highlight notes (SessionTracker)', () => {
     expectKeys(
       [
         ...Object.values(CORRECTION_NOTE_KEYS),
@@ -120,11 +120,11 @@ describe('toda chave prometida pelo engine existe nos dois locales', () => {
         HIGH_SCORE_STREAK_NOTE_KEY,
         GOOD_PUNCHES_NOTE_KEY,
       ],
-      'nota'
+      'note'
     );
   });
 
-  it('as notas carregam os placeholders que o engine preenche', () => {
+  it('the notes carry the placeholders the engine fills in', () => {
     for (const [, bundle] of bundles) {
       for (const key of Object.values(CORRECTION_NOTE_KEYS)) {
         expect(placeholders(get(bundle, key)!)).toEqual(['count']);
@@ -135,21 +135,21 @@ describe('toda chave prometida pelo engine existe nos dois locales', () => {
     }
   });
 
-  it('descrições de missão (QUEST_POOL)', () => {
+  it('quest descriptions (QUEST_POOL)', () => {
     expectKeys(
       QUEST_POOL.map((q) => q.descriptionKey),
-      'missão'
+      'quest'
     );
   });
 
-  it('nomes e critérios de badge (BADGES)', () => {
+  it('badge names and criteria (BADGES)', () => {
     expectKeys(
       BADGES.flatMap((b) => [b.nameKey, b.descriptionKey]),
       'badge'
     );
   });
 
-  it('ranks e dias da semana', () => {
+  it('ranks and weekdays', () => {
     expectKeys(Object.values(RANK_LABEL_KEYS), 'rank');
     expectKeys(WEEKDAY_LABEL_KEYS, 'weekday');
     expect(WEEKDAY_LABEL_KEYS).toHaveLength(7);

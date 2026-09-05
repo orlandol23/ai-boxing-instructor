@@ -24,17 +24,18 @@ import {
 import { DEFAULT_THEME, setTheme, type Theme } from '../theme/theme';
 
 /**
- * Ponte React ↔ ProfileStore (F7). Único dono do documento de perfis em
- * runtime: toda mutação passa por aqui (funções puras do store + save) e
- * o tema do app (`data-theme` no <html>) segue o perfil ativo —
- * `kids` (Arcade Royale) quando `isKid`, senão `adult` (Fight Night).
+ * React ↔ ProfileStore bridge (F7). The single owner of the profiles
+ * document at runtime: every mutation goes through here (the store's pure
+ * functions + save) and the app theme (`data-theme` on <html>) follows the
+ * active profile: `kids` (Arcade Royale) when `isKid`, otherwise `adult`
+ * (Fight Night).
  */
 
 export interface ProfileContextValue {
   profiles: Profile[];
-  /** Perfil ativo (null = primeiro uso → seletor /profiles). */
+  /** Active profile (null = first use, which lands on the /profiles selector). */
   activeProfile: Profile | null;
-  /** Tema derivado do perfil ativo ('adult' sem perfil). */
+  /** Theme derived from the active profile ('adult' when there is none). */
   theme: Theme;
   createProfile(draft: ProfileDraft): Profile;
   updateProfile(id: string, patch: ProfileUpdate): void;
@@ -50,7 +51,7 @@ export function themeForProfile(profile: Profile | null): Theme {
 
 interface ProfileProviderProps {
   children: ReactNode;
-  /** Injeção p/ testes; default = localStorage do browser. */
+  /** Injection point for tests; defaults to the browser's localStorage. */
   store?: ProfileStore;
 }
 
@@ -61,9 +62,9 @@ export function ProfileProvider({ children, store: storeProp }: ProfileProviderP
   const activeProfile = activeProfileOf(doc);
   const theme = themeForProfile(activeProfile);
 
-  // Tema segue o perfil ativo (inclusive ao alternar o modo kids do
-  // perfil já ativo). O boot sem flash é garantido pelo script inline
-  // no index.html; aqui é a fonte da verdade em runtime.
+  // The theme follows the active profile (including when the kids mode of
+  // the already active profile is toggled). The flash-free boot is handled
+  // by the inline script in index.html; this is the runtime source of truth.
   useEffect(() => {
     setTheme(theme);
   }, [theme]);
@@ -94,8 +95,8 @@ export function ProfileProvider({ children, store: storeProp }: ProfileProviderP
 
   const deleteProfile = useCallback(
     (id: string) => {
-      // Só remove do documento de perfis — o histórico do perfil no
-      // HistoryStore fica intacto (escondido), por decisão do F7.
+      // Only removed from the profiles document. The profile's history in
+      // the HistoryStore stays intact (hidden), by the F7 decision.
       commit(deleteProfilePure(store.load(), id));
     },
     [store, commit]
@@ -126,14 +127,14 @@ export function ProfileProvider({ children, store: storeProp }: ProfileProviderP
 
 export function useProfiles(): ProfileContextValue {
   const ctx = useContext(ProfileContext);
-  if (!ctx) throw new Error('useProfiles requer <ProfileProvider> acima na árvore');
+  if (!ctx) throw new Error('useProfiles requires a <ProfileProvider> above it in the tree');
   return ctx;
 }
 
 /**
- * Tema atual de forma tolerante: componentes de apresentação (cards,
- * badges) funcionam fora do provider (ex.: testes isolados) caindo no
- * tema adulto.
+ * The current theme, read tolerantly: presentational components (cards,
+ * badges) still work outside the provider (e.g. isolated tests) by falling
+ * back to the adult theme.
  */
 export function useAppTheme(): Theme {
   return useContext(ProfileContext)?.theme ?? DEFAULT_THEME;

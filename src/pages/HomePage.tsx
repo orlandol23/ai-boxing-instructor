@@ -30,7 +30,7 @@ export function HomePage() {
         </p>
       </div>
 
-      {/* Progresso (F6): LVL chip + XP bar + streak + link p/ /progress */}
+      {/* Progress (F6): LVL chip + XP bar + streak + link to /progress */}
       <section className="w-full max-w-xs rounded-xl border border-line bg-surface p-4">
         <div className="flex items-center justify-between gap-2">
           <LevelChip level={progress.level.level} />

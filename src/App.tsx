@@ -8,7 +8,7 @@ import { TrainingPage } from './pages/TrainingPage';
 import { ProgressPage } from './pages/ProgressPage';
 import { ProfilesPage } from './pages/ProfilesPage';
 
-/** Primeiro uso (nenhum perfil ativo) → seletor /profiles (F7). */
+/** First use (no active profile) lands on the /profiles selector (F7). */
 function RequireProfile({ children }: { children: ReactNode }) {
   const { activeProfile } = useProfiles();
   if (!activeProfile) return <Navigate to="/profiles" replace />;

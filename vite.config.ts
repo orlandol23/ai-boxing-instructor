@@ -11,16 +11,16 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.svg', 'icons/*.svg'],
       workbox: {
-        // inclui as fontes self-hosted (woff2) no precache p/ offline
+        // include the self-hosted fonts (woff2) in the precache, for offline
         globPatterns: ['**/*.{js,css,html,svg,woff2}'],
-        // /api/* são Vercel Functions — o SW não deve responder com o app shell
+        // /api/* are Vercel Functions: the SW must not answer with the app shell
         navigateFallbackDenylist: [/^\/api\//],
-        // O MediaPipe (runtime WASM + modelo de pose, ~10MB) vem de CDN e
-        // não entra no precache. Sem estas rotas, "treinar sem rede" só
-        // vale enquanto o cache HTTP do browser durar. CacheFirst: são
-        // artefatos versionados/imutáveis, então cache vence rede.
-        // Respostas cross-origin são opacas (status 0) — daí o
-        // cacheableResponse aceitar 0 junto com 200.
+        // MediaPipe (WASM runtime + pose model, ~10MB) comes from a CDN
+        // and stays out of the precache. Without these routes, "training
+        // with no network" only holds while the browser HTTP cache lasts.
+        // CacheFirst because they are versioned, immutable artifacts, so
+        // the cache beats the network. Cross-origin responses are opaque
+        // (status 0), which is why cacheableResponse accepts 0 next to 200.
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/cdn\.jsdelivr\.net\/npm\/@mediapipe\/tasks-vision@/,
@@ -29,7 +29,7 @@ export default defineConfig({
               cacheName: 'mediapipe-wasm',
               expiration: {
                 maxEntries: 12,
-                maxAgeSeconds: 60 * 60 * 24 * 60, // 60 dias
+                maxAgeSeconds: 60 * 60 * 24 * 60, // 60 days
               },
               cacheableResponse: { statuses: [0, 200] },
             },
@@ -41,7 +41,7 @@ export default defineConfig({
               cacheName: 'mediapipe-model',
               expiration: {
                 maxEntries: 4,
-                maxAgeSeconds: 60 * 60 * 24 * 60, // 60 dias
+                maxAgeSeconds: 60 * 60 * 24 * 60, // 60 days
               },
               cacheableResponse: { statuses: [0, 200] },
             },

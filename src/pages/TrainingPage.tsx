@@ -55,8 +55,8 @@ export function TrainingPage() {
     reset: resetSession,
   } = useSession({ frame });
 
-  // Gamificação (F6): registra a sessão concluída e guarda os ganhos
-  // (XP, badges, missões) para o resumo.
+  // Gamification (F6): records the finished session and keeps the gains
+  // (XP, badges, quests) for the summary.
   const { recordSession, attachCoachFeedback } = useGamification();
   const [gains, setGains] = useState<SessionGains | null>(null);
 
@@ -66,22 +66,22 @@ export function TrainingPage() {
     voiceEnabledRef.current = voiceEnabled;
   }, [voiceEnabled]);
 
-  // Correções frame-a-frame só durante o round; fora dele a voz fica
-  // livre para ler o feedback do coach IA sem ser interrompida.
+  // Frame-by-frame corrections only during a round; outside one the voice
+  // is free to read the AI coach feedback without being interrupted.
   const { isSpeaking, speak, cancel: cancelSpeech } = useVoiceCoach({
     frame,
     enabled: voiceEnabled && phase === 'in_round',
     onSpoken: recordCorrection,
   });
 
-  // Desligar o toggle de voz também interrompe a leitura do coach IA.
+  // Turning the voice toggle off also stops the AI coach being read out.
   useEffect(() => {
     if (!voiceEnabled) cancelSpeech();
   }, [voiceEnabled, cancelSpeech]);
 
   const onCoachFeedback = useCallback(
     (text: string) => {
-      // Voz opcional: lê o feedback do coach se o toggle estiver ativo.
+      // Optional voice: reads the coach feedback out if the toggle is on.
       if (voiceEnabledRef.current) speak(text);
     },
     [speak]
@@ -139,8 +139,8 @@ export function TrainingPage() {
     startRound();
   }, [startSession, startRound]);
 
-  // Fim de round: encerra no tracker e pede o coaching da IA com o
-  // snapshot pós-round. Falhas do endpoint nunca afetam o treino.
+  // End of round: close it in the tracker and ask the AI for coaching with
+  // the post-round snapshot. Endpoint failures never affect the workout.
   const handleEndRound = useCallback(() => {
     const finishedRound = currentRound;
     const snapshot = endRound();
@@ -149,15 +149,15 @@ export function TrainingPage() {
 
   const handleEndSession = useCallback(() => {
     const finalSummary = endSession();
-    // Sessão sem nenhum round completo não entra no histórico/XP.
+    // A session with no completed round never enters the history/XP.
     if (finalSummary.rounds > 0) {
       setGains(recordSession(finalSummary));
     }
     requestSessionFeedback(finalSummary);
   }, [endSession, recordSession, requestSessionFeedback]);
 
-  // O feedback do coach IA chega async, depois da sessão já registrada —
-  // anexa ao registro persistido quando estiver disponível.
+  // The AI coach feedback arrives async, after the session is recorded,
+  // so it is attached to the persisted record once it is available.
   useEffect(() => {
     if (phase === 'ended' && coachStatus === 'success' && coachFeedback && gains) {
       attachCoachFeedback(gains.record.id, coachFeedback);
@@ -217,7 +217,7 @@ export function TrainingPage() {
           onEndSession={handleEndSession}
         />
 
-        {/* Coach IA do round — visível no descanso entre rounds */}
+        {/* The round's AI coach, visible during the rest between rounds */}
         {phase === 'between_rounds' && coachStatus !== 'idle' && (
           <div className="absolute inset-x-4 top-1/2 z-10 mx-auto max-w-md -translate-y-1/2">
             <CoachBubble status={coachStatus} feedback={coachFeedback} context="round" />

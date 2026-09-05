@@ -4,12 +4,30 @@ Guidance for Claude Code when working in this repository.
 
 ## Commit and PR conventions
 
-Do not include Co-Authored-By or "Generated with Claude Code" lines in commit
-messages or PR descriptions.
-
 Commits are authored as `Orlando Fernandes
-<27815856+orlandol23@users.noreply.github.com>` (configured in
-`.claude/settings.json`).
+<27815856+orlandol23@users.noreply.github.com>`, set by `env` in
+`.claude/settings.json`. Confirm it landed with
+`git log -1 --format='%an <%ae>'`; if another identity got in, amend with
+`--reset-author` instead of leaving it in the history.
+
+Nothing in a commit message or a pull request body may name the tool or the
+session that wrote it: no `Co-Authored-By:` trailer, no `Claude-Session:`
+trailer, no "Generated with/by Claude Code" footer, and no `claude.ai/code`
+link. Describe the change, not how it was produced.
+
+PR bodies may be written in Portuguese. They are read by the repository owner,
+not by visitors browsing the code.
+
+## Language
+
+The README is the reference, and it is in English. So is everything else a
+visitor reads on GitHub: documentation, code comments, test names, commit
+messages and PR titles.
+
+Two things are **product content**, not documentation, and stay in Portuguese:
+`src/i18n/locales/pt-BR.ts`, the text a pt-BR user reads on screen, and
+`SYSTEM_PROMPT_PT_BR` in `api/coach.ts`, which is what makes the coach answer
+in the user's language. A language pass never touches either.
 
 ## Install
 

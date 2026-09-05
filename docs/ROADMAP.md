@@ -6,7 +6,7 @@ done (DoD)** criteria so a phase can be closed with confidence.
 
 > Current state (jul/2026): React 19 + Vite 8 PWA with client-side MediaPipe
 > Pose, analysis engine (guard/base/punches), voice coach, sessions with
-> rounds and a summary, `/api/coach` endpoint for the AI coach (Phase 4),
+> rounds and a summary, the `/api/coach` endpoint backed by Claude (Phase 4),
 > gamification + history (Phase 6), profiles + kids theme (Phase 7) and a
 > quality foundation (CI, tests, Error Boundary). **Full i18n delivered in
 > jul/2026** (outside the numbered phases): app in EN by default with PT-BR

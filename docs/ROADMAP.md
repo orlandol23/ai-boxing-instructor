@@ -1,214 +1,217 @@
-# Roadmap — Projeto Prime 🥊
+# Roadmap: Prime Project 🥊
 
-Plano de evolução do AI Boxing Instructor rumo a um produto top de linha,
-organizado em fases priorizadas. Cada item tem **critérios de pronto (DoD)**
-objetivos para fechar a fase com confiança.
+Evolution plan for the AI Boxing Instructor towards a top-tier product,
+organised into prioritised phases. Every item has objective **definition of
+done (DoD)** criteria so a phase can be closed with confidence.
 
-> Estado atual (jul/2026): PWA React 19 + Vite 8 + MediaPipe Pose client-side,
-> engine de análise (guarda/base/golpes), coach de voz, sessões com rounds e
-> resumo, endpoint `/api/coach` com Claude (Fase 4), gamificação + histórico
-> (Fase 6), perfis + tema kids (Fase 7) e fundação de qualidade (CI, testes,
-> Error Boundary). **i18n completo entregue em jul/2026** (fora das fases
-> numeradas): app EN por padrão com PT-BR disponível, seletor de idioma no
-> header, engine emitindo chaves i18n estáveis e coach respondendo no idioma
-> do usuário.
+> Current state (jul/2026): React 19 + Vite 8 PWA with client-side MediaPipe
+> Pose, analysis engine (guard/base/punches), voice coach, sessions with
+> rounds and a summary, `/api/coach` endpoint for the AI coach (Phase 4),
+> gamification + history (Phase 6), profiles + kids theme (Phase 7) and a
+> quality foundation (CI, tests, Error Boundary). **Full i18n delivered in
+> jul/2026** (outside the numbered phases): app in EN by default with PT-BR
+> available, a language selector in the header, the engine emitting stable
+> i18n keys and the coach answering in the user's language.
 
-> **Design System v2 (fundação) aplicado:** tokens themáveis
-> (`adult`/`kids` via `data-theme`), fontes Saira self-host, e as telas
-> existentes migradas para o visual Fight Night. Specs completas em
-> [`docs/design-system/SPECS.md`](design-system/SPECS.md) — gamificação
-> (XP/níveis/missões/badges), seletor de perfis e o tema kids "Arcade
-> Royale" (Fases 6/7) devem ser construídos sobre este kit.
-
----
-
-## Fase 5 — Coach IA visível + Deploy (prioridade máxima)
-
-O backend do coach já existe; falta o usuário ver o valor.
-
-### 5.1 Integração frontend do coach IA ✅ Entregue
-- [x] Hook `useCoachingFeedback` que envia o resumo do round/sessão para
-  `/api/coach` (timeout 15s, abort ao sair, máx. 1 retry).
-- [x] Coach bubble (DS v2, SPECS §6) ao fim de cada round (descanso) e no
-  resumo da sessão, com insights no idioma do app (EN/PT-BR desde o i18n
-  de jul/2026).
-- [x] Estados de carregamento/erro elegantes; sem chave de API ou offline,
-  fallback amigável e o treino local segue 100% funcional.
-- [x] Voz opcional: com o Voice Coach ativado, o feedback do coach é lido
-  em voz alta ao chegar.
-
-**DoD atendido:** ao terminar um round com a API configurada, o card de
-feedback do coach aparece em segundos; sem API, o resumo local continua
-como antes.
-
-### 5.2 Deploy Vercel com `ANTHROPIC_API_KEY` (pendente — passo do dono)
-- Projeto conectado na Vercel, variável `ANTHROPIC_API_KEY` configurada.
-- `/api/health` verde em produção; PWA instalável servida por HTTPS.
-
-> **Nota:** o frontend do coach (5.1) já está pronto e degrada
-> graciosamente; para o coach IA funcionar de verdade, falta o deploy na
-> Vercel com a env var `ANTHROPIC_API_KEY` — passo manual do dono do repo.
-
-**DoD:** URL pública funcionando no celular (câmera + pose + coach IA).
+> **Design System v2 (foundation) applied:** themable tokens
+> (`adult`/`kids` via `data-theme`), self-hosted Saira fonts, and the
+> existing screens migrated to the Fight Night look. Full specs in
+> [`docs/design-system/SPECS.md`](design-system/SPECS.md). Gamification
+> (XP/levels/quests/badges), the profile selector and the kids theme "Arcade
+> Royale" (Phases 6/7) are to be built on top of this kit.
 
 ---
 
-## Fase 6 — Gamificação + histórico de treinos ✅ Entregue
+## Phase 5: visible AI coach + deploy (top priority)
 
-Sem histórico não há progresso visível — essencial para manter a motivação.
-Arquitetura **local-first**: persistência em localStorage atrás da interface
-`HistoryStore` (`src/services/historyStore.ts`), com documento JSON
-**versionado por schema** e particionado por `profileId` — o F7 (perfis) não
-exigirá migração de dados.
+The coach backend already exists; what is missing is the user seeing the value.
 
-- [x] Motor de gamificação (`src/engine/gamification/`, funções puras,
-  SPECS §5): XP por golpe (good +10 · fair +5 · poor +2) e bônus de round
-  (+30 guarda média ≥ 80, +20 base média ≥ 80); nível N = 250×N XP; ranks
-  por nível (1 Bronze · 10 Prata · 20 Ouro · 35 Campeão, nomes por tema —
-  skin kids pronta p/ o F7); streak de dias consecutivos com expiração à
-  meia-noite local; 8 badges permanentes; 3 missões diárias determinísticas
-  (seed = data local) verificadas contra o agregado do dia.
-- [x] Histórico por sessão (data, duração, rounds, golpes por tipo/qualidade,
-  médias de guarda/base, XP, feedback do coach IA quando houver) + agregados
-  diários para o gráfico semanal.
-- [x] Integração: "+XP" no punch feed; XP bar + LVL chip + streak na Home;
-  resumo de sessão com XP ganho (breakdown), level-up, badges novas (medal)
-  e missões do dia.
-- [x] Tela `/progress` (SPECS §7): nível/rank + XP bar, gráfico dos últimos
-  7 dias (cor pela faixa de score, sempre com número), grid de badges
-  (locked em grayscale) e próxima missão.
+### 5.1 Frontend integration of the AI coach ✅ Delivered
+- [x] `useCoachingFeedback` hook that sends the round/session summary to
+  `/api/coach` (15s timeout, abort on leaving, at most 1 retry).
+- [x] Coach bubble (DS v2, SPECS §6) at the end of every round (rest) and in
+  the session summary, with insights in the app's language (EN/PT-BR since
+  the i18n work of jul/2026).
+- [x] Graceful loading/error states; with no API key or offline, a friendly
+  fallback and local training stays 100% functional.
+- [x] Optional voice: with the Voice Coach on, the coach feedback is read out
+  loud when it arrives.
 
-**DoD atendido:** terminar um treino credita XP, persiste a sessão e
-atualiza streak/badges/missões; `/progress` mostra a evolução da semana.
+**DoD met:** finishing a round with the API configured makes the coach
+feedback card appear within seconds; with no API, the local summary carries
+on as before.
 
-### 6b — Sync na nuvem (Neon PostgreSQL) — futuro
-A interface `HistoryStore` foi desenhada para ganhar uma implementação
-remota sem tocar na UI nem no motor:
-- Banco Neon (PostgreSQL serverless) com tabelas de perfis/sessões/rounds.
-- Endpoints `api/sessions` (upsert ao fim da sessão, listar histórico) e
-  reconciliação local ↔ remoto (local-first continua sendo a fonte offline).
+### 5.2 Vercel deploy with `ANTHROPIC_API_KEY` (pending: the owner's step)
+- Project connected on Vercel, `ANTHROPIC_API_KEY` variable configured.
+- `/api/health` green in production; installable PWA served over HTTPS.
 
-**DoD:** o mesmo histórico aparece em dois dispositivos logados; offline
-tudo continua funcionando só com o storage local.
+> **Note:** the coach frontend (5.1) is ready and degrades gracefully. For
+> the AI coach to actually work, the Vercel deploy with the
+> `ANTHROPIC_API_KEY` env var is still missing: a manual step for the repo
+> owner.
+
+**DoD:** public URL working on a phone (camera + pose + AI coach).
 
 ---
 
-## Fase 7 — Perfis e família ✅ Entregue
+## Phase 6: gamification + training history ✅ Delivered
 
-Projeto é dele **e da filha** — multiusuário é diferencial central.
-O storage do F6 já era particionado por `profileId`, então a fase foi
-UI + seleção + tema.
+Without history there is no visible progress, which is essential to keep the
+motivation up. **Local-first** architecture: persistence in localStorage
+behind the `HistoryStore` interface (`src/services/historyStore.ts`), with a
+JSON document **versioned by schema** and partitioned by `profileId`, so F7
+(profiles) will not require a data migration.
 
-- [x] Perfis múltiplos locais (`src/services/profileStore.ts`, mesmo
-  padrão do HistoryStore: localStorage, schema versionado, mutações
-  puras): nome, avatar de set curado, modo kids, perfil ativo. O 1º
-  perfil adota o id `default` e herda o histórico/XP pré-F7.
-- [x] Tela `/profiles` (SPECS §7): Profile cards (avatar com borda
-  accent, LVL chip do snapshot de gamificação do perfil, selecionado com
-  glow), card "novo perfil", criação/edição (nome, avatar, toggle "Modo
-  kids 👑") e exclusão com confirmação dupla. Primeiro uso cai no
-  seletor; avatar do perfil ativo no Header abre a tela.
-- [x] Sessões/histórico/gráficos por pessoa: `useGamification` lê e
-  escreve na partição do perfil ativo (`ProfileContext`); trocar de
-  perfil troca XP, badges, missões e histórico juntos.
-- [x] **Deletar perfil não apaga o histórico** no HistoryStore — só o
-  esconde (exclusão acidental não destrói meses de treino; o F6b pode
-  reconciliar).
-- [x] Boot sem flash: script inline no `index.html` aplica o tema do
-  último perfil ativo antes do primeiro paint.
+- [x] Gamification engine (`src/engine/gamification/`, pure functions,
+  SPECS §5): XP per punch (good +10 · fair +5 · poor +2) and round bonus
+  (+30 average guard ≥ 80, +20 average base ≥ 80); level N = 250×N XP; ranks
+  by level (1 Bronze · 10 Silver · 20 Gold · 35 Champion, names per theme,
+  the kids skin ready for F7); streak of consecutive days expiring at local
+  midnight; 8 permanent badges; 3 deterministic daily quests (seed = local
+  date) checked against the day's aggregate.
+- [x] Per-session history (date, duration, rounds, punches by type/quality,
+  guard/base averages, XP, AI coach feedback when there is one) + daily
+  aggregates for the weekly chart.
+- [x] Integration: "+XP" in the punch feed; XP bar + LVL chip + streak on the
+  Home; session summary with the XP earned (breakdown), level-up, new badges
+  (medal) and the day's quests.
+- [x] `/progress` screen (SPECS §7): level/rank + XP bar, chart of the last
+  7 days (colour by score band, always with the number), badge grid (locked
+  in grayscale) and the next quest.
 
-**DoD atendido:** dois perfis usados em sequência geram históricos
-separados; cada perfil vê seu progresso e seu tema.
+**DoD met:** finishing a workout credits XP, persists the session and updates
+streak/badges/quests; `/progress` shows the week's evolution.
 
-### 7.1 Modo kids ✅ Entregue (skin)
-- [x] Tema Arcade Royale aplicado ao app inteiro via tokens quando o
-  perfil ativo é kids; medal/badge com a skin sticker (radius 24, glow,
-  rotate −3° — `[data-theme='kids']`, 100% por tokens).
-- [x] Copy por tema em dicionário central (`src/theme/copy.ts`, SPECS
-  §8.3): ranks Cinturões vs Coroas (Bronze→Rainha do Ringue), skin RPG
-  das 8 missões diárias ("Defenda o castelo: guarda ≥ 80 no round"),
-  saudação da Home e nomes de badge onde a metáfora cabe. Feedback
-  técnico de treino é idêntico nos dois temas (precisão > tema).
-- Pendente p/ fase futura: rounds mais curtos por padrão no perfil kids
-  (depende das configurações de round do F8).
+### 6b: cloud sync (Neon PostgreSQL), future
+The `HistoryStore` interface was designed to gain a remote implementation
+without touching the UI or the engine:
+- Neon database (serverless PostgreSQL) with profile/session/round tables.
+- `api/sessions` endpoints (upsert at the end of the session, list the
+  history) and local ↔ remote reconciliation (local-first stays the offline
+  source).
 
-**DoD atendido:** perfil kids vê conquistas/streak com a skin Arcade
-Royale e a copy RPG das missões diárias.
+**DoD:** the same history shows up on two signed-in devices; offline,
+everything keeps working on local storage alone.
 
 ---
 
-## Fase 8 — Modos de treino (próxima fase)
+## Phase 7: profiles and family ✅ Delivered
 
-Modo Técnica/Drill + tela de configurações.
+The project is his **and his daughter's**: multi-user is a central
+differentiator. F6 storage was already partitioned by `profileId`, so the
+phase was UI + selection + theme.
 
-- **Modo Técnica/Drill** (card hoje desabilitado na home): sequências guiadas
-  (ex.: jab-jab-cross), o engine valida cada golpe da sequência e dá feedback
-  por repetição.
-- **Tela de configurações:** volume e voz do coach (seleção de voz da Web
-  Speech API), sensibilidade de detecção de golpe, duração de round/descanso.
-  (Idioma EN/PT-BR já foi entregue fora desta fase — seletor no header,
-  jul/2026; a tela pode no máximo reexpor a mesma preferência.)
+- [x] Multiple local profiles (`src/services/profileStore.ts`, same pattern
+  as the HistoryStore: localStorage, versioned schema, pure mutations):
+  name, avatar from a curated set, kids mode, active profile. The 1st
+  profile takes the id `default` and inherits the pre-F7 history/XP.
+- [x] `/profiles` screen (SPECS §7): profile cards (avatar with accent
+  border, LVL chip from the profile's gamification snapshot, the selected
+  one with a glow), "new profile" card, creation/editing (name, avatar,
+  "Kids mode 👑" toggle) and deletion with double confirmation. First use
+  lands on the selector; the active profile's avatar in the Header opens the
+  screen.
+- [x] Sessions/history/charts per person: `useGamification` reads and writes
+  in the active profile's partition (`ProfileContext`); switching profile
+  switches XP, badges, quests and history together.
+- [x] **Deleting a profile does not erase its history** in the HistoryStore,
+  it only hides it (an accidental deletion does not destroy months of
+  training; F6b can reconcile it).
+- [x] Boot with no flash: an inline script in `index.html` applies the last
+  active profile's theme before the first paint.
 
-**DoD:** card de Técnica habilitado com pelo menos 3 drills; configurações
-persistidas (localStorage) e respeitadas pelo coach de voz e pelo engine.
+**DoD met:** two profiles used one after the other produce separate
+histories; each profile sees its own progress and its own theme.
 
----
+### 7.1 Kids mode ✅ Delivered (skin)
+- [x] Arcade Royale theme applied to the whole app through tokens when the
+  active profile is a kid; medal/badge with the sticker skin (radius 24,
+  glow, rotate −3°, `[data-theme='kids']`, 100% through tokens).
+- [x] Copy per theme in a central dictionary (`src/theme/copy.ts`, SPECS
+  §8.3): Belts vs Crowns ranks (Bronze→Ring Royalty), RPG skin for the 8
+  daily quests ("Defend the castle: guard ≥ 80 in a round"), the Home
+  greeting and badge names where the metaphor fits. Technical training
+  feedback is identical in both themes (precision > theme).
+- Pending for a future phase: shorter rounds by default on the kids profile
+  (depends on F8's round settings).
 
-## Fase 9 — Engine v2 (precisão e robustez)
-
-Dívidas técnicas conhecidas do engine — mudanças comportamentais, exigem
-validação cuidadosa com vídeo real.
-
-- **Frame-rate independence:** substituir contagem de frames (assume ~30fps)
-  por timestamps reais em cooldowns e debounces (`PunchClassifier`,
-  thresholds de voz). Hoje, em 60fps o cooldown dura metade do tempo esperado.
-- **`returnSpeed` real no `PunchClassifier`:** medir a velocidade de retorno
-  da mão à guarda (hoje hardcoded em `0`) e usá-la na qualidade do golpe e na
-  regra `punch:fair`.
-- Recalibrar thresholds de velocidade (hoje em unidades/frame → unidades/s).
-
-**DoD:** suíte de testes atualizada cobrindo 30fps e 60fps simulados com os
-mesmos resultados; `returnSpeed > 0` em golpes reais.
-
----
-
-## Fase 10 — Performance e offline de verdade
-
-- [x] **Cache offline do modelo MediaPipe** (~10MB) via service worker ✅
-  entregue: `runtimeCaching` do workbox em `vite.config.ts` com duas rotas
-  `CacheFirst` (runtime WASM na jsDelivr e o `.task` de pose no
-  storage.googleapis.com), `cacheableResponse` aceitando respostas opacas
-  (status 0) e expiração de 60 dias. Depois da primeira visita, o PWA abre
-  e treina sem rede.
-- **Web Worker para a pose:** mover a inferência do MediaPipe para fora da
-  main thread (OffscreenCanvas/`VideoFrame`), liberando a UI e melhorando FPS
-  em celulares mais fracos.
-- Métricas de FPS/latência no modo dev para validar o ganho.
-
-**DoD:** treino completo em modo avião após primeira visita; main thread sem
-long tasks > 50ms durante análise.
+**DoD met:** a kids profile sees achievements/streak with the Arcade Royale
+skin and the RPG copy for the daily quests.
 
 ---
 
-## Registro de dívidas conhecidas
+## Phase 8: training modes (next phase)
 
-| Item | Onde | Fase |
+Technique/Drill mode + settings screen.
+
+- **Technique/Drill mode** (card currently disabled on the home): guided
+  sequences (e.g. jab-jab-cross), the engine validates each punch of the
+  sequence and gives feedback per repetition.
+- **Settings screen:** coach volume and voice (voice selection from the Web
+  Speech API), punch detection sensitivity, round/rest duration. (EN/PT-BR
+  language was already delivered outside this phase: selector in the header,
+  jul/2026; at most the screen can re-expose the same preference.)
+
+**DoD:** Technique card enabled with at least 3 drills; settings persisted
+(localStorage) and respected by the voice coach and the engine.
+
+---
+
+## Phase 9: engine v2 (precision and robustness)
+
+Known technical debt in the engine. These are behavioural changes and need
+careful validation against real video.
+
+- **Frame-rate independence:** replace frame counting (assumes ~30fps) with
+  real timestamps in cooldowns and debounces (`PunchClassifier`, voice
+  thresholds). Today, at 60fps the cooldown lasts half the expected time.
+- **Real `returnSpeed` in `PunchClassifier`:** measure the speed of the hand
+  returning to the guard (hardcoded to `0` today) and use it in punch
+  quality and in the `punch:fair` rule.
+- Recalibrate the velocity thresholds (today in units/frame → units/s).
+
+**DoD:** test suite updated covering simulated 30fps and 60fps with the same
+results; `returnSpeed > 0` on real punches.
+
+---
+
+## Phase 10: performance and real offline
+
+- [x] **Offline cache of the MediaPipe model** (~10MB) via service worker ✅
+  delivered: workbox `runtimeCaching` in `vite.config.ts` with two
+  `CacheFirst` routes (the WASM runtime on jsDelivr and the pose `.task` on
+  storage.googleapis.com), `cacheableResponse` accepting opaque responses
+  (status 0) and a 60-day expiry. After the first visit, the PWA opens and
+  trains with no network.
+- **Web Worker for the pose:** move MediaPipe inference off the main thread
+  (OffscreenCanvas/`VideoFrame`), freeing the UI and improving FPS on weaker
+  phones.
+- FPS/latency metrics in dev mode to validate the gain.
+
+**DoD:** full workout in airplane mode after the first visit; main thread
+with no long tasks > 50ms during analysis.
+
+---
+
+## Known debt register
+
+| Item | Where | Phase |
 | --- | --- | --- |
-| Cooldown/debounce por contagem de frames (~30fps) | `PunchClassifier`, voz | 9 |
-| `returnSpeed` sempre `0` | `PunchClassifier` | 9 |
-| ~~Modelo MediaPipe baixado da CDN a cada visita~~ ✅ entregue (10) | `useMediaPipe` + `runtimeCaching` (`vite.config.ts`) | 10 |
-| Card "Técnica" desabilitado na home | `HomePage` | 8 |
-| Rounds mais curtos por padrão no perfil kids | `useSession` + configurações | 8 |
-| Histórico de perfil deletado fica órfão no localStorage (decisão: nunca apagar) | `profileStore` / futura "limpeza" em configurações | 8+ |
-| ~~Coach IA sem UI (endpoint pronto, frontend pendente)~~ ✅ entregue (5.1) | `useCoachingFeedback` + `CoachBubble` | 5 |
+| Cooldown/debounce by frame count (~30fps) | `PunchClassifier`, voice | 9 |
+| `returnSpeed` always `0` | `PunchClassifier` | 9 |
+| ~~MediaPipe model downloaded from the CDN on every visit~~ ✅ delivered (10) | `useMediaPipe` + `runtimeCaching` (`vite.config.ts`) | 10 |
+| "Technique" card disabled on the home | `HomePage` | 8 |
+| Shorter rounds by default on the kids profile | `useSession` + settings | 8 |
+| The history of a deleted profile is orphaned in localStorage (decision: never erase) | `profileStore` / future "cleanup" in settings | 8+ |
+| ~~AI coach with no UI (endpoint ready, frontend pending)~~ ✅ delivered (5.1) | `useCoachingFeedback` + `CoachBubble` | 5 |
 
 ---
 
-## Princípios
+## Principles
 
-1. **Mobile-first:** todo recurso é validado no celular antes de fechar.
-2. **Degradação graciosa:** sem rede/API, o treino local nunca quebra.
-3. **Privacidade:** vídeo nunca sai do dispositivo; só métricas agregadas
-   vão ao backend.
-4. **Qualidade contínua:** nada mergeia sem CI verde (lint, tsc, testes,
-   build) e revisão humana.
+1. **Mobile-first:** every feature is validated on a phone before it closes.
+2. **Graceful degradation:** with no network/API, local training never breaks.
+3. **Privacy:** video never leaves the device; only aggregate metrics go to
+   the backend.
+4. **Continuous quality:** nothing merges without green CI (lint, tsc, tests,
+   build) and a human review.

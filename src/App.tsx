@@ -21,35 +21,49 @@ export default function App() {
       <BrowserRouter>
         <div className="flex h-full flex-col bg-bg">
           <Header />
-          <Routes>
-            <Route path="/profiles" element={<ProfilesPage />} />
-            <Route
-              path="/"
-              element={
-                <RequireProfile>
-                  <HomePage />
-                </RequireProfile>
-              }
-            />
-            <Route
-              path="/training"
-              element={
-                <RequireProfile>
-                  <ErrorBoundary>
-                    <TrainingPage />
-                  </ErrorBoundary>
-                </RequireProfile>
-              }
-            />
-            <Route
-              path="/progress"
-              element={
-                <RequireProfile>
-                  <ProgressPage />
-                </RequireProfile>
-              }
-            />
-          </Routes>
+          {/*
+            The boundary wraps every route, not just training. A render error
+            on the home or progress screen used to paint a blank page with no
+            way back, which is worse than the same error during a session:
+            those two screens are where a user lands, so there is nothing left
+            to navigate away to.
+          */}
+          <ErrorBoundary>
+            <Routes>
+              <Route path="/profiles" element={<ProfilesPage />} />
+              <Route
+                path="/"
+                element={
+                  <RequireProfile>
+                    <HomePage />
+                  </RequireProfile>
+                }
+              />
+              <Route
+                path="/training"
+                element={
+                  <RequireProfile>
+                    {/*
+                      Training keeps its own boundary so a camera or MediaPipe
+                      failure resets the session without unmounting the rest of
+                      the app.
+                    */}
+                    <ErrorBoundary>
+                      <TrainingPage />
+                    </ErrorBoundary>
+                  </RequireProfile>
+                }
+              />
+              <Route
+                path="/progress"
+                element={
+                  <RequireProfile>
+                    <ProgressPage />
+                  </RequireProfile>
+                }
+              />
+            </Routes>
+          </ErrorBoundary>
         </div>
       </BrowserRouter>
     </ProfileProvider>

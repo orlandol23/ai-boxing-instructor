@@ -287,3 +287,47 @@ Recommended order from here: **11 → 9 → 8 → 10 → 6b.**
    the backend.
 4. **Continuous quality:** nothing merges without green CI (lint, tsc, tests,
    build) and a human review.
+
+---
+
+## Second review, 2026-09-07: beyond the audit
+
+What no audit finding would surface, because none of it is a bug.
+
+1. **The engine's accuracy has never been measured.** The coach can be
+   confidently wrong and nothing would show it. This is the single largest
+   gap between a polished app and a reference product. A labelled evaluation
+   set (recorded sessions with every punch annotated by type and quality), a
+   precision and recall number per punch class, and that number as a
+   regression floor in CI. Phase 9's recordings are the beginning of this set,
+   not a substitute for it.
+2. **Kids and the AI coach.** The kids theme changes the copy; it does not
+   change what the model is asked. Review `SYSTEM_PROMPT_*` for
+   age-appropriate output when the active profile is a kid, or add a stricter
+   prompt variant selected by the profile. Camera plus minors is low exposure
+   here (no accounts, video never leaves the device); say so in the privacy
+   note from Phase 11.
+3. **Analytics is an omission, not a decision.** Either zero analytics,
+   privacy-first, written down as the choice, or a self-hosted cookieless
+   counter. Today nobody knows whether anyone trains.
+4. **6b has no conflict rule.** "Reconcile local and remote" needs one:
+   sessions are immutable once ended and keyed by id, last write wins per
+   session, aggregates are always recomputed from sessions and never merged.
+5. **Mobile release checklist.** Camera permission prompts, Safari iOS PWA
+   quirks (no background audio for the voice coach, storage eviction) and
+   Android install banners are each a known failure class with no line here.
+
+### Repository hygiene (shared by all six repositories)
+
+- **Dependency update automation.** None of the six repositories has Dependabot
+  or Renovate. Add `.github/dependabot.yml` with weekly, grouped updates for the
+  package ecosystem and for `github-actions`, and daily security updates. The
+  recurring "npm audit fix without --force" items stop recurring once this
+  exists.
+- **Responsible disclosure.** No repository has a `SECURITY.md`. Enable GitHub
+  private vulnerability reporting (Settings > Security > "Private vulnerability
+  reporting") and add a `SECURITY.md` that points to it, so a report never has
+  to be a public issue. Do not put a personal email address in the file.
+- **Branch protection on the default branch.** Require the CI checks to pass
+  before merge; forbid force-push and deletion. An owner setting; costs nothing
+  and is the first thing a reviewer checks after the README.

@@ -4,14 +4,18 @@ Evolution plan for the AI Boxing Instructor towards a top-tier product,
 organised into prioritised phases. Every item has objective **definition of
 done (DoD)** criteria so a phase can be closed with confidence.
 
-> Current state (jul/2026): React 19 + Vite 8 PWA with client-side MediaPipe
+> Current state (sep/2026): React 19 + Vite 8 PWA with client-side MediaPipe
 > Pose, analysis engine (guard/base/punches), voice coach, sessions with
 > rounds and a summary, the `/api/coach` endpoint backed by Claude (Phase 4),
 > gamification + history (Phase 6), profiles + kids theme (Phase 7) and a
 > quality foundation (CI, tests, Error Boundary). **Full i18n delivered in
 > jul/2026** (outside the numbered phases): app in EN by default with PT-BR
 > available, a language selector in the header, the engine emitting stable
-> i18n keys and the coach answering in the user's language.
+> i18n keys and the coach answering in the user's language. **Hardening in
+> sep/2026** (PR #22, from the audit in [`AUDIT-2026-09.md`](AUDIT-2026-09.md)):
+> `/api/coach` validates in a fixed order with a hard cap on every field and
+> returns closed errors; corrupted stored history can no longer take the app
+> down; every route has an error boundary; CI runs with a read-only token.
 
 > **Design System v2 (foundation) applied:** themable tokens
 > (`adult`/`kids` via `data-theme`), self-hosted Saira fonts, and the
@@ -193,6 +197,42 @@ with no long tasks > 50ms during analysis.
 
 ---
 
+## Phase 11: security and operations (from the September 2026 audit)
+
+The one HIGH finding in [`AUDIT-2026-09.md`](AUDIT-2026-09.md) and the
+operational gaps a public PWA with a paid endpoint has to close. Scheduled
+**ahead of Phase 8**: features on top of an endpoint anyone can drain is the
+wrong order.
+
+- **Rate limit on `/api/coach`.** Per-IP (Vercel Firewall rules, or
+  `@upstash/ratelimit` backed by Vercel KV) plus a daily ceiling on total
+  calls. Both fail closed to the existing 503 path, which the coach bubble
+  already handles with friendly copy. Tests in `api/__tests__` for
+  "limit hit" and "ceiling hit", asserting that no model call was made.
+- **Transport and content security.** `Strict-Transport-Security` in
+  `vercel.json`. `Content-Security-Policy` first as `Report-Only`, with
+  explicit sources for the MediaPipe WASM (jsDelivr) and the pose model
+  (Google Cloud Storage), then enforced once a full workout produces zero
+  violations.
+- **Error visibility.** Forward function errors and PWA runtime errors to a
+  sink (Sentry, or a Vercel log drain). Today the coach's failure rate is
+  invisible: a broken key or a model rename would only show up as users seeing
+  the fallback copy.
+- **Tests where there are none.** `selectors.ts` and `BoxingEngine.ts`; remove
+  the dead `gamification/index.ts` barrel.
+- **Hygiene.** Rename `.github/instructions/*.instructions.md` (a literal `*`
+  breaks `git clone` on Windows); `npm audit fix` without `--force`.
+- **Privacy, said where it matters.** A one-line note at the moment the camera
+  permission is requested: video never leaves the device; only aggregate
+  metrics go to `/api/coach`. The README says it; the app should too.
+
+**DoD:** 100 requests in a minute from one IP get 429 with no model call; the
+daily ceiling trips in a test; CSP enforced with zero console violations
+across a full workout; the error sink shows one deliberately thrown error
+from each of the function and the PWA.
+
+---
+
 ## Known debt register
 
 | Item | Where | Phase |
@@ -204,6 +244,38 @@ with no long tasks > 50ms during analysis.
 | Shorter rounds by default on the kids profile | `useSession` + settings | 8 |
 | The history of a deleted profile is orphaned in localStorage (decision: never erase) | `profileStore` / future "cleanup" in settings | 8+ |
 | ~~AI coach with no UI (endpoint ready, frontend pending)~~ ✅ delivered (5.1) | `useCoachingFeedback` + `CoachBubble` | 5 |
+| `/api/coach` has no rate limit or daily ceiling (audit H1) | `api/coach.ts` | 11 |
+| No HSTS, no CSP | `vercel.json` | 11 |
+| No error reporting for the function or the PWA | `api/`, `src/main.tsx` | 11 |
+| `selectors.ts`, `BoxingEngine.ts` untested; `gamification/index.ts` dead barrel | `src/engine/` | 11 |
+| Literal `*` in `.github/instructions/*.instructions.md` breaks Windows clones | `.github/instructions/` | 11 |
+
+---
+
+## Plan review, 2026-09-07
+
+This roadmap read against the September 2026 audit and against what a
+reviewer expects from a shipped PWA. What it did not cover, and what changed:
+
+1. **Security and operations had no phase.** Added as Phase 11, ahead of
+   Phase 8.
+2. **Phase 9 is a correctness bug in production, not debt.** At 60 fps the
+   punch cooldown lasts half the intended time, today, on every 60 fps phone.
+   Schedule it before Phase 8 features. It needs a validation protocol the
+   roadmap did not have: three recorded sessions (a 30 fps phone, a 60 fps
+   phone, a laptop) replayed through the engine as fixtures, with identical
+   classification results as the DoD. Without the recordings the phase cannot
+   be closed with confidence.
+3. **No accessibility pass anywhere.** Contrast in the kids theme, focus order
+   in the profile selector, the punch feed for screen readers. Add to Phase 8
+   alongside the settings screen, where the UI is being touched anyway.
+4. **No performance budget in CI**, despite "mobile-first" being principle 1.
+   Lighthouse CI on the built PWA with thresholds, so Phase 10's "no long
+   tasks > 50 ms" has a measurement and can actually be closed.
+5. **Owner step still open:** `ANTHROPIC_API_KEY` on Vercel (5.2). Until it is
+   set, the coach is in fallback for every user and Phase 5 is not closable.
+
+Recommended order from here: **11 → 9 → 8 → 10 → 6b.**
 
 ---
 

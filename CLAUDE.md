@@ -95,3 +95,11 @@ on purpose — never "fix" that by duplicating strings.
   build on drift. Add new copy to both `en.ts` and `pt-BR.ts`.
 - Pose analysis runs entirely client-side. No video should ever leave the
   browser.
+
+## Plans and audits
+
+- The plan is `docs/ROADMAP.md`. Nothing in it is ticked by intention: a box
+  closes in the PR that closes it, with the PR linked.
+- `docs/AUDIT-2026-09.md` is the September 2026 security and architecture
+  audit with the status of every finding. A status changes only in the PR that
+  changes the code. Later reviews go in a new dated file, never merged into it.

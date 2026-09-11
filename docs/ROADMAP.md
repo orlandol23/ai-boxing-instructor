@@ -204,11 +204,36 @@ operational gaps a public PWA with a paid endpoint has to close. Scheduled
 **ahead of Phase 8**: features on top of an endpoint anyone can drain is the
 wrong order.
 
+**This PR only documents the plan.** Nothing below is implemented, and no box
+will be ticked until the PR that ships this phase lands.
+
+### Two protection states, two status codes
+
+The implementation must not conflate a user exceeding their allowance with the
+protection machinery failing:
+
+- **429 Too Many Requests means the user hit a limit.** The per-IP rate limit
+  or the daily ceiling is reached. The endpoint answers **429 and does not call
+  the model**: the request is refused before any spend. This is the abuse /
+  quota-exceeded case.
+- **503 Service Unavailable means the mechanism failed.** The limiter, its
+  storage (Vercel KV) or another control dependency errors, and the endpoint
+  **fails closed** to the existing 503 path the coach bubble already handles
+  with friendly copy. A 503 is an operational failure, **not consumed quota**:
+  a request the system could not serve is never charged against the user's
+  allowance.
+
+Observability has to tell the two apart: a 429 logs the limit category (per-IP
+or daily) and the refusal; a 503 logs the failing dependency and the error
+class. Neither logs the request body or personal data. The future test suite
+covers both paths — limit hit → 429, limiter/dependency failure → 503, recovery
+once the dependency is healthy again — and asserts **no model call on either
+blocked path**.
+
 - **Rate limit on `/api/coach`.** Per-IP (Vercel Firewall rules, or
   `@upstash/ratelimit` backed by Vercel KV) plus a daily ceiling on total
-  calls. Both fail closed to the existing 503 path, which the coach bubble
-  already handles with friendly copy. Tests in `api/__tests__` for
-  "limit hit" and "ceiling hit", asserting that no model call was made.
+  calls. Limit reached → 429 with no model call; limiter/storage unavailable →
+  503 fail-closed, never counted as quota used.
 - **Transport and content security.** `Strict-Transport-Security` in
   `vercel.json`. `Content-Security-Policy` first as `Report-Only`, with
   explicit sources for the MediaPipe WASM (jsDelivr) and the pose model
@@ -217,7 +242,7 @@ wrong order.
 - **Error visibility.** Forward function errors and PWA runtime errors to a
   sink (Sentry, or a Vercel log drain). Today the coach's failure rate is
   invisible: a broken key or a model rename would only show up as users seeing
-  the fallback copy.
+  the fallback copy. The sink must surface the 429 vs 503 distinction.
 - **Tests where there are none.** `selectors.ts` and `BoxingEngine.ts`; remove
   the dead `gamification/index.ts` barrel.
 - **Hygiene.** Rename `.github/instructions/*.instructions.md` (a literal `*`
@@ -226,10 +251,18 @@ wrong order.
   permission is requested: video never leaves the device; only aggregate
   metrics go to `/api/coach`. The README says it; the app should too.
 
-**DoD:** 100 requests in a minute from one IP get 429 with no model call; the
-daily ceiling trips in a test; CSP enforced with zero console violations
-across a full workout; the error sink shows one deliberately thrown error
-from each of the function and the PWA.
+**DoD:**
+- Hitting the per-IP rate limit or the daily ceiling returns **429** and does
+  not call the model (a test asserts the no-model-call on that path).
+- A failing limiter/storage/control dependency returns **503** fail-closed, is
+  **not counted against any quota**, and the endpoint recovers automatically
+  once the dependency is healthy again (both tested).
+- A test proves **no model call happens on either blocked path**.
+- Observability and logs distinguish abuse/limit (429) from internal failure
+  (503) without exposing sensitive data (no request body, no personal info).
+- CSP enforced with zero console violations across a full workout; the error
+  sink shows one deliberately thrown error from each of the function and the
+  PWA.
 
 ---
 

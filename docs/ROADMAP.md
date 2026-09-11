@@ -4,14 +4,18 @@ Evolution plan for the AI Boxing Instructor towards a top-tier product,
 organised into prioritised phases. Every item has objective **definition of
 done (DoD)** criteria so a phase can be closed with confidence.
 
-> Current state (jul/2026): React 19 + Vite 8 PWA with client-side MediaPipe
+> Current state (sep/2026): React 19 + Vite 8 PWA with client-side MediaPipe
 > Pose, analysis engine (guard/base/punches), voice coach, sessions with
 > rounds and a summary, the `/api/coach` endpoint backed by Claude (Phase 4),
 > gamification + history (Phase 6), profiles + kids theme (Phase 7) and a
 > quality foundation (CI, tests, Error Boundary). **Full i18n delivered in
 > jul/2026** (outside the numbered phases): app in EN by default with PT-BR
 > available, a language selector in the header, the engine emitting stable
-> i18n keys and the coach answering in the user's language.
+> i18n keys and the coach answering in the user's language. **Hardening in
+> sep/2026** (PR #22, from the audit in [`AUDIT-2026-09.md`](AUDIT-2026-09.md)):
+> `/api/coach` validates in a fixed order with a hard cap on every field and
+> returns closed errors; corrupted stored history can no longer take the app
+> down; every route has an error boundary; CI runs with a read-only token.
 
 > **Design System v2 (foundation) applied:** themable tokens
 > (`adult`/`kids` via `data-theme`), self-hosted Saira fonts, and the
@@ -193,6 +197,75 @@ with no long tasks > 50ms during analysis.
 
 ---
 
+## Phase 11: security and operations (from the September 2026 audit)
+
+The one HIGH finding in [`AUDIT-2026-09.md`](AUDIT-2026-09.md) and the
+operational gaps a public PWA with a paid endpoint has to close. Scheduled
+**ahead of Phase 8**: features on top of an endpoint anyone can drain is the
+wrong order.
+
+**This PR only documents the plan.** Nothing below is implemented, and no box
+will be ticked until the PR that ships this phase lands.
+
+### Two protection states, two status codes
+
+The implementation must not conflate a user exceeding their allowance with the
+protection machinery failing:
+
+- **429 Too Many Requests means the user hit a limit.** The per-IP rate limit
+  or the daily ceiling is reached. The endpoint answers **429 and does not call
+  the model**: the request is refused before any spend. This is the abuse /
+  quota-exceeded case.
+- **503 Service Unavailable means the mechanism failed.** The limiter, its
+  storage (Vercel KV) or another control dependency errors, and the endpoint
+  **fails closed** to the existing 503 path the coach bubble already handles
+  with friendly copy. A 503 is an operational failure, **not consumed quota**:
+  a request the system could not serve is never charged against the user's
+  allowance.
+
+Observability has to tell the two apart: a 429 logs the limit category (per-IP
+or daily) and the refusal; a 503 logs the failing dependency and the error
+class. Neither logs the request body or personal data. The future test suite
+covers both paths — limit hit → 429, limiter/dependency failure → 503, recovery
+once the dependency is healthy again — and asserts **no model call on either
+blocked path**.
+
+- **Rate limit on `/api/coach`.** Per-IP (Vercel Firewall rules, or
+  `@upstash/ratelimit` backed by Vercel KV) plus a daily ceiling on total
+  calls. Limit reached → 429 with no model call; limiter/storage unavailable →
+  503 fail-closed, never counted as quota used.
+- **Transport and content security.** `Strict-Transport-Security` in
+  `vercel.json`. `Content-Security-Policy` first as `Report-Only`, with
+  explicit sources for the MediaPipe WASM (jsDelivr) and the pose model
+  (Google Cloud Storage), then enforced once a full workout produces zero
+  violations.
+- **Error visibility.** Forward function errors and PWA runtime errors to a
+  sink (Sentry, or a Vercel log drain). Today the coach's failure rate is
+  invisible: a broken key or a model rename would only show up as users seeing
+  the fallback copy. The sink must surface the 429 vs 503 distinction.
+- **Tests where there are none.** `selectors.ts` and `BoxingEngine.ts`; remove
+  the dead `gamification/index.ts` barrel.
+- **Hygiene.** Rename `.github/instructions/*.instructions.md` (a literal `*`
+  breaks `git clone` on Windows); `npm audit fix` without `--force`.
+- **Privacy, said where it matters.** A one-line note at the moment the camera
+  permission is requested: video never leaves the device; only aggregate
+  metrics go to `/api/coach`. The README says it; the app should too.
+
+**DoD:**
+- Hitting the per-IP rate limit or the daily ceiling returns **429** and does
+  not call the model (a test asserts the no-model-call on that path).
+- A failing limiter/storage/control dependency returns **503** fail-closed, is
+  **not counted against any quota**, and the endpoint recovers automatically
+  once the dependency is healthy again (both tested).
+- A test proves **no model call happens on either blocked path**.
+- Observability and logs distinguish abuse/limit (429) from internal failure
+  (503) without exposing sensitive data (no request body, no personal info).
+- CSP enforced with zero console violations across a full workout; the error
+  sink shows one deliberately thrown error from each of the function and the
+  PWA.
+
+---
+
 ## Known debt register
 
 | Item | Where | Phase |
@@ -204,6 +277,38 @@ with no long tasks > 50ms during analysis.
 | Shorter rounds by default on the kids profile | `useSession` + settings | 8 |
 | The history of a deleted profile is orphaned in localStorage (decision: never erase) | `profileStore` / future "cleanup" in settings | 8+ |
 | ~~AI coach with no UI (endpoint ready, frontend pending)~~ ✅ delivered (5.1) | `useCoachingFeedback` + `CoachBubble` | 5 |
+| `/api/coach` has no rate limit or daily ceiling (audit H1) | `api/coach.ts` | 11 |
+| No HSTS, no CSP | `vercel.json` | 11 |
+| No error reporting for the function or the PWA | `api/`, `src/main.tsx` | 11 |
+| `selectors.ts`, `BoxingEngine.ts` untested; `gamification/index.ts` dead barrel | `src/engine/` | 11 |
+| Literal `*` in `.github/instructions/*.instructions.md` breaks Windows clones | `.github/instructions/` | 11 |
+
+---
+
+## Plan review, 2026-09-07
+
+This roadmap read against the September 2026 audit and against what a
+reviewer expects from a shipped PWA. What it did not cover, and what changed:
+
+1. **Security and operations had no phase.** Added as Phase 11, ahead of
+   Phase 8.
+2. **Phase 9 is a correctness bug in production, not debt.** At 60 fps the
+   punch cooldown lasts half the intended time, today, on every 60 fps phone.
+   Schedule it before Phase 8 features. It needs a validation protocol the
+   roadmap did not have: three recorded sessions (a 30 fps phone, a 60 fps
+   phone, a laptop) replayed through the engine as fixtures, with identical
+   classification results as the DoD. Without the recordings the phase cannot
+   be closed with confidence.
+3. **No accessibility pass anywhere.** Contrast in the kids theme, focus order
+   in the profile selector, the punch feed for screen readers. Add to Phase 8
+   alongside the settings screen, where the UI is being touched anyway.
+4. **No performance budget in CI**, despite "mobile-first" being principle 1.
+   Lighthouse CI on the built PWA with thresholds, so Phase 10's "no long
+   tasks > 50 ms" has a measurement and can actually be closed.
+5. **Owner step still open:** `ANTHROPIC_API_KEY` on Vercel (5.2). Until it is
+   set, the coach is in fallback for every user and Phase 5 is not closable.
+
+Recommended order from here: **11 → 9 → 8 → 10 → 6b.**
 
 ---
 
@@ -215,3 +320,47 @@ with no long tasks > 50ms during analysis.
    the backend.
 4. **Continuous quality:** nothing merges without green CI (lint, tsc, tests,
    build) and a human review.
+
+---
+
+## Second review, 2026-09-07: beyond the audit
+
+What no audit finding would surface, because none of it is a bug.
+
+1. **The engine's accuracy has never been measured.** The coach can be
+   confidently wrong and nothing would show it. This is the single largest
+   gap between a polished app and a reference product. A labelled evaluation
+   set (recorded sessions with every punch annotated by type and quality), a
+   precision and recall number per punch class, and that number as a
+   regression floor in CI. Phase 9's recordings are the beginning of this set,
+   not a substitute for it.
+2. **Kids and the AI coach.** The kids theme changes the copy; it does not
+   change what the model is asked. Review `SYSTEM_PROMPT_*` for
+   age-appropriate output when the active profile is a kid, or add a stricter
+   prompt variant selected by the profile. Camera plus minors is low exposure
+   here (no accounts, video never leaves the device); say so in the privacy
+   note from Phase 11.
+3. **Analytics is an omission, not a decision.** Either zero analytics,
+   privacy-first, written down as the choice, or a self-hosted cookieless
+   counter. Today nobody knows whether anyone trains.
+4. **6b has no conflict rule.** "Reconcile local and remote" needs one:
+   sessions are immutable once ended and keyed by id, last write wins per
+   session, aggregates are always recomputed from sessions and never merged.
+5. **Mobile release checklist.** Camera permission prompts, Safari iOS PWA
+   quirks (no background audio for the voice coach, storage eviction) and
+   Android install banners are each a known failure class with no line here.
+
+### Repository hygiene (shared by all six repositories)
+
+- **Dependency update automation.** None of the six repositories has Dependabot
+  or Renovate. Add `.github/dependabot.yml` with weekly, grouped updates for the
+  package ecosystem and for `github-actions`, and daily security updates. The
+  recurring "npm audit fix without --force" items stop recurring once this
+  exists.
+- **Responsible disclosure.** No repository has a `SECURITY.md`. Enable GitHub
+  private vulnerability reporting (Settings > Security > "Private vulnerability
+  reporting") and add a `SECURITY.md` that points to it, so a report never has
+  to be a public issue. Do not put a personal email address in the file.
+- **Branch protection on the default branch.** Require the CI checks to pass
+  before merge; forbid force-push and deletion. An owner setting; costs nothing
+  and is the first thing a reviewer checks after the README.

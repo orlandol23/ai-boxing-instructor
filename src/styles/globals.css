@@ -1,10 +1,25 @@
 /* ============================================================
-   BOXING AI · Design Tokens v2.0
+   BOXING AI · Design tokens · "Round Tape / Cornerboard"
    Tailwind CSS 4 · base theme "Fight Night" (adult)
    + "Arcade Royale" variant (kids) via [data-theme="kids"]
    Runtime theme swap: <html data-theme="adult|kids">
    Fonts (Saira / Saira Condensed) are self-hosted through
    @fontsource (imported in src/main.tsx), for the offline PWA.
+
+   Visual grammar (phase 1 foundation):
+   - carbon canvas, matte rubber surfaces — no ornament;
+   - quiet/strong score lines frame real entities (a panel is a
+     scoreboard block, a rail is a tape strip), never decoration;
+   - red = action (live training, alerts); gold = progression
+     (rank, XP, earned things); score colours keep their meaning
+     and always travel with a number or label;
+   - shape has meaning: tight rails (md), panels (xl), sheets
+     (2xl); circles only for genuinely round things (avatars,
+     medals, round controls); pills only for compact statuses
+     and progress;
+   - backdrop blur exists ONLY over the camera/video surface
+     (.hud-surface). No hero gradients, no glassmorphism, no
+     decorative glow (the adult glow tokens are `none`).
    ============================================================ */
 
 @import 'tailwindcss';
@@ -12,46 +27,48 @@
 /* ---------- Semantic variables (themable at runtime) ---------- */
 :root,
 [data-theme='adult'] {
-  /* surfaces */
-  --bg: #0a0a0a;
-  --surface: #1a1a1a;
-  --surface-2: #242424;
-  --border: #2a2a2a;
-  --border-strong: #3f3f3f;
-  --overlay: rgba(0, 0, 0, 0.65);
+  /* carbon canvas + rubber surfaces (matte, no ornament) */
+  --bg: #0a0a0a;                  /* carbon canvas: the page ground */
+  --surface: #1a1a1a;             /* rubber mat: panels and sheets */
+  --surface-2: #242424;           /* raised rubber: chips and wells */
+  --border: #2a2a2a;              /* quiet score line */
+  --border-strong: #3f3f3f;       /* strong score line */
+  --overlay: rgba(0, 0, 0, 0.65); /* readability rail over video */
 
-  /* text */
+  /* text: foreground / muted / dim */
   --text: #f5f5f5;
   --text-muted: #a3a3a3;
   --text-dim: #737373;
 
-  /* primary action (fight red) */
+  /* action red — live training, alerts, primary emphasis */
   --primary: #dc2626;
   --primary-hover: #ef4444;
   --primary-pressed: #b91c1c;
   --on-primary: #ffffff;
 
-  /* accent (champion gold) */
+  /* progression gold — rank, XP, earned achievements */
   --accent: #d4a843;
   --accent-light: #f5d98c;
   --accent-deep: #8f6e24;
 
-  /* progression / XP */
+  /* progression / XP fill + track */
   --xp: #d4a843;
   --xp-track: #2e291c;
 
-  /* semantic score scale, IDENTICAL in both themes */
+  /* semantic score scale, IDENTICAL in both themes; a score is
+     never colour alone — the number/label travels with it */
   --score-good: #22c55e; /* ≥ 90 */
   --score-warn: #eab308; /* 70–89 */
   --score-bad: #ef4444;  /* < 70  */
 
-  /* effects */
+  /* effects — glow is a token only; adult = none (no ornament) */
   --glow-primary: none;
   --glow-accent: none;
   --ring: #d4a843;
 }
 
 [data-theme='kids'] {
+  /* carbon canvas + rubber surfaces (deep arcade purple) */
   --bg: #140a20;
   --surface: #211238;
   --surface-2: #2c1a47;
@@ -59,22 +76,23 @@
   --border-strong: #5b3a8c;
   --overlay: rgba(12, 4, 24, 0.68);
 
+  /* text: foreground / muted / dim */
   --text: #fbf7ff;
   --text-muted: #c9b8e4;
   --text-dim: #937fb5;
 
-  /* neon pink */
+  /* action red = neon pink in the kids theme */
   --primary: #ff3d9a;
   --primary-hover: #ff66b2;
   --primary-pressed: #d62681;
   --on-primary: #2a0518; /* dark text for AA on pink */
 
-  /* arcade lilac */
+  /* progression gold = arcade lilac in the kids theme */
   --accent: #c084fc;
   --accent-light: #e2ccfe;
   --accent-deep: #7c3aed;
 
-  /* XP = star gold */
+  /* progression / XP fill + track (star gold) */
   --xp: #ffc83d;
   --xp-track: #3a2a55;
 
@@ -82,6 +100,7 @@
   --score-warn: #eab308;
   --score-bad: #ef4444;
 
+  /* the kids identity keeps its glow tokens (adult = none) */
   --glow-primary: 0 0 24px rgba(255, 61, 154, 0.5);
   --glow-accent: 0 0 18px rgba(192, 132, 252, 0.5);
   --ring: #c084fc;
@@ -138,12 +157,15 @@
   --text-title: 1.75rem;        /* 28px */
   --text-title--line-height: 1.2;
 
-  /* radius */
-  --radius-sm: 6px;
-  --radius-md: 10px;
-  --radius-lg: 14px;
-  --radius-xl: 20px;
-  --radius-2xl: 28px;
+  /* radius — scoreboard grammar (phase 1): tight rails (md),
+     panels (xl), sheets (2xl); circles/pills keep rounded-full.
+     Profile cards deliberately stay rounder (20px) so the shape
+     vocabulary stays varied, not uniform. */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-2xl: 24px;
 }
 
 /* ---------- Global rules ---------- */
@@ -179,6 +201,18 @@ html, body, #root {
   );
   box-shadow: var(--glow-accent);
   transform: rotate(-3deg);
+}
+
+/* ---------- Surface over the camera/video ---------- */
+/* The ONE readability surface used over the video feed: --overlay
+   scrim + 4px backdrop blur (SPECS §4). Components bring their own
+   radius; hover/active bg utilities still win because this sits in
+   the components layer. No other surface may add backdrop blur. */
+@layer components {
+  .hud-surface {
+    background-color: var(--overlay);
+    @apply backdrop-blur-xs;
+  }
 }
 
 /* HUD numbers: always tabular */

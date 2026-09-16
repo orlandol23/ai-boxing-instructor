@@ -53,7 +53,7 @@ export function StatusBar({
 
   if (isModelLoading) {
     return (
-      <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-overlay backdrop-blur-xs">
+      <div className="absolute inset-0 z-20 flex flex-col items-center justify-center hud-surface">
         <div className="h-10 w-10 animate-spin rounded-full border-4 border-accent border-t-transparent" />
         <p className="mt-4 font-display text-lg font-bold uppercase tracking-wide text-accent-light">
           {t('status.loadingModel')}
@@ -64,7 +64,7 @@ export function StatusBar({
 
   if (!hasLandmarks && isCameraReady) {
     return (
-      <div className="absolute inset-x-0 bottom-0 z-10 bg-overlay px-4 py-3 text-center text-base font-semibold text-score-warn backdrop-blur-xs">
+      <div className="absolute inset-x-0 bottom-0 z-10 hud-surface px-4 py-3 text-center text-base font-semibold text-score-warn">
         {t('status.stepIntoFrame')}
       </div>
     );

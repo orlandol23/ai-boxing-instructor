@@ -42,7 +42,7 @@ export function SessionControls({
     <>
       {/* Timer HUD, top-centre, .num ≥56px, legible at 2–3m (SPECS §6) */}
       {phase === 'in_round' && (
-        <div className="absolute left-1/2 top-3 z-10 -translate-x-1/2 rounded-md bg-overlay px-5 py-2 text-center backdrop-blur-xs">
+        <div className="absolute left-1/2 top-3 z-10 -translate-x-1/2 rounded-md hud-surface px-5 py-2 text-center">
           <div className="num text-hud-value font-bold text-white md:text-hud-timer">
             {formatClock(roundElapsedMs)}
           </div>
@@ -140,10 +140,10 @@ function VoiceButton({
       onClick={onToggle}
       aria-label={label}
       aria-pressed={enabled}
-      className={`tap-training flex items-center justify-center rounded-full backdrop-blur-xs transition-[background-color,transform] active:scale-[.96] ${
+      className={`tap-training flex items-center justify-center rounded-full hud-surface transition-[background-color,transform] active:scale-[.96] ${
         enabled
           ? 'bg-primary text-on-primary [box-shadow:var(--glow-primary)]'
-          : 'bg-overlay text-white/80 hover:text-white'
+          : 'text-white/80 hover:text-white'
       }`}
     >
       <Icon size={24} aria-hidden="true" />

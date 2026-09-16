@@ -18,7 +18,7 @@ export function ScorePanel({ frame, punchCount, recentPunches }: ScorePanelProps
   return (
     <>
       {/* Punch counter + stance, top-left corner */}
-      <div className="absolute left-3 top-20 z-10 rounded-md bg-overlay px-3.5 py-2 text-center backdrop-blur-xs">
+      <div className="absolute left-3 top-20 z-10 rounded-md hud-surface px-3.5 py-2 text-center">
         <div className="num text-4xl font-bold leading-none text-white">{punchCount}</div>
         <div className="mt-0.5 text-xs uppercase tracking-widest text-white/70">
           {t('training.punches')}
@@ -60,7 +60,7 @@ function ScoreBar({ label, score }: { label: string; score: number }) {
   const { barClass, textClass } = getScoreClasses(score);
 
   return (
-    <div className="flex items-center gap-2.5 rounded-[12px] bg-overlay px-3 py-2 backdrop-blur-xs">
+    <div className="flex items-center gap-2.5 rounded-[12px] hud-surface px-3 py-2">
       <span className="w-16 text-sm font-semibold uppercase tracking-wider text-white/70">
         {label}
       </span>
@@ -95,7 +95,7 @@ function PunchBadge({ punch, rank }: { punch: PunchEvent; rank: number }) {
   const rankStyle = RANK_STYLES[Math.min(rank, RANK_STYLES.length - 1)];
 
   return (
-    <div className={`flex items-center gap-2 rounded-md bg-overlay backdrop-blur-xs ${rankStyle}`}>
+    <div className={`flex items-center gap-2 rounded-md hud-surface ${rankStyle}`}>
       <span className="font-display font-bold uppercase leading-none text-white">
         {t(`punchType.${punch.type}`)}
       </span>

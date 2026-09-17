@@ -52,41 +52,76 @@ export function ProfilesPage() {
 
   return (
     <main className="min-h-0 flex-1 overflow-y-auto px-4 py-6">
-      <div className="mx-auto flex w-full max-w-md flex-col gap-6">
-        <header className="text-center">
-          <h1 className="font-display text-title font-extrabold uppercase tracking-wide text-fg">
-            {t('profiles.title')}
+      <div className="mx-auto flex w-full max-w-md flex-col gap-5">
+        <header className="rounded-2xl border border-line bg-surface p-4 text-left">
+          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-fg-dim">
+            {activeProfile ? t('profiles.activeProfile') : t('profiles.chooseCorner')}
+          </p>
+          <h1 className="mt-2 font-display text-title font-extrabold uppercase tracking-wide text-fg">
+            {activeProfile
+              ? t('profiles.readyForNextRound', { name: activeProfile.name })
+              : t('profiles.title')}
           </h1>
           <p className="mt-1 text-sm text-fg-muted">{t('profiles.subtitle')}</p>
         </header>
 
-        <div className="grid grid-cols-2 gap-3">
-          {profiles.map((profile) => (
-            <ProfileCard
-              key={profile.id}
-              profile={profile}
-              level={levels.get(profile.id) ?? 1}
-              selected={profile.id === activeProfile?.id}
-              onSelect={() => handleSelect(profile.id)}
-              onEdit={() => setForm({ mode: 'edit', profile })}
-            />
-          ))}
+        {activeProfile && (
+          <section className="rounded-[20px] border border-accent bg-surface p-4">
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex min-w-0 items-center gap-3">
+                <span className="flex size-[56px] items-center justify-center rounded-full border-2 border-accent bg-surface-2 text-3xl">
+                  {activeProfile.avatar}
+                </span>
+                <div className="min-w-0">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-accent-light">
+                    {t('profiles.activeProfile')}
+                  </p>
+                  <p className="mt-1 truncate font-display text-xl font-bold uppercase tracking-wide text-fg">
+                    {activeProfile.name}
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => navigate('/')}
+                className="flex min-h-12 items-center justify-center rounded-xl border border-accent bg-surface-2 px-3 font-display text-sm font-bold uppercase tracking-wider text-accent-light"
+              >
+                {t('profiles.continueTraining')}
+              </button>
+            </div>
+          </section>
+        )}
 
-          {profiles.length < MAX_PROFILES && (
-            <button
-              type="button"
-              onClick={() => setForm({ mode: 'create' })}
-              className="flex min-h-[180px] flex-col items-center justify-center gap-2.5 rounded-[20px] border border-dashed border-line-strong bg-surface p-4 text-fg-muted transition-colors hover:border-accent hover:text-fg"
-            >
-              <span className="flex size-[68px] items-center justify-center rounded-full border-2 border-dashed border-line-strong">
-                <Plus size={28} aria-hidden="true" />
-              </span>
-              <span className="font-display text-lg font-bold uppercase tracking-wide">
+        <section className="space-y-3">
+          <div className="flex items-center justify-between">
+            <h2 className="text-xs font-semibold uppercase tracking-[0.2em] text-fg-dim">
+              {t('profiles.chooseCorner')}
+            </h2>
+            {profiles.length < MAX_PROFILES && (
+              <button
+                type="button"
+                onClick={() => setForm({ mode: 'create' })}
+                className="flex items-center gap-2 rounded-full border border-line-strong bg-surface-2 px-2.5 py-1.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-fg-muted"
+              >
+                <Plus size={14} aria-hidden="true" />
                 {t('profiles.newProfile')}
-              </span>
-            </button>
-          )}
-        </div>
+              </button>
+            )}
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            {profiles.map((profile) => (
+              <ProfileCard
+                key={profile.id}
+                profile={profile}
+                level={levels.get(profile.id) ?? 1}
+                selected={profile.id === activeProfile?.id}
+                onSelect={() => handleSelect(profile.id)}
+                onEdit={() => setForm({ mode: 'edit', profile })}
+              />
+            ))}
+          </div>
+        </section>
 
         {form.mode !== 'closed' && (
           <ProfileForm
@@ -190,7 +225,7 @@ function ProfileForm({ profile, canDismiss, onCancel, onCreate, onSave, onDelete
 
       <fieldset>
         <legend className="mb-1.5 text-sm font-semibold text-fg">{t('profiles.avatar')}</legend>
-        <div className="grid grid-cols-6 gap-1.5">
+        <div className="grid grid-cols-4 gap-1.5 sm:grid-cols-6">
           {AVATARS.map((emoji) => (
             <button
               key={emoji}

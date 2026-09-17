@@ -35,7 +35,7 @@ export function ProfileCard({ profile, level, selected, onSelect, onEdit }: Prof
         aria-label={t(profile.isKid ? 'profiles.trainAsKid' : 'profiles.trainAs', {
           name: profile.name,
         })}
-        className="flex flex-col items-center gap-2.5"
+        className="flex w-full flex-col items-center gap-2.5"
       >
         <span
           aria-hidden="true"
@@ -48,6 +48,11 @@ export function ProfileCard({ profile, level, selected, onSelect, onEdit }: Prof
         </span>
       </button>
       <LevelChip level={level} />
+      {selected && (
+        <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-accent-light">
+          {t('profiles.activeProfile')}
+        </span>
+      )}
       {profile.isKid && (
         <span className="text-[11px] font-semibold uppercase tracking-wider text-accent-light">
           {t('profiles.kidsMode')}

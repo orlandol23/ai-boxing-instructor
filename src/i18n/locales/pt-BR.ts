@@ -209,6 +209,7 @@ const ptBR = {
     startTraining: 'Iniciar treino',
     endRound: 'Encerrar round',
     finish: 'Finalizar',
+    betweenRounds: 'Intervalo',
     punches: 'golpes',
     guard: 'Guarda',
     base: 'Base',

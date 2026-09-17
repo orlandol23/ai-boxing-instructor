@@ -15,7 +15,9 @@ interface StatusBarProps {
  * Loading/error states for training (SPECS §6, States):
  * - camera/model error: full screen with an icon + CTA (never a toast)
  * - model loading: full overlay + accent spinner
- * - no pose detected: bottom strip in --overlay, 16px warn text
+ * - no pose detected: bottom strip in --overlay, 16px warn text, placed just
+ *   above the control footer and never taking pointer events (it is a hint,
+ *   so it must not swallow taps on Start/End/Finish)
  */
 export function StatusBar({
   isModelLoading,
@@ -32,7 +34,10 @@ export function StatusBar({
     const title = cameraError ? t('status.cameraBlocked') : t('status.startFailed');
 
     return (
-      <div className="absolute inset-0 z-30 flex flex-col items-center justify-center gap-4 bg-bg px-8 text-center">
+      <div
+        role="alert"
+        className="absolute inset-0 z-30 flex flex-col items-center justify-center gap-4 bg-bg px-8 text-center"
+      >
         <Icon size={48} className="text-score-bad" aria-hidden="true" />
         <h2 className="font-display text-title font-bold uppercase tracking-wide text-fg">
           {title}
@@ -53,7 +58,10 @@ export function StatusBar({
 
   if (isModelLoading) {
     return (
-      <div className="absolute inset-0 z-20 flex flex-col items-center justify-center hud-surface">
+      <div
+        role="status"
+        className="absolute inset-0 z-20 flex flex-col items-center justify-center hud-surface"
+      >
         <div className="h-10 w-10 animate-spin rounded-full border-4 border-accent border-t-transparent" />
         <p className="mt-4 font-display text-lg font-bold uppercase tracking-wide text-accent-light">
           {t('status.loadingModel')}
@@ -64,7 +72,10 @@ export function StatusBar({
 
   if (!hasLandmarks && isCameraReady) {
     return (
-      <div className="absolute inset-x-0 bottom-0 z-10 hud-surface px-4 py-3 text-center text-base font-semibold text-score-warn">
+      <div
+        role="status"
+        className="pointer-events-none absolute inset-x-0 bottom-24 z-10 hud-surface px-4 py-3 text-center text-base font-semibold text-score-warn"
+      >
         {t('status.stepIntoFrame')}
       </div>
     );

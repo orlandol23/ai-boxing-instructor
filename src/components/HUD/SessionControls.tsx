@@ -40,15 +40,30 @@ export function SessionControls({
 
   return (
     <>
-      {/* Timer HUD, top-centre, .num ≥56px, legible at 2–3m (SPECS §6) */}
+      {/* Round scoreboard, top-centre: the bell side of the HUD (SPECS §6).
+          The kicker names the round, the .num timer is the value; legible
+          at 2–3 m. Only the in-round clock ticks — no invented countdown. */}
       {phase === 'in_round' && (
         <div className="absolute left-1/2 top-3 z-10 -translate-x-1/2 rounded-md hud-surface px-5 py-2 text-center">
+          <div className="font-display text-xs font-bold uppercase tracking-widest text-accent-light">
+            {t('training.round', { number: currentRound })}
+          </div>
           <div className="num text-hud-value font-bold text-white md:text-hud-timer">
             {formatClock(roundElapsedMs)}
           </div>
-          <div className="mt-1 text-xs uppercase tracking-widest text-white/70">
-            {t('training.round', { number: currentRound })}
-          </div>
+        </div>
+      )}
+
+      {/* Between rounds: a transition pill, not a countdown (no interval
+          clock exists in the tracker) */}
+      {phase === 'between_rounds' && (
+        <div
+          role="status"
+          className="absolute left-1/2 top-3 z-10 -translate-x-1/2 rounded-full hud-surface px-5 py-2.5 text-center"
+        >
+          <span className="font-display text-base font-bold uppercase tracking-widest text-accent-light">
+            {t('training.betweenRounds')}
+          </span>
         </div>
       )}
 

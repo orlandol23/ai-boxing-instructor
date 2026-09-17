@@ -214,6 +214,7 @@ const en = {
     startTraining: 'Start training',
     endRound: 'End round',
     finish: 'Finish',
+    betweenRounds: 'Between rounds',
     punches: 'punches',
     guard: 'Guard',
     base: 'Base',

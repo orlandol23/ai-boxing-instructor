@@ -44,6 +44,13 @@ export function CoachBubble({ status, feedback, context }: CoachBubbleProps) {
         aria-live="polite"
         className="min-w-0 flex-1 rounded-[16px] rounded-tl-[4px] border border-accent bg-surface-2 px-4 py-3"
       >
+        {/* Cornerboard tag: names the source of the note, and only when a note
+            exists — never while the coach is loading, unavailable or failed */}
+        {context === 'round' && status === 'success' && feedback && (
+          <div className="mb-1 font-display text-xs font-bold uppercase tracking-widest text-accent">
+            {t('coach.title')}
+          </div>
+        )}
         {status === 'loading' && (
           <p className="animate-pulse text-base leading-relaxed text-fg-muted">
             {t(LOADING_KEYS[context])}

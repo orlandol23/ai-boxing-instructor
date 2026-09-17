@@ -40,9 +40,11 @@ export function ScorePanel({ frame, punchCount, recentPunches }: ScorePanelProps
         </div>
       )}
 
-      {/* ScoreBars, above the round controls */}
-      <div className="absolute inset-x-3 bottom-28 z-10 flex flex-col gap-2">
+      {/* Score rail, above the round controls: guard + base grouped as one
+          scoreboard strip, each value kept next to its label and colour */}
+      <div className="absolute inset-x-3 bottom-28 z-10 mx-auto max-w-md rounded-[12px] hud-surface px-3 py-1">
         <ScoreBar label={t('training.guard')} score={guard.overall} />
+        <div aria-hidden="true" className="h-px bg-white/15" />
         <ScoreBar label={t('training.base')} score={base.overall} />
       </div>
     </>
@@ -55,12 +57,12 @@ function getScoreClasses(score: number): { barClass: string; textClass: string }
   return { barClass: 'bg-score-bad', textClass: 'text-score-bad' };
 }
 
-/** ScoreBar v2 (SPECS §6): overlay+blur pill, 14px label, 8px track, 22px .num value. */
+/** ScoreBar v3: one row of the grouped score rail — label, track, .num value. */
 function ScoreBar({ label, score }: { label: string; score: number }) {
   const { barClass, textClass } = getScoreClasses(score);
 
   return (
-    <div className="flex items-center gap-2.5 rounded-[12px] hud-surface px-3 py-2">
+    <div className="flex items-center gap-2.5 px-1 py-2.5">
       <span className="w-16 text-sm font-semibold uppercase tracking-wider text-white/70">
         {label}
       </span>

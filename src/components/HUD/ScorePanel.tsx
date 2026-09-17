@@ -18,7 +18,7 @@ export function ScorePanel({ frame, punchCount, recentPunches }: ScorePanelProps
   return (
     <>
       {/* Punch counter + stance, top-left corner */}
-      <div className="absolute left-3 top-20 z-10 rounded-md bg-overlay px-3.5 py-2 text-center backdrop-blur-xs">
+      <div className="absolute left-3 top-20 z-10 rounded-md hud-surface px-3.5 py-2 text-center">
         <div className="num text-4xl font-bold leading-none text-white">{punchCount}</div>
         <div className="mt-0.5 text-xs uppercase tracking-widest text-white/70">
           {t('training.punches')}
@@ -40,9 +40,11 @@ export function ScorePanel({ frame, punchCount, recentPunches }: ScorePanelProps
         </div>
       )}
 
-      {/* ScoreBars, above the round controls */}
-      <div className="absolute inset-x-3 bottom-28 z-10 flex flex-col gap-2">
+      {/* Score rail, above the round controls: guard + base grouped as one
+          scoreboard strip, each value kept next to its label and colour */}
+      <div className="absolute inset-x-3 bottom-28 z-10 mx-auto max-w-md rounded-[12px] hud-surface px-3 py-1">
         <ScoreBar label={t('training.guard')} score={guard.overall} />
+        <div aria-hidden="true" className="h-px bg-white/15" />
         <ScoreBar label={t('training.base')} score={base.overall} />
       </div>
     </>
@@ -55,12 +57,12 @@ function getScoreClasses(score: number): { barClass: string; textClass: string }
   return { barClass: 'bg-score-bad', textClass: 'text-score-bad' };
 }
 
-/** ScoreBar v2 (SPECS §6): overlay+blur pill, 14px label, 8px track, 22px .num value. */
+/** ScoreBar v3: one row of the grouped score rail — label, track, .num value. */
 function ScoreBar({ label, score }: { label: string; score: number }) {
   const { barClass, textClass } = getScoreClasses(score);
 
   return (
-    <div className="flex items-center gap-2.5 rounded-[12px] bg-overlay px-3 py-2 backdrop-blur-xs">
+    <div className="flex items-center gap-2.5 px-1 py-2.5">
       <span className="w-16 text-sm font-semibold uppercase tracking-wider text-white/70">
         {label}
       </span>
@@ -95,7 +97,7 @@ function PunchBadge({ punch, rank }: { punch: PunchEvent; rank: number }) {
   const rankStyle = RANK_STYLES[Math.min(rank, RANK_STYLES.length - 1)];
 
   return (
-    <div className={`flex items-center gap-2 rounded-md bg-overlay backdrop-blur-xs ${rankStyle}`}>
+    <div className={`flex items-center gap-2 rounded-md hud-surface ${rankStyle}`}>
       <span className="font-display font-bold uppercase leading-none text-white">
         {t(`punchType.${punch.type}`)}
       </span>

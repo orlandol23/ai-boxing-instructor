@@ -95,7 +95,7 @@ export function ProfilesPage() {
         <section className="space-y-3">
           <div className="flex items-center justify-between">
             <h2 className="text-xs font-semibold uppercase tracking-[0.2em] text-fg-dim">
-              {t('profiles.chooseCorner')}
+              {t('profiles.roster')}
             </h2>
             {profiles.length < MAX_PROFILES && (
               <button

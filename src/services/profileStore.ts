@@ -58,7 +58,7 @@ export const AVATARS: readonly string[] = [
   '⭐',
   '🔥',
   '👑',
-  '🤖',
+  '🐻',
 ];
 
 export const DEFAULT_AVATAR = AVATARS[0];

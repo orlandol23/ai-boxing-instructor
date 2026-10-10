@@ -58,6 +58,7 @@ const ptBR = {
     subtitle: 'Cada perfil tem seu próprio nível, histórico e tema.',
     activeProfile: 'Perfil ativo',
     chooseCorner: 'Escolha o seu canto',
+    roster: 'Lutadores',
     readyForNextRound: 'Pronto para o próximo round, {{name}}',
     continueTraining: 'Continuar treinando',
     newProfile: 'Novo perfil',

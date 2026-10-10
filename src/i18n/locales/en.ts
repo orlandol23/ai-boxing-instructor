@@ -63,6 +63,7 @@ const en = {
     subtitle: 'Every profile has its own level, history and theme.',
     activeProfile: 'Active profile',
     chooseCorner: 'Choose your corner',
+    roster: 'Fighters',
     readyForNextRound: 'Ready for the next round, {{name}}',
     continueTraining: 'Continue to training',
     newProfile: 'New profile',
